@@ -59,11 +59,11 @@ export default function DscrSchedule({ data, years }: { data: ProjectedYear[], y
             </tr>
             <tr>
               <td className="px-6 py-2.5 text-left font-sans pl-10">6. Repayment of Term Loan Installments</td>
-              {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right text-rose-600">0</td>)}
+              {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right text-rose-600">{fmt(d.tlRepayment)}</td>)}
             </tr>
             <tr className="bg-[#e8e4da] font-bold border-y border-[#ccc8be]">
               <td className="px-6 py-3 text-left pl-6 font-sans uppercase">7. TOTAL DEBT SERVICE (5+6)</td>
-              {data.map(d => <td key={d.year} className="px-6 py-3 text-right text-rose-700">{fmt(d.interest)}</td>)}
+              {data.map(d => <td key={d.year} className="px-6 py-3 text-right text-rose-700">{fmt(d.interest + d.tlRepayment)}</td>)}
             </tr>
 
             {/* RATIO RESULT */}

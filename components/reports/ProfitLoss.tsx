@@ -89,7 +89,7 @@ export default function ProfitLoss({ data, years }: { data: ProjectedYear[], yea
             </tr>
             <tr className="bg-emerald-50/50 text-emerald-800 font-semibold border-t border-emerald-100">
               <td className="px-6 py-3 text-left">Net Profit before Tax</td>
-              {data.map(d => <td key={d.year} className="px-6 py-3 text-right font-mono">{fmt(d.netProfit)}</td>)}
+              {data.map(d => <td key={d.year} className="px-6 py-3 text-right font-mono">{fmt(d.profitBeforeTax)}</td>)}
             </tr>
             <tr className="hover:bg-slate-50">
               <td className="px-6 py-2.5 text-left text-slate-600 pl-10">Net Profit Ratio (%)</td>
@@ -97,7 +97,7 @@ export default function ProfitLoss({ data, years }: { data: ProjectedYear[], yea
             </tr>
             <tr className="hover:bg-slate-50">
               <td className="px-6 py-2.5 text-left text-slate-600 pl-10">Less: Income Tax Provision</td>
-              {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right font-mono text-slate-700">0</td>)}
+              {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right font-mono text-slate-700">{fmt(d.tax)}</td>)}
             </tr>
             <tr className="bg-emerald-100 text-emerald-900 font-bold border-t-2 border-emerald-300 shadow-sm">
               <td className="px-6 py-4 text-left">Net Profit after Tax (PAT)</td>

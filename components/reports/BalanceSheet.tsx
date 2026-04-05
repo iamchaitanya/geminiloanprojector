@@ -49,7 +49,7 @@ export default function BalanceSheet({ data, years, loanAmount }: { data: Projec
             </tr>
             <tr className="hover:bg-slate-50">
               <td className="px-6 py-2.5 text-left text-slate-900 font-medium pl-10 font-sans">3. Term Loans (Bank/FIs)</td>
-              {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right text-slate-700">0</td>)}
+              {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right text-slate-700">{fmt(d.termLoan)}</td>)}
             </tr>
             <tr className="hover:bg-slate-50">
               <td className="px-6 py-2.5 text-left text-slate-900 font-medium pl-10 font-sans">4. Unsecured Loans (Market/External)</td>
@@ -58,22 +58,26 @@ export default function BalanceSheet({ data, years, loanAmount }: { data: Projec
 
             {/* 3. CURRENT LIABILITIES */}
             <tr className="bg-[#f0ede6] font-bold text-[#7a7567] text-[11px] uppercase tracking-wider">
-              <td className="px-6 py-3 text-left font-sans" colSpan={years.length + 1}>III. CURRENT LIABILITIES</td>
+              <td className="px-6 py-3 text-left font-sans" col colSpan={years.length + 1}>III. CURRENT LIABILITIES</td>
             </tr>
             <tr className="hover:bg-blue-50/50 bg-blue-50/20">
               <td className="px-6 py-3 text-left text-blue-900 font-bold pl-10 font-sans">5. Bank Borrowings (Proposed Limit CC/OD)</td>
-              {data.map(d => <td key={d.year} className="px-6 py-3 text-right font-bold text-blue-900">{fmt(loanAmount)}</td>)}
+              {data.map(d => <td key={d.year} className="px-6 py-3 text-right font-bold text-blue-900">{fmt(d.bankBorrowings)}</td>)}
+            </tr>
+            <tr className="hover:bg-rose-50/50 bg-rose-50/10 text-rose-800">
+              <td className="px-6 py-2.5 text-left font-medium pl-10 font-sans">6. Current Maturities of Long Term Debt (CMLTD)</td>
+              {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right">{fmt(d.cmltd)}</td>)}
             </tr>
             <tr className="hover:bg-slate-50">
-              <td className="px-6 py-2.5 text-left text-slate-900 font-medium pl-10 font-sans">6. Sundry Creditors (Trade Payables)</td>
+              <td className="px-6 py-2.5 text-left text-slate-900 font-medium pl-10 font-sans">7. Sundry Creditors (Trade Payables)</td>
               {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right text-slate-700">{fmt(d.creditors)}</td>)}
             </tr>
             <tr className="hover:bg-amber-50 italic text-amber-800 bg-amber-50/10">
-              <td className="px-6 py-2.5 text-left pl-14 font-sans font-bold">7. Statutory Liabilities (GST/PF/TDS)</td>
+              <td className="px-6 py-2.5 text-left pl-14 font-sans font-bold">8. Statutory Liabilities (GST/PF/TDS)</td>
               {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right font-bold">{fmt(d.statutoryDues)}</td>)}
             </tr>
             <tr className="hover:bg-slate-50">
-              <td className="px-6 py-2.5 text-left text-slate-900 font-medium pl-10 font-sans">8. Other Current Liabilities & Provisions</td>
+              <td className="px-6 py-2.5 text-left text-slate-900 font-medium pl-10 font-sans">9. Other Current Liabilities & Provisions</td>
               {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right text-slate-700">{fmt(d.otherCL)}</td>)}
             </tr>
 
@@ -95,15 +99,15 @@ export default function BalanceSheet({ data, years, loanAmount }: { data: Projec
               <td className="px-6 py-3 text-left font-sans" colSpan={years.length + 1}>IV. FIXED ASSETS</td>
             </tr>
             <tr className="hover:bg-slate-50">
-              <td className="px-6 py-2.5 text-left text-slate-900 font-medium pl-10 font-sans">9. Gross Block (At Cost)</td>
+              <td className="px-6 py-2.5 text-left text-slate-900 font-medium pl-10 font-sans">10. Gross Block (At Cost)</td>
               {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right text-slate-700">{fmt(d.grossFA)}</td>)}
             </tr>
             <tr className="hover:bg-rose-50 text-rose-700 bg-rose-50/10">
-              <td className="px-6 py-2.5 text-left pl-14 font-sans font-bold italic">10. Less: Accumulated Depreciation</td>
+              <td className="px-6 py-2.5 text-left pl-14 font-sans font-bold italic">11. Less: Accumulated Depreciation</td>
               {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right font-bold">({fmt(d.accDepn)})</td>)}
             </tr>
             <tr className="bg-slate-50 font-bold border-y border-slate-100">
-              <td className="px-6 py-3 text-left text-slate-900 pl-10 font-sans uppercase text-[11px]">NET FIXED ASSETS (9 - 10)</td>
+              <td className="px-6 py-3 text-left text-slate-900 pl-10 font-sans uppercase text-[11px]">NET FIXED ASSETS (10 - 11)</td>
               {data.map(d => <td key={d.year} className="px-6 py-3 text-right">{fmt(d.netFA)}</td>)}
             </tr>
 
@@ -112,28 +116,28 @@ export default function BalanceSheet({ data, years, loanAmount }: { data: Projec
               <td className="px-6 py-3 text-left font-sans" colSpan={years.length + 1}>V. CURRENT ASSETS, LOANS & ADVANCES</td>
             </tr>
             <tr className="hover:bg-slate-50">
-              <td className="px-6 py-3 text-left text-slate-900 font-medium pl-10 font-sans">11. Closing Stock (Inventory)</td>
+              <td className="px-6 py-3 text-left text-slate-900 font-medium pl-10 font-sans">12. Closing Stock (Inventory)</td>
               {data.map(d => <td key={d.year} className="px-6 py-3 text-right font-bold text-slate-700">{fmt(d.inventory)}</td>)}
             </tr>
             <tr className="hover:bg-blue-50/50 bg-blue-50/10">
-              <td className="px-6 py-2.5 text-left text-blue-900 font-bold pl-10 font-sans italic">12. Sundry Debtors (Receivables) &lt; 6 Months</td>
+              <td className="px-6 py-2.5 text-left text-blue-900 font-bold pl-10 font-sans italic">13. Sundry Debtors (Receivables) &lt; 6 Months</td>
               {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right font-bold">{fmt(d.debtorsUnder6M)}</td>)}
             </tr>
             <tr className="hover:bg-rose-50 italic text-rose-800 bg-rose-50/10">
-              <td className="px-6 py-2 text-left pl-14 font-sans font-bold">13. Sundry Debtors (Receivables) &gt; 6 Months</td>
+              <td className="px-6 py-2 text-left pl-14 font-sans font-bold">14. Sundry Debtors (Receivables) &gt; 6 Months</td>
               {data.map(d => <td key={d.year} className="px-6 py-2 text-right font-bold">{fmt(d.debtorsOver6M)}</td>)}
             </tr>
             <tr className="hover:bg-slate-50">
-              <td className="px-6 py-2.5 text-left text-slate-900 font-medium pl-10 font-sans">14. Cash and Bank Balances</td>
+              <td className="px-6 py-2.5 text-left text-slate-900 font-medium pl-10 font-sans">15. Cash and Bank Balances</td>
               {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right text-slate-700">{fmt(d.cashBank)}</td>)}
             </tr>
             <tr className="hover:bg-slate-50">
-              <td className="px-6 py-2.5 text-left text-slate-900 font-medium pl-10 font-sans">15. Loans & Advances (Suppliers/Deposits)</td>
+              <td className="px-6 py-2.5 text-left text-slate-900 font-medium pl-10 font-sans">16. Loans & Advances (Suppliers/Deposits)</td>
               {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right text-slate-700">{fmt(d.loansAdv)}</td>)}
             </tr>
             {data.some(d => d.reconAdj > 0) && (
               <tr className="hover:bg-slate-50 italic">
-                <td className="px-6 py-2 text-left text-slate-500 pl-14 font-sans text-xs">16. Other Deposits / Adjustments</td>
+                <td className="px-6 py-2 text-left text-slate-500 pl-14 font-sans text-xs">17. Other Deposits / Adjustments</td>
                 {data.map(d => <td key={d.year} className="px-6 py-2 text-right text-slate-500 text-xs">{fmt(d.reconAdj)}</td>)}
               </tr>
             )}

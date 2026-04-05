@@ -21,12 +21,11 @@ export interface BusinessProfile {
   cashPct: number;
   loansAdvPct: number;
   otherCLPct: number;
-  // Professional Granularity Fields
   installedCap?: number; 
   utilizedCap?: number;
-  quasiEquityPct?: number; // % of unsecured loans treated as quasi-equity
-  debtorAgingPct?: number; // % of debtors > 6 months
-  statutoryDuesPct?: number; // % of other CL that is statutory (GST/PF/TDS)
+  quasiEquityPct?: number; 
+  debtorAgingPct?: number; 
+  statutoryDuesPct?: number; 
   exp: {
     salary: number; rent: number; power: number; freight: number;
     travel: number; telephone: number; sadar: number; office: number;
@@ -40,16 +39,20 @@ export interface ProjectedYear {
   sales: number; otherInc: number; totalRev: number; openStock: number; purchases: number;
   indirectExpenses: { label: string; value: number }[]; totalIndExp: number; closingStock: number;
   totalCosts: number; grossProfit: number; gpRatio: number; depnYr: number;
-  profitBeforeInt: number; interest: number; netProfit: number; npRatio: number; ebitda: number;
+  profitBeforeInt: number; interest: number; profitBeforeTax: number; tax: number;
+  netProfit: number; npRatio: number; ebitda: number;
   
   // Balance Sheet (RBI Form III Granular)
   capital: number;
-  quasiEquity: number;   // Subordinated promoter loans
-  unsecured: number;     // External market loans
-  bankBorrowings: number;
+  quasiEquity: number;   
+  unsecured: number;     
+  bankBorrowings: number; // Short Term WC (Cash Credit)
+  termLoan: number;       // Long Term Debt (strictly excluding current portion)
+  cmltd: number;          // Current Maturities of Long Term Debt
+  tlRepayment: number;    // Actual principal repayment made during the year
   creditors: number;
-  statutoryDues: number; // GST/PF/TDS breakup
-  otherCL: number;       // General trade liabilities
+  statutoryDues: number; 
+  otherCL: number;       
   totalCL: number;
   totalLiab: number; 
   
@@ -58,8 +61,8 @@ export interface ProjectedYear {
   netFA: number;
   
   inventory: number;
-  debtorsUnder6M: number; // Liquid receivables
-  debtorsOver6M: number;  // Non-liquid receivables (excluded from DP)
+  debtorsUnder6M: number; 
+  debtorsOver6M: number;  
   debtors: number;
   cashBank: number;
   loansAdv: number;
@@ -72,10 +75,10 @@ export interface ProjectedYear {
   currentRatioExBank: number;
   dscr: number;
   deRatio: number;
-  tolTnw: number;        // Total Outside Liabilities / Tangible Net Worth
-  bepPercentage: number; // Break-even point as % of sales
-  facr: number;          // Fixed Asset Coverage Ratio
-  capacityUtil: number;  // % of installed capacity utilized
+  tolTnw: number;        
+  bepPercentage: number; 
+  facr: number;          
+  capacityUtil: number;  
 }
 
 export interface CMAFormData {

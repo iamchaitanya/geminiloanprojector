@@ -4,7 +4,6 @@ import { fmtR } from "../../lib/format";
 
 export default function RatioAnalysis({ data, years, loanAmount }: { data: ProjectedYear[], years: string[], loanAmount: number }) {
   
-  // RESTORED: Original logic gates from your uploaded file
   const getStatusColor = (val: number, type: string) => {
     switch (type) {
       case 'np': return val >= 7 ? 'text-emerald-600' : val >= 4 ? 'text-amber-600' : 'text-rose-600';
@@ -13,8 +12,9 @@ export default function RatioAnalysis({ data, years, loanAmount }: { data: Proje
       case 'de': return val <= 2.0 ? 'text-emerald-600' : val <= 3.0 ? 'text-amber-600' : 'text-rose-600';
       case 'dscr': return val >= 1.5 ? 'text-emerald-600' : val >= 1.0 ? 'text-amber-600' : 'text-rose-600';
       case 'days': return val <= 45 ? 'text-emerald-600' : val <= 75 ? 'text-amber-600' : 'text-rose-600';
-      // New audit-specific gates
       case 'toltnw': return val <= 3.0 ? 'text-emerald-600' : val <= 4.5 ? 'text-amber-600' : 'text-rose-600';
+      case 'bep': return val <= 65 ? 'text-emerald-600' : val <= 75 ? 'text-amber-600' : 'text-rose-600';
+      case 'facr': return val >= 1.33 ? 'text-emerald-600' : val >= 1.1 ? 'text-amber-600' : 'text-rose-600';
       default: return 'text-slate-700';
     }
   };
@@ -40,7 +40,7 @@ export default function RatioAnalysis({ data, years, loanAmount }: { data: Proje
           </thead>
           <tbody className="divide-y divide-slate-100 bg-white font-mono">
             
-            {/* 1. PROFITABILITY RATIOS (Restored Original) */}
+            {/* 1. PROFITABILITY RATIOS */}
             <tr className="bg-slate-50/50 font-bold text-slate-800 text-[0.65rem] uppercase tracking-widest">
               <td className="px-6 py-3 text-left font-sans" colSpan={years.length + 2}>1. Profitability Ratios</td>
             </tr>
@@ -59,6 +59,11 @@ export default function RatioAnalysis({ data, years, loanAmount }: { data: Proje
               {data.map(d => <td key={d.year} className="px-6 py-2 text-right text-slate-700">{fmtR((d.ebitda/d.sales)*100)}%</td>)}
               <td className="px-6 py-2 text-right text-slate-400 text-[10px]">≥ 10% Good</td>
             </tr>
+            <tr className="bg-amber-50/30">
+              <td className="px-6 py-2 text-left text-amber-900 font-bold pl-10 font-sans italic">Break-Even Point (% of Sales)</td>
+              {data.map(d => <td key={d.year} className={`px-6 py-2 text-right font-bold ${getStatusColor(d.bepPercentage, 'bep')}`}>{fmtR(d.bepPercentage)}%</td>)}
+              <td className="px-6 py-2 text-right text-slate-400 text-[10px]">≤ 75%</td>
+            </tr>
             <tr>
               <td className="px-6 py-2 text-left text-slate-700 pl-10 font-sans">Return on Equity (ROE %)</td>
               {data.map(d => <td key={d.year} className="px-6 py-2 text-right text-slate-700">{fmtR((d.netProfit/d.capital)*100)}%</td>)}
@@ -70,7 +75,7 @@ export default function RatioAnalysis({ data, years, loanAmount }: { data: Proje
               <td className="px-6 py-2 text-right text-slate-400 text-[10px]">≥ 5% Good</td>
             </tr>
 
-            {/* 2. LIQUIDITY RATIOS (Restored Original) */}
+            {/* 2. LIQUIDITY RATIOS */}
             <tr className="bg-slate-50/50 font-bold text-slate-800 text-[0.65rem] uppercase tracking-widest">
               <td className="px-6 py-3 text-left font-sans" colSpan={years.length + 2}>2. Liquidity Ratios</td>
             </tr>
@@ -86,11 +91,11 @@ export default function RatioAnalysis({ data, years, loanAmount }: { data: Proje
             </tr>
             <tr>
               <td className="px-6 py-2 text-left text-slate-700 pl-10 font-sans">Quick Ratio</td>
-              {data.map(d => <td key={d.year} className="px-6 py-2 text-right text-slate-700">{fmtR((d.debtors + d.cashBank) / (d.totalCL + loanAmount))}×</td>)}
+              {data.map(d => <td key={d.year} className="px-6 py-2 text-right text-slate-700">{fmtR((d.totalCA - d.inventory) / Math.max(d.totalCL + d.bankBorrowings, 1))}×</td>)}
               <td className="px-6 py-2 text-right text-slate-400 text-[10px]">≥ 1.00</td>
             </tr>
 
-            {/* 3. SOLVENCY & LEVERAGE (Restored Original + Added Audit Specs) */}
+            {/* 3. SOLVENCY & LEVERAGE */}
             <tr className="bg-slate-50/50 font-bold text-slate-800 text-[0.65rem] uppercase tracking-widest">
               <td className="px-6 py-3 text-left font-sans" colSpan={years.length + 2}>3. Solvency & Leverage</td>
             </tr>
@@ -110,17 +115,22 @@ export default function RatioAnalysis({ data, years, loanAmount }: { data: Proje
               <td className="px-6 py-2 text-right text-slate-400 text-[10px]">≥ 2.5</td>
             </tr>
             <tr>
+              <td className="px-6 py-2 text-left text-slate-700 pl-10 font-sans">Fixed Asset Coverage Ratio (FACR)</td>
+              {data.map(d => <td key={d.year} className={`px-6 py-2 text-right font-bold ${getStatusColor(d.facr, 'facr')}`}>{fmtR(d.facr)}×</td>)}
+              <td className="px-6 py-2 text-right text-slate-400 text-[10px]">≥ 1.33</td>
+            </tr>
+            <tr>
               <td className="px-6 py-2 text-left text-slate-700 pl-10 font-sans">DSCR</td>
               {data.map(d => <td key={d.year} className={`px-6 py-2 text-right font-bold ${getStatusColor(d.dscr, 'dscr')}`}>{fmtR(d.dscr)}×</td>)}
               <td className="px-6 py-2 text-right text-slate-400 text-[10px]">≥ 1.50</td>
             </tr>
             <tr>
               <td className="px-6 py-2 text-left text-slate-700 pl-10 font-sans">Total Debt / EBITDA</td>
-              {data.map(d => <td key={d.year} className="px-6 py-2 text-right text-slate-700">{fmtR(loanAmount / d.ebitda)}×</td>)}
+              {data.map(d => <td key={d.year} className="px-6 py-2 text-right text-slate-700">{fmtR((d.bankBorrowings + d.termLoan + d.cmltd + d.unsecured) / d.ebitda)}×</td>)}
               <td className="px-6 py-2 text-right text-slate-400 text-[10px]">{'< 4.0'}</td>
             </tr>
 
-            {/* 4. EFFICIENCY & CAPACITY (Restored Original + Added Audit Specs) */}
+            {/* 4. EFFICIENCY & CAPACITY */}
             <tr className="bg-slate-50/50 font-bold text-slate-800 text-[0.65rem] uppercase tracking-widest">
               <td className="px-6 py-3 text-left font-sans" colSpan={years.length + 2}>4. Efficiency Ratios</td>
             </tr>
@@ -151,7 +161,7 @@ export default function RatioAnalysis({ data, years, loanAmount }: { data: Proje
             </tr>
             <tr>
               <td className="px-6 py-2 text-left text-slate-700 pl-10 font-sans">Working Capital Turnover (×)</td>
-              {data.map(d => <td key={d.year} className="px-6 py-2 text-right text-slate-700">{fmtR(d.sales / (d.totalCA - (d.totalCL + loanAmount)), 1)}</td>)}
+              {data.map(d => <td key={d.year} className="px-6 py-2 text-right text-slate-700">{fmtR(d.sales / (d.totalCA - (d.totalCL + d.bankBorrowings)), 1)}</td>)}
               <td className="px-6 py-2 text-right text-slate-400 text-[10px]">3.0 – 8.0×</td>
             </tr>
             <tr>
