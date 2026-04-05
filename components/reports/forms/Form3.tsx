@@ -32,12 +32,12 @@ export default function Form3({ data, years, loanAmount }: { data: ProjectedYear
             </tr>
             <tr><td className="px-6 py-2 pl-6 font-sans">1. Raw materials, stores and other items used in manufacturing</td>{data.map(d => <td key={d.year} className="px-6 py-2 text-right">Included in Item 3</td>)}</tr>
             <tr>
-              <td className="px-6 py-2 pl-6 font-sans font-bold text-blue-800">2. Short-term borrowings from banks (Working Capital Proposed)</td>
-              {data.map(d => <td key={d.year} className="px-6 py-2 text-right font-bold text-blue-800">{fmt(loanAmount)}</td>)}
+              <td className="px-6 py-2 pl-6 font-sans font-bold text-blue-800">2. Short-term borrowings from banks (Working Capital Limits)</td>
+              {data.map(d => <td key={d.year} className="px-6 py-2 text-right font-bold text-blue-800">{fmt(d.bankBorrowings)}</td>)}
             </tr>
             <tr><td className="px-6 py-2 pl-6 font-sans">3. Sundry Creditors (Trade Payables)</td>{data.map(d => <td key={d.year} className="px-6 py-2 text-right">{fmt(d.creditors)}</td>)}</tr>
             <tr><td className="px-6 py-2 pl-6 font-sans">4. Advance payments from customers / progress payments</td>{data.map(d => <td key={d.year} className="px-6 py-2 text-right">0</td>)}</tr>
-            <tr><td className="px-6 py-2 pl-6 font-sans">5. Provision for Taxation</td>{data.map(d => <td key={d.year} className="px-6 py-2 text-right">0</td>)}</tr>
+            <tr><td className="px-6 py-2 pl-6 font-sans">5. Provision for Taxation</td>{data.map(d => <td key={d.year} className="px-6 py-2 text-right">{fmt(d.tax)}</td>)}</tr>
             <tr><td className="px-6 py-2 pl-6 font-sans">6. Dividend Payable</td>{data.map(d => <td key={d.year} className="px-6 py-2 text-right">0</td>)}</tr>
             
             {/* INJECTED AUDIT GRANULARITY */}
@@ -46,11 +46,11 @@ export default function Form3({ data, years, loanAmount }: { data: ProjectedYear
               {data.map(d => <td key={d.year} className="px-6 py-2 text-right font-bold text-amber-700">{fmt(d.statutoryDues)}</td>)}
             </tr>
             
-            <tr><td className="px-6 py-2 pl-6 font-sans">8. Installments of Term Loans/Debentures due within 1 year</td>{data.map(d => <td key={d.year} className="px-6 py-2 text-right">0</td>)}</tr>
+            <tr><td className="px-6 py-2 pl-6 font-sans">8. Installments of Term Loans/Debentures due within 1 year (CMLTD)</td>{data.map(d => <td key={d.year} className="px-6 py-2 text-right">{fmt(d.cmltd)}</td>)}</tr>
             <tr><td className="px-6 py-2 pl-6 font-sans">9. Other Current Liabilities and Provisions</td>{data.map(d => <td key={d.year} className="px-6 py-2 text-right">{fmt(d.otherCL)}</td>)}</tr>
             <tr className="bg-[#e8e4da] font-bold border-y border-[#ccc8be]">
               <td className="px-6 py-2.5 pl-6 font-sans uppercase">10. TOTAL CURRENT LIABILITIES (1 to 9)</td>
-              {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right font-bold">{fmt(d.totalCL + loanAmount)}</td>)}
+              {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right font-bold">{fmt(d.totalCL + d.bankBorrowings)}</td>)}
             </tr>
 
             {/* II. TERM LIABILITIES */}
@@ -59,27 +59,23 @@ export default function Form3({ data, years, loanAmount }: { data: ProjectedYear
             </tr>
             <tr><td className="px-6 py-2 pl-6 font-sans">11. Debentures (not maturing within one year)</td>{data.map(d => <td key={d.year} className="px-6 py-2 text-right">0</td>)}</tr>
             <tr><td className="px-6 py-2 pl-6 font-sans">12. Preference Shares (redeemable after one year)</td>{data.map(d => <td key={d.year} className="px-6 py-2 text-right">0</td>)}</tr>
-            <tr><td className="px-6 py-2 pl-6 font-sans">13. Term Loans (excluding installments due within one year)</td>{data.map(d => <td key={d.year} className="px-6 py-2 text-right">0</td>)}</tr>
+            <tr><td className="px-6 py-2 pl-6 font-sans">13. Term Loans (excluding installments due within one year)</td>{data.map(d => <td key={d.year} className="px-6 py-2 text-right">{fmt(d.termLoan)}</td>)}</tr>
             <tr><td className="px-6 py-2 pl-6 font-sans">14. Deferred Payment Credits (excluding installments due within one yr)</td>{data.map(d => <td key={d.year} className="px-6 py-2 text-right">0</td>)}</tr>
             <tr><td className="px-6 py-2 pl-6 font-sans">15. Fixed Deposits (maturing after one year)</td>{data.map(d => <td key={d.year} className="px-6 py-2 text-right">0</td>)}</tr>
             
             {/* INJECTED AUDIT GRANULARITY: QUASI-EQUITY SPLIT */}
-            <tr className="bg-emerald-50/50">
-              <td className="px-6 py-2 pl-6 font-sans italic font-bold text-emerald-700 underline decoration-emerald-200">16. Unsecured Loans (Quasi-Equity - Promoter Funds)</td>
-              {data.map(d => <td key={d.year} className="px-6 py-2 text-right font-bold text-emerald-700">{fmt(d.quasiEquity)}</td>)}
-            </tr>
             <tr>
-              <td className="px-6 py-2 pl-6 font-sans">17. Other Unsecured Loans (Market/Third Party)</td>
+              <td className="px-6 py-2 pl-6 font-sans">16. Unsecured Loans (Market/Third Party)</td>
               {data.map(d => <td key={d.year} className="px-6 py-2 text-right">{fmt(d.unsecured)}</td>)}
             </tr>
 
             <tr className="bg-[#e8e4da] font-bold border-y border-[#ccc8be]">
-              <td className="px-6 py-2.5 pl-6 font-sans uppercase">18. TOTAL TERM LIABILITIES (11 to 17)</td>
-              {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right font-bold">{fmt(d.unsecured + d.quasiEquity)}</td>)}
+              <td className="px-6 py-2.5 pl-6 font-sans uppercase">17. TOTAL TERM LIABILITIES (11 to 16)</td>
+              {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right font-bold">{fmt(d.termLoan + d.unsecured)}</td>)}
             </tr>
             <tr className="bg-slate-50 font-bold">
-              <td className="px-6 py-3 pl-6 font-sans text-slate-600 italic uppercase">TOTAL OUTSIDE LIABILITIES (10 + 18)</td>
-              {data.map(d => <td key={d.year} className="px-6 py-3 text-right">{fmt(d.totalCL + loanAmount + d.unsecured + d.quasiEquity)}</td>)}
+              <td className="px-6 py-3 pl-6 font-sans text-slate-600 italic uppercase">TOTAL OUTSIDE LIABILITIES (10 + 17)</td>
+              {data.map(d => <td key={d.year} className="px-6 py-3 text-right">{fmt(d.totalCL + d.bankBorrowings + d.termLoan + d.unsecured)}</td>)}
             </tr>
 
             {/* III. NET WORTH */}
@@ -97,7 +93,7 @@ export default function Form3({ data, years, loanAmount }: { data: ProjectedYear
               {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right font-bold">{fmt(d.capital)}</td>)}
             </tr>
             <tr className="bg-slate-900 text-white font-bold">
-              <td className="px-6 py-4 font-sans uppercase">26. TOTAL LIABILITIES (10 + 18 + 25)</td>
+              <td className="px-6 py-4 font-sans uppercase">26. TOTAL LIABILITIES (10 + 17 + 25 + Quasi-Equity)</td>
               {data.map(d => <td key={d.year} className="px-6 py-4 text-right text-base tracking-tight text-blue-300">{fmt(d.totalLiab)}</td>)}
             </tr>
 
@@ -161,17 +157,21 @@ export default function Form3({ data, years, loanAmount }: { data: ProjectedYear
             </tr>
             <tr><td className="px-6 py-2 pl-6 font-sans text-rose-700 italic">45. Less: Intangible Assets</td>{data.map(d => <td key={d.year} className="px-6 py-2 text-right">0</td>)}</tr>
             <tr className="bg-emerald-50 border-b border-emerald-200">
-              <td className="px-6 py-3 pl-6 font-bold font-sans uppercase text-blue-900">46. TANGIBLE NET WORTH (TNW) (25 + 16 - 45)</td>
+              <td className="px-6 py-3 pl-6 font-bold font-sans uppercase text-blue-900">46. TANGIBLE NET WORTH (TNW) (25 - 45 + Quasi-Equity)</td>
               {data.map(d => <td key={d.year} className="px-6 py-3 text-right font-bold text-blue-900 text-sm tracking-tight">{fmt(d.capital + d.quasiEquity)}</td>)}
+            </tr>
+            <tr className="bg-emerald-50/50">
+              <td className="px-6 py-1.5 pl-10 font-sans italic text-emerald-800 text-[10px]">Of which: Quasi-Equity (Promoter Funds)</td>
+              {data.map(d => <td key={d.year} className="px-6 py-1.5 text-right text-emerald-800">{fmt(d.quasiEquity)}</td>)}
             </tr>
             <tr>
               <td className="px-6 py-3 pl-6 font-bold font-sans uppercase text-emerald-900">47. NET WORKING CAPITAL (NWC) (43 - 10)</td>
-              {data.map(d => <td key={d.year} className="px-6 py-3 text-right font-bold text-emerald-700 text-sm tracking-tight">{fmt(d.totalCA - (d.totalCL + loanAmount))}</td>)}
+              {data.map(d => <td key={d.year} className="px-6 py-3 text-right font-bold text-emerald-700 text-sm tracking-tight">{fmt(d.totalCA - (d.totalCL + d.bankBorrowings))}</td>)}
             </tr>
             <tr className="bg-slate-900 text-white font-bold">
               <td className="px-6 py-4 pl-6 font-sans uppercase tracking-tight">48. FINAL CURRENT RATIO (Standard Benchmark: 1.33)</td>
               {data.map(d => {
-                const ratio = d.totalCA / (d.totalCL + loanAmount);
+                const ratio = d.totalCA / (d.totalCL + d.bankBorrowings);
                 return (
                   <td key={d.year} className={`px-6 py-4 text-right text-lg ${ratio >= 1.33 ? 'text-emerald-400' : 'text-rose-400'}`}>
                     {fmtR(ratio)}

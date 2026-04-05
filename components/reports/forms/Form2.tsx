@@ -96,8 +96,16 @@ export default function Form2({ data, years }: { data: ProjectedYear[], years: s
               <td className="px-6 py-2.5 text-left font-sans pl-10">7. Less: Interest on Borrowings</td>
               {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right">{fmt(d.interest)}</td>)}
             </tr>
+            <tr className="hover:bg-slate-50 font-bold border-t border-slate-200">
+              <td className="px-6 py-3 text-left font-sans pl-6 uppercase text-slate-800">8. PROFIT BEFORE TAX (PBT)</td>
+              {data.map(d => <td key={d.year} className="px-6 py-3 text-right">{fmt(d.profitBeforeTax)}</td>)}
+            </tr>
+            <tr className="hover:bg-slate-50">
+              <td className="px-6 py-2.5 text-left font-sans pl-10 text-rose-600">9. Less: Provision for Taxation</td>
+              {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right text-rose-600">({fmt(d.tax)})</td>)}
+            </tr>
             <tr className="bg-emerald-100 text-emerald-900 font-bold border-t-2 border-emerald-300 shadow-sm">
-              <td className="px-6 py-4 text-left font-sans uppercase tracking-tight">8. NET PROFIT AFTER TAX (PAT)</td>
+              <td className="px-6 py-4 text-left font-sans uppercase tracking-tight">10. NET PROFIT AFTER TAX (PAT)</td>
               {data.map(d => <td key={d.year} className="px-6 py-4 text-right text-lg">{fmt(d.netProfit)}</td>)}
             </tr>
             <tr className="bg-white text-[10px] text-blue-600 font-bold">

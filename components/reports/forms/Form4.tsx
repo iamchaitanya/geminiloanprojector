@@ -87,11 +87,14 @@ export default function Form4({ data, years, loanAmount }: { data: ProjectedYear
               {data.map(d => <td key={d.year} className="px-6 py-1.5 text-right font-bold">{Math.round(d.creditors / (d.purchases / 365))} Days</td>)}
             </tr>
             <tr><td className="px-6 py-2 pl-6 font-sans">10. Advances from customers</td>{data.map(d => <td key={d.year} className="px-6 py-2 text-right">0</td>)}</tr>
-            <tr className="bg-amber-50">
-               <td className="px-6 py-2 pl-6 font-sans font-bold text-amber-800">11. Statutory liabilities (GST/PF/TDS)</td>
-               {data.map(d => <td key={d.year} className="px-6 py-2 text-right font-bold text-amber-800">{fmt(d.statutoryDues)}</td>)}
+            <tr>
+               <td className="px-6 py-2 pl-6 font-sans">11. Installments of Term Loans (CMLTD)</td>
+               {data.map(d => <td key={d.year} className="px-6 py-2 text-right">{fmt(d.cmltd)}</td>)}
             </tr>
-            <tr><td className="px-6 py-2 pl-6 font-sans">12. Other current liabilities & provisions</td>{data.map(d => <td key={d.year} className="px-6 py-2 text-right">{fmt(d.otherCL)}</td>)}</tr>
+            <tr className="bg-amber-50">
+               <td className="px-6 py-2 pl-6 font-sans font-bold text-amber-800">12. Statutory, Tax & Other Liabilities</td>
+               {data.map(d => <td key={d.year} className="px-6 py-2 text-right font-bold text-amber-800">{fmt(d.statutoryDues + d.otherCL + d.tax)}</td>)}
+            </tr>
             
             <tr className="bg-[#e8e4da] border-y border-[#ccc8be] font-bold">
               <td className="px-6 py-2.5 pl-6 font-sans uppercase">13. TOTAL CURRENT LIABILITIES (9 to 12)</td>
@@ -105,11 +108,11 @@ export default function Form4({ data, years, loanAmount }: { data: ProjectedYear
             </tr>
             <tr className="bg-slate-50 font-bold border-y border-slate-200">
               <td className="px-6 py-3 pl-6 font-sans uppercase italic text-[10px]">15. ACTUAL/PROJECTED NET WORKING CAPITAL (NWC)</td>
-              {data.map(d => <td key={d.year} className="px-6 py-3 text-right font-mono text-slate-600">{fmt(d.totalCA - (d.totalCL + loanAmount))}</td>)}
+              {data.map(d => <td key={d.year} className="px-6 py-3 text-right font-mono text-slate-600">{fmt(d.totalCA - (d.totalCL + d.bankBorrowings))}</td>)}
             </tr>
             <tr className="bg-slate-900 text-white font-bold">
-              <td className="px-6 py-4 pl-6 font-sans uppercase tracking-widest text-xs">16. ASSESSED BANK FINANCE (Requested)</td>
-              {data.map(d => <td key={d.year} className="px-6 py-4 text-right text-xl text-emerald-400 tracking-tighter">{fmt(loanAmount)}</td>)}
+              <td className="px-6 py-4 pl-6 font-sans uppercase tracking-widest text-xs">16. ASSESSED BANK FINANCE (Req. Limits)</td>
+              {data.map(d => <td key={d.year} className="px-6 py-4 text-right text-xl text-emerald-400 tracking-tighter">{fmt(d.bankBorrowings)}</td>)}
             </tr>
           </tbody>
         </table>

@@ -55,7 +55,7 @@ export default function Form5({ data, years, loanAmount }: { data: ProjectedYear
             
             <tr>
               <td className="px-6 py-2 pl-6 font-sans">6. Actual Net Working Capital (NWC) Proposed</td>
-              {data.map(d => <td key={d.year} className="px-6 py-2 text-right font-bold text-emerald-600">{fmt(d.totalCA - (d.totalCL + loanAmount))}</td>)}
+              {data.map(d => <td key={d.year} className="px-6 py-2 text-right font-bold text-emerald-600">{fmt(d.totalCA - (d.totalCL + d.bankBorrowings))}</td>)}
             </tr>
             
             <tr className="bg-slate-900 text-white font-bold">
@@ -80,7 +80,7 @@ export default function Form5({ data, years, loanAmount }: { data: ProjectedYear
 
             <tr className="bg-slate-50 font-bold border-t border-slate-200 uppercase">
               <td className="px-6 py-4 pl-6 font-sans text-blue-900">Final Requested Loan Limit (CC/OD)</td>
-              {data.map(d => <td key={d.year} className="px-6 py-4 text-right text-lg text-blue-900">{fmt(loanAmount)}</td>)}
+              {data.map(d => <td key={d.year} className="px-6 py-4 text-right text-lg text-blue-900">{fmt(d.bankBorrowings)}</td>)}
             </tr>
           </tbody>
         </table>

@@ -1,6 +1,8 @@
 // lib/engine.ts
 import { BusinessProfile, ProjectedYear } from '../types/cma';
 
+export type { ProjectedYear };
+
 const EXP_LABELS = [
   { k: 'salary', l: 'Salaries & Wages', fixed: 1.0 }, 
   { k: 'rent', l: 'Rent & Rates', fixed: 1.0 },

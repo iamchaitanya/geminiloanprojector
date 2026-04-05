@@ -58,7 +58,7 @@ export default function BalanceSheet({ data, years, loanAmount }: { data: Projec
 
             {/* 3. CURRENT LIABILITIES */}
             <tr className="bg-[#f0ede6] font-bold text-[#7a7567] text-[11px] uppercase tracking-wider">
-              <td className="px-6 py-3 text-left font-sans" col colSpan={years.length + 1}>III. CURRENT LIABILITIES</td>
+              <td className="px-6 py-3 text-left font-sans" colSpan={years.length + 1}>III. CURRENT LIABILITIES</td>
             </tr>
             <tr className="hover:bg-blue-50/50 bg-blue-50/20">
               <td className="px-6 py-3 text-left text-blue-900 font-bold pl-10 font-sans">5. Bank Borrowings (Proposed Limit CC/OD)</td>

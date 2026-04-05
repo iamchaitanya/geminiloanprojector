@@ -57,8 +57,9 @@ export default function Form6({ data, years }: { data: ProjectedYear[], years: s
             <tr>
               <td className="px-6 py-2 pl-6 font-sans">4. Increase in Long-Term Liabilities (Unsecured/Term Loans)</td>
               {data.slice(1).map((d, i) => {
-                const diff = d.unsecured - data[i].unsecured;
-                return <td key={i} className="px-6 py-2 text-right">{fmt(diff > 0 ? diff : 0)}</td>;
+                const termInc = Math.max(0, d.termLoan - data[i].termLoan + d.tlRepayment);
+                const unsecInc = Math.max(0, d.unsecured - data[i].unsecured);
+                return <td key={i} className="px-6 py-2 text-right">{fmt(termInc + unsecInc)}</td>;
               })}
             </tr>
             <tr>
@@ -73,7 +74,7 @@ export default function Form6({ data, years }: { data: ProjectedYear[], years: s
               {data.slice(1).map((d, i) => {
                 const prev = data[i];
                 const capInc = Math.max(d.capital - (prev.capital + d.netProfit), 0);
-                const termInc = Math.max(d.unsecured - prev.unsecured, 0);
+                const termInc = Math.max(0, d.termLoan - prev.termLoan + d.tlRepayment) + Math.max(0, d.unsecured - prev.unsecured);
                 const faDec = Math.max(prev.grossFA - d.grossFA, 0);
                 return <td key={i} className="px-6 py-2.5 text-right text-blue-800">{fmt(d.netProfit + d.depnYr + capInc + termInc + faDec)}</td>;
               })}
@@ -93,8 +94,8 @@ export default function Form6({ data, years }: { data: ProjectedYear[], years: s
             <tr>
               <td className="px-6 py-2 pl-6 font-sans">7. Decrease in Term Liabilities (Repayment)</td>
               {data.slice(1).map((d, i) => {
-                const diff = data[i].unsecured - d.unsecured;
-                return <td key={i} className="px-6 py-2 text-right">{fmt(diff > 0 ? diff : 0)}</td>;
+                const unsecDec = Math.max(0, data[i].unsecured - d.unsecured);
+                return <td key={i} className="px-6 py-2 text-right">{fmt(d.tlRepayment + unsecDec)}</td>;
               })}
             </tr>
             <tr>
@@ -110,7 +111,7 @@ export default function Form6({ data, years }: { data: ProjectedYear[], years: s
               {data.slice(1).map((d, i) => {
                 const prev = data[i];
                 const faInc = Math.max(d.grossFA - prev.grossFA, 0);
-                const termDec = Math.max(prev.unsecured - d.unsecured, 0);
+                const termDec = d.tlRepayment + Math.max(0, prev.unsecured - d.unsecured);
                 const drawings = Math.max((prev.capital + d.netProfit) - d.capital, 0);
                 return <td key={i} className="px-6 py-2.5 text-right text-rose-800">{fmt(faInc + termDec + drawings)}</td>;
               })}
@@ -122,12 +123,12 @@ export default function Form6({ data, years }: { data: ProjectedYear[], years: s
               {data.slice(1).map((d, i) => {
                 const prev = data[i];
                 const capInc = Math.max(d.capital - (prev.capital + d.netProfit), 0);
-                const termInc = Math.max(d.unsecured - prev.unsecured, 0);
+                const termInc = Math.max(0, d.termLoan - prev.termLoan + d.tlRepayment) + Math.max(0, d.unsecured - prev.unsecured);
                 const faDec = Math.max(prev.grossFA - d.grossFA, 0);
                 const totalA = d.netProfit + d.depnYr + capInc + termInc + faDec;
                 
                 const faInc = Math.max(d.grossFA - prev.grossFA, 0);
-                const termDec = Math.max(prev.unsecured - d.unsecured, 0);
+                const termDec = d.tlRepayment + Math.max(0, prev.unsecured - d.unsecured);
                 const drawings = Math.max((prev.capital + d.netProfit) - d.capital, 0);
                 const totalB = faInc + termDec + drawings;
 
