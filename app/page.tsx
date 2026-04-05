@@ -35,6 +35,8 @@ export default function CMAApp() {
     capital: 800000, unsecured: 0, creditors: 200000, otherCL: 50000,
     grossFA: 300000, accDepn: 0, debtors: 250000, inventory: 200000, cash: 100000, loansAdv: 0, deposits: 0, capex: 0,
     debtorDays: 30, credDays: 45, stockMo: 2, margin: 25, drawings: 120000,
+    // Granular Audit Fields
+    instCap: 0, quasiEq: 60, debtorAge: 5, statDues: 40,
     expBase: { salary: 0, rent: 0, power: 0, freight: 0, travel: 0, telephone: 0, sadar: 0, office: 0, welfare: 0, misc: 0 },
     optSens: false, optDepn: true, optCF: true, sealFirm: 'Srinivasa Tax Consultants'
   });
@@ -80,12 +82,14 @@ export default function CMAApp() {
 
   const handleGenerate = () => {
     const results = generateProjections(f.loan, {
+      label: bizType,
       salesMult: f.sales0 / f.loan,
       capitalMult: f.capital / f.loan,
       drawingsMult: f.drawings / f.loan,
       grossFAMult: f.grossFA / f.loan,
       revGrowth: f.revG / 100,
       purGrowth: f.purG / 100,
+      expGrowth: f.expG / 100,
       purchaseRatio: f.purch0 / f.sales0,
       indExpRatio: 0.12,
       depnRate: f.depnRate / 100,
@@ -94,7 +98,13 @@ export default function CMAApp() {
       debtorDays: f.debtorDays,
       cashPct: f.cash / f.sales0,
       loansAdvPct: f.loansAdv / f.sales0,
-      otherCLPct: f.otherCL / f.sales0,
+      otherCLPct: (f.creditors + f.otherCL) / f.sales0,
+      wcMargin: f.margin,
+      // Granular audit fields mapping
+      installedCap: f.instCap,
+      quasiEquityPct: f.quasiEq / 100,
+      debtorAgingPct: f.debtorAge / 100,
+      statutoryDuesPct: f.statDues / 100,
       exp: f.expBase
     }, f.projYears);
     setProjections(results);
@@ -157,7 +167,7 @@ export default function CMAApp() {
           
           {inputMode === 'detailed' && (
             <div className="flex flex-wrap gap-3 border-b border-slate-100 pb-5">
-              {['1. Applicant & Loan Details', '2. P&L / Operating Inputs', '3. Balance Sheet Opening', '4. WC Norms & Options'].map((label, i) => (
+              {['1. Applicant & Loan Details', '2. P&L / Operating Inputs', '3. Balance Sheet Opening', '4. Audit & WC Granularities'].map((label, i) => (
                 <button key={i} onClick={() => setDetTab(i + 1)} className={`text-[10px] font-bold px-4 py-2 rounded-full uppercase tracking-widest transition-all ${detTab === i + 1 ? 'bg-[#1a5fa8] text-white shadow-md' : 'bg-[#f5f2eb] text-[#7a7567] hover:bg-slate-200'}`}>
                   {label}
                 </button>
@@ -185,6 +195,7 @@ export default function CMAApp() {
             <div className="space-y-10 animate-in fade-in duration-300">
               <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
                 <div><label className="l-label">Annual Sales / Turnover (₹)</label><input type="number" value={f.sales0} onChange={e => update('sales0', Number(e.target.value))} className="legacy-input" /></div>
+                <div><label className="l-label">Installed Capacity (Annual ₹)</label><input type="number" value={f.instCap} onChange={e => update('instCap', Number(e.target.value))} className="legacy-input border-emerald-200" placeholder="0 = Auto" /></div>
                 <div><label className="l-label">Other Non-Operating Income (₹)</label><input type="number" value={f.otherInc} onChange={e => update('otherInc', Number(e.target.value))} className="legacy-input" /></div>
                 <div><label className="l-label">Opening Stock (₹)</label><input type="number" value={f.openSt} onChange={e => update('openSt', Number(e.target.value))} className="legacy-input" /></div>
                 <div><label className="l-label">Closing Stock (₹)</label><input type="number" value={f.closeSt} onChange={e => update('closeSt', Number(e.target.value))} className="legacy-input" /></div>
@@ -209,7 +220,7 @@ export default function CMAApp() {
           {inputMode === 'detailed' && detTab === 3 && (
             <div className="grid grid-cols-1 md:grid-cols-4 gap-x-8 gap-y-6 animate-in fade-in duration-300">
                <div><label className="l-label">Proprietor Capital / Net Worth (₹)</label><input type="number" value={f.capital} onChange={e => update('capital', Number(e.target.value))} className="legacy-input" /></div>
-               <div><label className="l-label">Unsecured Loans (Promoters) (₹)</label><input type="number" value={f.unsecured} onChange={e => update('unsecured', Number(e.target.value))} className="legacy-input" /></div>
+               <div><label className="l-label">Unsecured Loans (Market/Promoter) (₹)</label><input type="number" value={f.unsecured} onChange={e => update('unsecured', Number(e.target.value))} className="legacy-input" /></div>
                <div><label className="l-label">Sundry Creditors (Trade Payables) (₹)</label><input type="number" value={f.creditors} onChange={e => update('creditors', Number(e.target.value))} className="legacy-input" /></div>
                <div><label className="l-label">Other Current Liabilities & Prov. (₹)</label><input type="number" value={f.otherCL} onChange={e => update('otherCL', Number(e.target.value))} className="legacy-input" /></div>
                <div><label className="l-label">Gross Fixed Assets (Block) (₹)</label><input type="number" value={f.grossFA} onChange={e => update('grossFA', Number(e.target.value))} className="legacy-input" /></div>
@@ -223,9 +234,35 @@ export default function CMAApp() {
             </div>
           )}
 
-          {/* TAB 4: WC NORMS & OPTIONS (Detailed Mode) */}
+          {/* TAB 4: AUDIT & WC GRANULARITIES (Detailed Mode) */}
           {inputMode === 'detailed' && detTab === 4 && (
-            <div className="space-y-10 animate-in fade-in duration-300">
+            <div className="space-y-12 animate-in fade-in duration-300">
+              
+              {/* NEW SECTION: INSPECTOR'S AUDIT INPUTS */}
+              <div className="bg-slate-50 border border-slate-200 p-6 rounded-lg space-y-6">
+                <div className="flex items-center gap-2 mb-2">
+                   <div className="w-2 h-4 bg-emerald-600 rounded-full"></div>
+                   <h4 className="text-[11px] font-bold text-slate-700 uppercase tracking-widest">Inspector's Audit Granularities</h4>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  <div>
+                    <label className="l-label">Quasi-Equity Allocation (%)</label>
+                    <input type="number" value={f.quasiEq} onChange={e => update('quasiEq', Number(e.target.value))} className="legacy-input border-emerald-200" />
+                    <p className="text-[8px] text-slate-500 mt-1 italic">% of unsecured loans treated as Promoter Equity (subordinated to bank)</p>
+                  </div>
+                  <div>
+                    <label className="l-label">Debtor Aging &gt; 6 Months (%)</label>
+                    <input type="number" value={f.debtorAge} onChange={e => update('debtorAge', Number(e.target.value))} className="legacy-input border-rose-200" />
+                    <p className="text-[8px] text-slate-500 mt-1 italic">% of receivables excluded from Drawing Power calculation</p>
+                  </div>
+                  <div>
+                    <label className="l-label">Statutory Dues Portion (%)</label>
+                    <input type="number" value={f.statDues} onChange={e => update('statDues', Number(e.target.value))} className="legacy-input border-amber-200" />
+                    <p className="text-[8px] text-slate-500 mt-1 italic">% of other CL related to GST/PF/TDS (red flag for auditor if high)</p>
+                  </div>
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
                 <div><label className="l-label">Debtor Collection Period (Days)</label><input type="number" value={f.debtorDays} onChange={e => update('debtorDays', Number(e.target.value))} className="legacy-input" /></div>
                 <div><label className="l-label">Creditor Payment Period (Days)</label><input type="number" value={f.credDays} onChange={e => update('credDays', Number(e.target.value))} className="legacy-input" /></div>
