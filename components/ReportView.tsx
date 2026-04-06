@@ -27,10 +27,14 @@ interface ReportViewProps {
   bizName: string;
   propName: string;
   loanAmount: number;
+  proposedCc?: number;
+  proposedTl?: number;
+  existingCc?: number;
+  existingTl?: number;
 }
 
-export default function ReportView({ data, bizName, propName, loanAmount }: ReportViewProps) {
-  const years = data.map(d => `Year ${d.year}`);
+export default function ReportView({ data, bizName, propName, loanAmount, proposedCc, proposedTl, existingCc, existingTl }: ReportViewProps) {
+  const years = data.map(d => d.fyLabel || `Year ${d.year}`);
 
   return (
     <div className="mt-12 space-y-16 animate-fade-in-up pb-32 max-w-7xl mx-auto px-4">
@@ -57,7 +61,14 @@ export default function ReportView({ data, bizName, propName, loanAmount }: Repo
 
       {/* 5. CMA Form I: Existing & Proposed Limits */}
       <section id="form1">
-        <Form1 loanAmount={loanAmount} bizName={bizName} propName={propName} />
+        <Form1 
+          bizName={bizName} 
+          propName={propName} 
+          proposedCc={proposedCc ?? loanAmount} 
+          proposedTl={proposedTl ?? 0} 
+          existingCc={existingCc ?? 0} 
+          existingTl={existingTl ?? 0} 
+        />
       </section>
 
       {/* 6. CMA Form II: Operating Statement */}

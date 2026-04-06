@@ -33,8 +33,17 @@ export interface BusinessProfile {
   };
 }
 
+export interface LoanLimits {
+  ccLimit: number;
+  termLoan: number;
+  isRenewal: boolean;
+  existingCc: number;
+  existingTl: number;
+}
+
 export interface ProjectedYear {
   year: number;
+  fyLabel: string;
   // P&L
   sales: number; otherInc: number; totalRev: number; openStock: number; purchases: number;
   indirectExpenses: { label: string; value: number }[]; totalIndExp: number; closingStock: number;

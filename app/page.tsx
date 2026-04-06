@@ -6,10 +6,10 @@ import { generateProjections, ProjectedYear } from '../lib/engine';
 import ReportView from '../components/ReportView';
 
 const PROFILES: any = {
-  trading: { label: 'Trading', salesMult: 5.0, purchaseRatio: .90, stockMonths: 1.5, debtorDays: 30, creditorDays: 42, indExpRatio: .095, depnRate: .15, revGrowth: .15, purGrowth: .12, expGrowth: .08, capitalMult: 1.10, grossFAMult: .50, drawingsMult: .38, wcMargin: 25, cashPct: .020, loansAdvPct: .015, otherCLPct: .040, exp: { salary: .32, rent: .18, power: .04, freight: .12, travel: .06, telephone: .03, sadar: .08, office: .07, welfare: .04, misc: .06 } },
-  service: { label: 'Services', salesMult: 5.5, purchaseRatio: .20, stockMonths: .5, debtorDays: 35, creditorDays: 22, indExpRatio: .68, depnRate: .15, revGrowth: .18, purGrowth: .12, expGrowth: .09, capitalMult: 1.00, grossFAMult: .40, drawingsMult: .42, wcMargin: 25, cashPct: .025, loansAdvPct: .012, otherCLPct: .045, exp: { salary: .55, rent: .12, power: .03, freight: .01, travel: .08, telephone: .04, sadar: .04, office: .05, welfare: .04, misc: .04 } },
-  manufacturing: { label: 'Manufacturing', salesMult: 4.5, purchaseRatio: .85, stockMonths: 2.0, debtorDays: 40, creditorDays: 42, indExpRatio: .075, depnRate: .15, revGrowth: .15, purGrowth: .12, expGrowth: .08, capitalMult: 1.20, grossFAMult: 1.00, drawingsMult: .35, wcMargin: 25, cashPct: .015, loansAdvPct: .022, otherCLPct: .038, exp: { salary: .35, rent: .10, power: .14, freight: .08, travel: .04, telephone: .02, sadar: .06, office: .04, welfare: .06, misc: .11 } },
-  construction: { label: 'Construction', salesMult: 4.8, purchaseRatio: .80, stockMonths: 1.0, debtorDays: 42, creditorDays: 42, indExpRatio: .12, depnRate: .15, revGrowth: .15, purGrowth: .12, expGrowth: .08, capitalMult: 1.10, grossFAMult: .80, drawingsMult: .36, wcMargin: 25, cashPct: .018, loansAdvPct: .025, otherCLPct: .038, exp: { salary: .40, rent: .08, power: .08, freight: .10, travel: .06, telephone: .02, sadar: .06, office: .04, welfare: .06, misc: .10 } }
+  trading: { label: 'Trading', salesMult: 5.0, purchaseRatio: .81, stockMonths: 1.5, debtorDays: 30, creditorDays: 42, indExpRatio: .11, depnRate: .15, revGrowth: .15, purGrowth: .12, expGrowth: .08, capitalMult: 1.10, grossFAMult: .40, drawingsMult: .38, wcMargin: 25, cashPct: .020, loansAdvPct: .015, otherCLPct: .040, exp: { salary: .40, rent: .20, power: .04, freight: .08, travel: .06, telephone: .04, sadar: .06, office: .07, welfare: .02, misc: .03 } },
+  service: { label: 'Services', salesMult: 5.5, purchaseRatio: .15, stockMonths: .5, debtorDays: 35, creditorDays: 22, indExpRatio: .65, depnRate: .15, revGrowth: .18, purGrowth: .12, expGrowth: .09, capitalMult: 1.00, grossFAMult: .40, drawingsMult: .42, wcMargin: 25, cashPct: .025, loansAdvPct: .012, otherCLPct: .045, exp: { salary: .55, rent: .15, power: .03, freight: .01, travel: .08, telephone: .04, sadar: .04, office: .05, welfare: .02, misc: .03 } },
+  manufacturing: { label: 'Manufacturing', salesMult: 5.0, purchaseRatio: .74, stockMonths: 2.0, debtorDays: 40, creditorDays: 42, indExpRatio: .14, depnRate: .15, revGrowth: .15, purGrowth: .12, expGrowth: .08, capitalMult: 1.20, grossFAMult: 1.00, drawingsMult: .35, wcMargin: 25, cashPct: .015, loansAdvPct: .022, otherCLPct: .038, exp: { salary: .35, rent: .10, power: .18, freight: .10, travel: .04, telephone: .03, sadar: .05, office: .05, welfare: .05, misc: .05 } },
+  construction: { label: 'Construction', salesMult: 5.2, purchaseRatio: .70, stockMonths: 1.0, debtorDays: 42, creditorDays: 42, indExpRatio: .16, depnRate: .15, revGrowth: .15, purGrowth: .12, expGrowth: .08, capitalMult: 1.10, grossFAMult: .80, drawingsMult: .36, wcMargin: 25, cashPct: .018, loansAdvPct: .025, otherCLPct: .038, exp: { salary: .40, rent: .07, power: .10, freight: .15, travel: .05, telephone: .03, sadar: .08, office: .04, welfare: .04, misc: .04 } }
 };
 
 const EXPENSE_HEADS = [
@@ -22,14 +22,14 @@ export default function CMAApp() {
   const [isGenerated, setIsGenerated] = useState(false);
   const [inputMode, setInputMode] = useState('simple');
   const [detTab, setDetTab] = useState(1);
-  const [loanType, setLoanType] = useState('CC');
   const [bizType, setBizType] = useState('trading');
   const [wcMethod, setWcMethod] = useState('turnover');
 
   // --- COMPREHENSIVE STATE ---
   const [f, setF] = useState({
     bizName: '', propName: '', pan: '', preparedBy: '', address: '', entityType: 'proprietorship',
-    loan: 500000, intRate: 11.5, baseYear: 2026, projYears: 3, tenure: 5,
+    ccLimit: 500000, termLoan: 0, isRenewal: false, existingCc: 0, existingTl: 0,
+    intRate: 11.5, baseYear: new Date().getFullYear(), projYears: 3, tenure: 5,
     sales0: 2500000, otherInc: 0, openSt: 0, closeSt: 200000, purch0: 2000000,
     revG: 15, purG: 12, expG: 8, depnRate: 15,
     capital: 800000, unsecured: 0, creditors: 200000, otherCL: 50000,
@@ -47,7 +47,8 @@ export default function CMAApp() {
   useEffect(() => {
     if (inputMode === 'simple') {
       const p = PROFILES[bizType];
-      const sales = isOverride ? f.sales0 : Math.round(f.loan * p.salesMult);
+      const totalLoanForMath = f.ccLimit + f.termLoan || 500000;
+      const sales = isOverride ? f.sales0 : Math.round(totalLoanForMath * p.salesMult);
       const purch = Math.round(sales * p.purchaseRatio);
       const indExp = Math.round(sales * p.indExpRatio);
       const newExps = { ...f.expBase };
@@ -56,8 +57,8 @@ export default function CMAApp() {
       setF(prev => ({
         ...prev,
         sales0: sales, purch0: purch, revG: p.revGrowth * 100, purG: p.purGrowth * 100, expG: p.expGrowth * 100,
-        capital: Math.round(prev.loan * p.capitalMult), drawings: Math.round(prev.loan * p.drawingsMult),
-        grossFA: Math.round(prev.loan * p.grossFAMult), closeSt: Math.round((purch / 12) * p.stockMonths),
+        capital: Math.round(totalLoanForMath * p.capitalMult), drawings: Math.round(totalLoanForMath * p.drawingsMult),
+        grossFA: Math.round(totalLoanForMath * p.grossFAMult), closeSt: Math.round((purch / 12) * p.stockMonths),
         debtors: Math.round((sales / 365) * p.debtorDays), creditors: Math.round((purch / 365) * p.creditorDays),
         inventory: Math.round((purch / 12) * p.stockMonths), cash: Math.round(sales * p.cashPct), 
         loansAdv: Math.round(sales * p.loansAdvPct), otherCL: Math.round(sales * p.otherCLPct),
@@ -65,13 +66,13 @@ export default function CMAApp() {
         expBase: newExps
       }));
     }
-  }, [f.loan, bizType, inputMode, isOverride]);
+  }, [f.ccLimit, f.termLoan, bizType, inputMode, isOverride]);
 
   // ════════ LIVE PREVIEW ════════
   const pv = useMemo(() => {
     const s = f.sales0;
-    const de = f.loan / Math.max(f.capital, 1);
-    const cr = (f.closeSt + f.debtors + f.cash) / Math.max(f.creditors + f.otherCL, 1);
+    const de = (f.ccLimit + f.termLoan) / Math.max(f.capital, 1);
+    const cr = (f.closeSt + f.debtors + f.cash) / Math.max(f.creditors + f.otherCL + f.ccLimit, 1);
     return { sales: s, np: (s * 0.082), de, turnLmt: (s * 0.20), cr };
   }, [f]);
 
@@ -81,17 +82,30 @@ export default function CMAApp() {
   const [projections, setProjections] = useState<ProjectedYear[]>([]);
 
   const handleGenerate = () => {
-    const results = generateProjections(f.loan, {
+    const totalExpBase = Object.values(f.expBase).reduce((a: number, b: any) => a + Number(b), 0);
+    const indExpRatioImplied = f.sales0 > 0 ? (totalExpBase / f.sales0) : 0.12;
+
+    const normalizedExpRatios = Object.fromEntries(
+      Object.entries(f.expBase).map(([k, v]) => [k, totalExpBase > 0 ? Number(v) / totalExpBase : 0])
+    );
+
+    const limits = {
+      ccLimit: f.ccLimit, termLoan: f.termLoan,
+      isRenewal: f.isRenewal, existingCc: f.existingCc, existingTl: f.existingTl
+    };
+    const totalCurrentLoan = f.ccLimit + f.termLoan || 1;
+
+    const results = generateProjections(limits, {
       label: bizType,
-      salesMult: f.sales0 / f.loan,
-      capitalMult: f.capital / f.loan,
-      drawingsMult: f.drawings / f.loan,
-      grossFAMult: f.grossFA / f.loan,
+      salesMult: f.sales0 / totalCurrentLoan,
+      capitalMult: f.capital / totalCurrentLoan,
+      drawingsMult: f.drawings / totalCurrentLoan,
+      grossFAMult: f.grossFA / totalCurrentLoan,
       revGrowth: f.revG / 100,
       purGrowth: f.purG / 100,
       expGrowth: f.expG / 100,
       purchaseRatio: f.purch0 / f.sales0,
-      indExpRatio: 0.12,
+      indExpRatio: indExpRatioImplied,
       depnRate: f.depnRate / 100,
       stockMonths: f.stockMo,
       creditorDays: f.credDays,
@@ -105,8 +119,8 @@ export default function CMAApp() {
       quasiEquityPct: f.quasiEq / 100,
       debtorAgingPct: f.debtorAge / 100,
       statutoryDuesPct: f.statDues / 100,
-      exp: f.expBase
-    }, f.projYears);
+      exp: normalizedExpRatios as any
+    }, f.projYears, f.baseYear);
     setProjections(results);
     setIsGenerated(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -115,7 +129,16 @@ export default function CMAApp() {
   if (isGenerated) {
     return (
       <div className="min-h-screen bg-[#f5f2eb] p-8">
-        <ReportView data={projections} bizName={f.bizName} propName={f.propName} loanAmount={f.loan} />
+        <ReportView 
+          data={projections} 
+          bizName={f.bizName} 
+          propName={f.propName} 
+          loanAmount={f.ccLimit + f.termLoan} 
+          proposedCc={f.ccLimit}
+          proposedTl={f.termLoan}
+          existingCc={f.isRenewal ? f.existingCc : 0}
+          existingTl={f.isRenewal ? f.existingTl : 0}
+        />
         <button onClick={() => setIsGenerated(false)} className="fixed bottom-8 right-8 bg-[#c8401a] text-white px-8 py-2.5 rounded-full shadow-2xl font-bold uppercase tracking-widest text-xs">↺ Edit Inputs</button>
       </div>
     );
@@ -131,11 +154,6 @@ export default function CMAApp() {
 
       {/* ════════ TOPBAR TOGGLES ════════ */}
       <div className="bg-[#ede9df] border-b border-[#ccc8be] px-6 py-2 flex flex-wrap gap-8 items-center">
-        <div className="flex items-center gap-2 text-[10px] font-bold text-[#7a7567] uppercase">
-          Loan: <div className="flex bg-white border border-[#ccc8be] rounded overflow-hidden">
-            {['CC', 'TL'].map(t => <button key={t} onClick={() => setLoanType(t)} className={`px-3 py-1 transition-all ${loanType === t ? 'bg-[#0f0e0b] text-white' : 'hover:bg-slate-50'}`}>{t === 'CC' ? 'CC/OD' : 'Term Loan'}</button>)}
-          </div>
-        </div>
         <div className="flex items-center gap-2 text-[10px] font-bold text-[#7a7567] uppercase">
           Business: <div className="flex bg-white border border-[#ccc8be] rounded overflow-hidden">
             {['trading', 'service', 'manufacturing', 'construction'].map(t => <button key={t} onClick={() => setBizType(t)} className={`px-3 py-1 capitalize border-r last:border-0 ${bizType === t ? 'bg-[#0f0e0b] text-white' : 'hover:bg-slate-50'}`}>{t}</button>)}
@@ -182,11 +200,31 @@ export default function CMAApp() {
              <div><label className="l-label">Proprietor / Managing Partner</label><input value={f.propName} onChange={e => update('propName', e.target.value)} className="legacy-input" /></div>
              <div><label className="l-label">Permanent Account Number (PAN)</label><input value={f.pan} onChange={e => update('pan', e.target.value.toUpperCase())} placeholder="XXXXX0000X" className="legacy-input" /></div>
              <div><label className="l-label">Prepared By (CA / Firm)</label><input value={f.preparedBy} onChange={e => update('preparedBy', e.target.value)} className="legacy-input" /></div>
-             <div><label className="l-label">★ Loan Amount Requested (₹)</label><input type="number" value={f.loan} onChange={e => update('loan', Number(e.target.value))} className="legacy-input font-bold border-blue-200" /></div>
+             
+             {/* NEW LOAN INPUTS */}
+             <div><label className="l-label text-blue-700">Application Type</label><select value={f.isRenewal ? 'renewal' : 'fresh'} onChange={e => update('isRenewal', e.target.value === 'renewal')} className="legacy-input font-bold"><option value="fresh">Fresh Proposal</option><option value="renewal">Renewal / Enhancement</option></select></div>
+             <div><label className="l-label text-blue-700">Proposed CC/OD Limit (₹)</label><input type="number" value={f.ccLimit} onChange={e => update('ccLimit', Number(e.target.value))} className="legacy-input font-bold border-blue-200" /></div>
+             <div><label className="l-label text-blue-700">Proposed Term Loan (₹)</label><input type="number" value={f.termLoan} onChange={e => update('termLoan', Number(e.target.value))} className="legacy-input font-bold border-blue-200" /></div>
              <div><label className="l-label">Interest Rate (% Per Annum)</label><input type="number" value={f.intRate} onChange={e => update('intRate', Number(e.target.value))} className="legacy-input" step="0.25" /></div>
-             <div><label className="l-label">Base Financial Year (Actuals)</label><select value={f.baseYear} onChange={e => update('baseYear', Number(e.target.value))} className="legacy-input"><option value={2025}>FY 2024-25</option><option value={2026}>FY 2025-26</option></select></div>
-             <div><label className="l-label">Projection Period (Years)</label><select value={f.projYears} onChange={e => update('projYears', Number(e.target.value))} className="legacy-input">{[2,3,4,5,6,7].map(y => <option key={y} value={y}>{y} Years</option>)}</select></div>
-             {loanType === 'TL' && <div><label className="l-label">Repayment Tenure (Years)</label><input type="number" value={f.tenure} onChange={e => update('tenure', Number(e.target.value))} className="legacy-input" /></div>}
+             
+             {f.isRenewal && (
+                <div className="md:col-span-4 grid grid-cols-1 md:grid-cols-4 gap-x-8 bg-amber-50 p-4 border border-amber-200 rounded-md">
+                   <div><label className="l-label text-amber-800">Existing CC Limit (₹)</label><input type="number" value={f.existingCc} onChange={e => update('existingCc', Number(e.target.value))} className="legacy-input border-amber-300 bg-white" /></div>
+                   <div><label className="l-label text-amber-800">Existing Term Loan O/s (₹)</label><input type="number" value={f.existingTl} onChange={e => update('existingTl', Number(e.target.value))} className="legacy-input border-amber-300 bg-white" /></div>
+                </div>
+             )}
+
+             <div>
+               <label className="l-label">Base Financial Year (Actuals)</label>
+               <select value={f.baseYear} onChange={e => update('baseYear', Number(e.target.value))} className="legacy-input">
+                 {[-2, -1, 0, 1].map(offset => {
+                   const y = new Date().getFullYear() + offset;
+                   return <option key={y} value={y}>FY {y.toString().slice(-2)}-{(y+1).toString().slice(-2)}</option>;
+                 })}
+               </select>
+             </div>
+             <div><label className="l-label">Projection Period (Years)</label><select value={f.projYears} onChange={e => update('projYears', Number(e.target.value))} className="legacy-input">{[2,3,4,5,6,7,8,9].map(y => <option key={y} value={y}>{y} Years</option>)}</select></div>
+             {(f.termLoan > 0 || f.existingTl > 0) && <div><label className="l-label">Repayment Tenure (Years)</label><input type="number" value={f.tenure} onChange={e => update('tenure', Number(e.target.value))} className="legacy-input" /></div>}
              <div className="md:col-span-4"><label className="l-label">Full Business / Factory Address</label><input value={f.address} onChange={e => update('address', e.target.value)} className="legacy-input" /></div>
           </div>
 
