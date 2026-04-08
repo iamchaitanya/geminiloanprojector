@@ -33,3 +33,64 @@ table {
   -webkit-font-feature-settings: "tnum";
   font-feature-settings: "tnum";
 }
+
+/* -------------------------------------------------------------
+ * BANKING/CMA REPORT FORMAL PRINT STYLES
+ * ------------------------------------------------------------- */
+
+/* Force standard banking document serif typography for body and tables */
+.cma-formal-report table,
+.cma-formal-report td,
+.cma-formal-report th,
+.cma-formal-report .font-sans,
+.cma-formal-report .font-mono {
+  font-family: "Times New Roman", Times, serif !important;
+  font-size: 13px !important; /* Dense, professional 10pt print equivalent */
+  line-height: 1.3 !important;
+  color: #000 !important; /* Force true black ink for printing */
+}
+
+/* Major Headers usually use strict sans-serif (Arial) in banking forms */
+.cma-formal-report h1,
+.cma-formal-report h2,
+.cma-formal-report h3,
+.cma-formal-report h4,
+.cma-formal-report h5,
+.cma-formal-report th.uppercase,
+.cma-formal-report .uppercase {
+  font-family: Arial, Helvetica, sans-serif !important;
+  letter-spacing: 0.02em !important;
+}
+
+/* Strictly enforce black borders to match exported Excel reports */
+.cma-formal-report table {
+  border-collapse: collapse !important;
+  border: 1px solid #000 !important;
+}
+
+.cma-formal-report tr.border-t-2 {
+  border-top-width: 2px !important;
+}
+
+.cma-formal-report tr.border-b-2 {
+  border-bottom-width: 2px !important;
+}
+
+.cma-formal-report .border-black,
+.cma-formal-report .divide-black > * {
+  border-color: #000 !important;
+}
+
+.cma-formal-report th, 
+.cma-formal-report td {
+  /* Overwrite Tailwind generous padding with strict document spacing */
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+}
+
+/* Strip out rounded corners from standard SaaS tables */
+.cma-formal-report .rounded,
+.cma-formal-report .rounded-lg,
+.cma-formal-report .rounded-xl {
+  border-radius: 0 !important;
+}

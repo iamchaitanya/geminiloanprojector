@@ -37,7 +37,7 @@ export default function ReportView({ data, bizName, propName, loanAmount, propos
   const years = data.map(d => d.fyLabel || `Year ${d.year}`);
 
   return (
-    <div className="mt-12 space-y-16 animate-fade-in-up pb-32 max-w-7xl mx-auto px-4">
+    <div className="mt-12 space-y-16 animate-fade-in-up pb-32 max-w-7xl mx-auto px-4 cma-formal-report">
       
       {/* 1. Basis of Projections (The Logical Anchor) */}
       <section id="assumptions">
