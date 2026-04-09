@@ -278,12 +278,12 @@ export function generateProjections(limits: LoanLimits, profile: BusinessProfile
   
   // Use a sensible baseline for random scale if CC Limit is 0
   const baselineVol = (limits.ccLimit || limits.existingCc || limits.termLoan || 500000);
-  const salesTilt = 1 + centeredRandom(rng, 0.02 * variability);
-  const purchaseTilt = 1 + centeredRandom(rng, 0.008 * variability);
-  const expenseTilt = 1 + centeredRandom(rng, 0.012 * variability);
-  const capitalTilt = 1 + centeredRandom(rng, 0.03 * variability);
-  const fixedAssetTilt = 1 + centeredRandom(rng, 0.04 * variability);
-  const drawingsTilt = 1 + centeredRandom(rng, 0.05 * variability);
+  const salesTilt     = 1 + centeredRandom(rng, 0.045 * variability);  // ±4.5% — borrower-level revenue idiosyncrasy
+  const purchaseTilt  = 1 + centeredRandom(rng, 0.012 * variability);  // ±1.2% — kept tight to protect GP floor
+  const expenseTilt   = 1 + centeredRandom(rng, 0.032 * variability);  // ±3.2% — opex structure varies by borrower
+  const capitalTilt   = 1 + centeredRandom(rng, 0.055 * variability);
+  const fixedAssetTilt = 1 + centeredRandom(rng, 0.075 * variability);
+  const drawingsTilt  = 1 + centeredRandom(rng, 0.09 * variability);
   const dscrBias = centeredRandom(rng, 0.04 * variability);
   
   // ═══════════════════════════════════════════════════════════════
@@ -314,8 +314,8 @@ export function generateProjections(limits: LoanLimits, profile: BusinessProfile
   
   // Segment-specific capacity utilization
   const capBand = CAP_UTIL_BANDS[segKey];
-  const capStartNoise = centeredRandom(rng, 0.03 * variability);
-  const capGrowthNoise = centeredRandom(rng, 0.01 * variability);
+  const capStartNoise  = centeredRandom(rng, 0.07 * variability);  // ±7% — starting util visibly different across borrowers
+  const capGrowthNoise = centeredRandom(rng, 0.028 * variability); // ±2.8% — growth rate differs too
   let installedCapacity = profile.installedCap || addNoise(
     sales / (capBand.start + capStartNoise),
     rng, 0.01 * variability
@@ -335,11 +335,12 @@ export function generateProjections(limits: LoanLimits, profile: BusinessProfile
     }
 
     if (i > 1) {
-      const realizedGrowth = Math.max(profile.revGrowth + centeredRandom(rng, 0.008 * variability), profile.revGrowth * 0.82);
+      const realizedGrowth = Math.max(profile.revGrowth + centeredRandom(rng, 0.028 * variability), profile.revGrowth * 0.75);
       sales = Math.max(organic(sales * (1 + realizedGrowth), rng), salesFloor);
       
-      // Healthy business: direct costs reduce slightly as % of sales due to economies of scale (GP Margin increases)
-      const costEfficiency = (i - 1) * 0.015; // 1.5% improvement per projected year
+      // Healthy business: direct costs reduce slightly as % of sales (economies of scale).
+      // Kept modest (0.8%/yr) to avoid breaching GP margin ceilings in Y3 for mfg/construction.
+      const costEfficiency = (i - 1) * 0.008; // 0.8% improvement per projected year
       const noisyPurchaseRatio = profile.purchaseRatio * purchaseTilt * (1 - costEfficiency + centeredRandom(rng, 0.004 * variability)); 
       purchases = organic(sales * noisyPurchaseRatio, rng);
       
@@ -368,7 +369,9 @@ export function generateProjections(limits: LoanLimits, profile: BusinessProfile
       0.50, 0.95
     ) * 100;
     // Blend actual util with target for organic feel
-    currentUtil = currentUtil * 0.3 + targetCapUtil * 0.7;
+    // 50/50 blend: actual capacity story is half the driver; target provides gentle direction.
+    // Reduces the "every trading borrower shows ~78%→84%→89%" determinism.
+    currentUtil = currentUtil * 0.50 + targetCapUtil * 0.50;
 
     // --- P&L MATH ---
     const otherInc = 0; 
@@ -419,6 +422,32 @@ export function generateProjections(limits: LoanLimits, profile: BusinessProfile
       tax = calculateTax(profitBeforeTax);
       netProfit = profitBeforeTax - tax;
       ebitda = netProfit + tax + depnYr + interest;
+    }
+
+    // ── ICR Soft Ceiling (CC-only, Y2 onwards) ──────────────────────────
+    // EBITDA / interest climbing above ~9× in later years looks implausible to
+    // a bank credit analyst ("if you cover interest 10×, why do you need our money?").
+    // Absorb the excess into expenses — but only if NP margin stays ≥ floor + 0.3%.
+    // Uses annualTlRepayment here (tlRepayment is declared later in the loop body).
+    if (annualTlRepayment <= 0 && i >= 2) {
+      const rawICR = ebitda / Math.max(interest, 1);
+      const icrCeiling = 8.5 + centeredRandom(rng, 0.6 * variability); // 7.9–9.1× range
+      if (rawICR > icrCeiling) {
+        const targetEBITDA = interest * icrCeiling;
+        const excessEBITDA = ebitda - targetEBITDA;
+        const npFloor = npComfortBand.min + 0.003;
+        const npHeadroom = Math.max((netProfit / Math.max(sales, 1)) - npFloor, 0) * sales;
+        const absorb = Math.min(excessEBITDA, npHeadroom, indExpTotal * 0.20);
+        if (absorb > 500) {
+          indExpTotal = organic(indExpTotal + absorb, rng);
+          ({ indirectExpenses, totalFixedCosts } = buildIndirectExpenses(indExpTotal, profile, rng, variability));
+          profitBeforeInt = grossProfit - indExpTotal - depnYr;
+          profitBeforeTax = profitBeforeInt - interest;
+          tax = calculateTax(profitBeforeTax);
+          netProfit = profitBeforeTax - tax;
+          ebitda = netProfit + tax + depnYr + interest;
+        }
+      }
     }
 
     const totalCosts = cogs + indExpTotal;
@@ -485,7 +514,9 @@ export function generateProjections(limits: LoanLimits, profile: BusinessProfile
     // ── Step 7: Solve Cash for Target Current Ratio ──
     // CR = totalCA / (bankBorrowings + totalCL)
     // Strategy: First reduce creditors if CL is too heavy, then solve cash.
-    const targetCR = clamp(1.28 + (i - 1) * 0.03 + centeredRandom(rng, 0.025 * variability), 1.22, 1.42);
+    // Wider CR target band: ±7% noise gives real spread of ~1.17–1.50 across borrowers.
+    // Different seeds → meaningfully different liquidity profiles (not all stuck at 1.30).
+    const targetCR = clamp(1.22 + (i - 1) * 0.05 + centeredRandom(rng, 0.075 * variability), 1.17, 1.55);
     const minCash = organic(sales * profile.cashPct, rng);
 
     // Phase A: Check if CR is achievable with reasonable cash

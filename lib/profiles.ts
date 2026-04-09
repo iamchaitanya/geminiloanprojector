@@ -60,65 +60,68 @@ type DynamicProfileCurve = {
 };
 
 const PROFILE_CURVES: Record<BusinessSegment, DynamicProfileCurve> = {
+  // Ranges are intentionally wide: small-ticket borrowers get high indExpRatio, long debtor days,
+  // lower growth; large-ticket borrowers get leaner expense structures and faster growth.
+  // This ensures projections are visibly different across the ₹50K–₹10L loan spectrum.
   trading: {
-    salesMult: [5.0, 5.15],
-    purchaseRatio: [0.79, 0.79],
-    stockMonths: [1.6, 1.3],
-    debtorDays: [28, 34],
-    creditorDays: [36, 48],
-    indExpRatio: [0.10, 0.095],
-    revGrowth: [0.13, 0.16],
-    capitalMult: [1.30, 1.55],
-    grossFAMult: [0.70, 0.92],
-    drawingsMult: [0.42, 0.32],
-    cashPct: [0.022, 0.018],
-    loansAdvPct: [0.012, 0.018],
-    otherCLPct: [0.035, 0.045],
+    salesMult:    [4.88, 5.28],        // ~8% spread vs previous 3%
+    purchaseRatio:[0.800, 0.775],      // kept tight — GP floor protection (min 18%)
+    stockMonths:  [1.8, 1.15],         // small traders carry more stock
+    debtorDays:   [22, 40],            // was [28, 34] — now 18-day spread
+    creditorDays: [30, 55],            // was [36, 48] — now 25-day spread
+    indExpRatio:  [0.115, 0.080],      // was [0.100, 0.095] — now 35% spread
+    revGrowth:    [0.12, 0.19],        // small traders grow faster from low base
+    capitalMult:  [1.20, 1.68],
+    grossFAMult:  [0.60, 1.02],
+    drawingsMult: [0.50, 0.27],        // higher drawings at small scale (personal use)
+    cashPct:      [0.028, 0.014],
+    loansAdvPct:  [0.010, 0.024],
+    otherCLPct:   [0.030, 0.054],
   },
   service: {
-    salesMult: [4.40, 5.05],
-    purchaseRatio: [0.12, 0.18],
-    stockMonths: [0.2, 0.5],
-    debtorDays: [28, 38],
-    creditorDays: [15, 26],
-    indExpRatio: [0.74, 0.69],
-    revGrowth: [0.14, 0.18],
-    capitalMult: [1.15, 1.40],
-    grossFAMult: [0.55, 0.78],
-    drawingsMult: [0.45, 0.34],
-    cashPct: [0.03, 0.022],
-    loansAdvPct: [0.01, 0.014],
-    otherCLPct: [0.04, 0.048],
+    salesMult:    [4.20, 5.20],
+    purchaseRatio:[0.10, 0.175],       // was 0.20 max — caps service COGS so GP stays ≥ 80%
+    stockMonths:  [0.12, 0.55],
+    debtorDays:   [20, 46],
+    creditorDays: [10, 32],
+    indExpRatio:  [0.80, 0.62],
+    revGrowth:    [0.12, 0.24],
+    capitalMult:  [1.08, 1.55],
+    grossFAMult:  [0.44, 0.92],
+    drawingsMult: [0.54, 0.27],
+    cashPct:      [0.038, 0.016],
+    loansAdvPct:  [0.008, 0.022],
+    otherCLPct:   [0.032, 0.058],
   },
   manufacturing: {
-    salesMult: [5.0, 5.15],
-    purchaseRatio: [0.74, 0.723],
-    stockMonths: [2.2, 1.8],
-    debtorDays: [35, 43],
-    creditorDays: [34, 45],
-    indExpRatio: [0.138, 0.13],
-    revGrowth: [0.13, 0.16],
-    capitalMult: [1.35, 1.60],
-    grossFAMult: [1.10, 1.35],
-    drawingsMult: [0.38, 0.30],
-    cashPct: [0.018, 0.013],
-    loansAdvPct: [0.018, 0.026],
-    otherCLPct: [0.034, 0.04],
+    salesMult:    [4.85, 5.28],
+    purchaseRatio:[0.755, 0.715],      // slightly tighter at large end — GP ceiling (31%) protection
+    stockMonths:  [1.95, 1.55],        // was 2.1 at small end — clears Quick Ratio ≥ 0.72 edge case
+    debtorDays:   [28, 52],
+    creditorDays: [26, 56],
+    indExpRatio:  [0.158, 0.108],
+    revGrowth:    [0.11, 0.19],
+    capitalMult:  [1.22, 1.72],
+    grossFAMult:  [0.95, 1.58],
+    drawingsMult: [0.46, 0.23],
+    cashPct:      [0.026, 0.010],
+    loansAdvPct:  [0.014, 0.034],
+    otherCLPct:   [0.026, 0.050],
   },
   construction: {
-    salesMult: [5.0, 5.25],
-    purchaseRatio: [0.70, 0.68],
-    stockMonths: [1.2, 0.9],
-    debtorDays: [36, 44],
-    creditorDays: [34, 45],
-    indExpRatio: [0.18, 0.15],
-    revGrowth: [0.13, 0.16],
-    capitalMult: [1.25, 1.50],
-    grossFAMult: [0.90, 1.15],
-    drawingsMult: [0.40, 0.31],
-    cashPct: [0.021, 0.016],
-    loansAdvPct: [0.022, 0.028],
-    otherCLPct: [0.034, 0.04],
+    salesMult:    [4.82, 5.48],
+    purchaseRatio:[0.710, 0.672],      // was 0.662 — GP ceiling (35%) protection for large ticket
+    stockMonths:  [1.45, 0.78],
+    debtorDays:   [26, 54],
+    creditorDays: [25, 56],
+    indExpRatio:  [0.205, 0.132],
+    revGrowth:    [0.11, 0.19],
+    capitalMult:  [1.12, 1.65],
+    grossFAMult:  [0.76, 1.38],
+    drawingsMult: [0.48, 0.25],
+    cashPct:      [0.028, 0.012],
+    loansAdvPct:  [0.016, 0.038],
+    otherCLPct:   [0.026, 0.050],
   },
 };
 
