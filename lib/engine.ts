@@ -2,6 +2,10 @@
 import { BusinessProfile, ProjectedYear, LoanLimits } from '../types/cma';
 
 export type { ProjectedYear };
+export interface ProjectionOptions {
+  seed?: number;
+  variability?: number;
+}
 
 const EXP_LABELS = [
   { k: 'salary', l: 'Salaries & Wages', fixed: 1.0 }, 
@@ -16,22 +20,214 @@ const EXP_LABELS = [
   { k: 'misc', l: 'Miscellaneous Expenses', fixed: 0.5 }
 ];
 
-function organic(val: number): number {
+const EBITDA_MARGIN_BANDS = {
+  trading: { min: 0.11, max: 0.135 },
+  service: { min: 0.14, max: 0.16 },
+  manufacturing: { min: 0.12, max: 0.155 },
+  construction: { min: 0.135, max: 0.165 },
+} as const;
+
+const NP_MARGIN_BANDS = {
+  trading: { min: 0.07, max: 0.126 },
+  service: { min: 0.095, max: 0.155 },
+  manufacturing: { min: 0.07, max: 0.128 },
+  construction: { min: 0.084, max: 0.145 },
+} as const;
+
+// Segment-specific capacity utilization starting points and growth
+const CAP_UTIL_BANDS = {
+  trading:       { start: 0.76, growth: 0.055 },
+  service:       { start: 0.62, growth: 0.075 },
+  manufacturing: { start: 0.58, growth: 0.070 },
+  construction:  { start: 0.53, growth: 0.085 },
+} as const;
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function createSeededRandom(seed: number) {
+  let state = seed >>> 0;
+  return () => {
+    state += 0x6D2B79F5;
+    let t = state;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function createRunSeed(seed?: number) {
+  if (seed !== undefined) {
+    return seed >>> 0;
+  }
+  return ((Date.now() ^ Math.floor(Math.random() * 0xffffffff)) >>> 0);
+}
+
+function centeredRandom(rng: () => number, amplitude: number) {
+  return (rng() * 2 - 1) * amplitude;
+}
+
+function organic(val: number, rng: () => number): number {
   const v = Math.floor(val);
   if (v <= 1000) return v;
   // If the number is unnaturally round (ends in 00), playfully bump it
   if (v % 100 === 0) {
-    const bump = Math.floor(Math.random() * 89) + 11;
-    return v + (Math.random() > 0.5 ? bump : -bump);
+    const bump = Math.floor(rng() * 89) + 11;
+    return v + (rng() > 0.5 ? bump : -bump);
   }
   return v;
 }
 
-function addNoise(baseValue: number, variancePercent: number = 0.02): number {
+function addNoise(baseValue: number, rng: () => number, variancePercent: number = 0.02): number {
   const min = 1 - variancePercent;
   const max = 1 + variancePercent;
-  const noiseFactor = Math.random() * (max - min) + min;
-  return organic(Math.floor(baseValue * noiseFactor));
+  const noiseFactor = rng() * (max - min) + min;
+  return organic(Math.floor(baseValue * noiseFactor), rng);
+}
+
+export function getDscrTargetBand(year: number, targetBias: number = 0) {
+  const baseTarget = 1.65 + ((year - 1) * 0.05);
+  const target = clamp(baseTarget + targetBias, 1.55, 1.95);
+  return {
+    floor: 1.5,
+    target,
+    ceiling: target + 0.3,
+  };
+}
+
+function resolveSegmentKey(label: string) {
+  const normalized = label.trim().toLowerCase();
+  if (normalized in EBITDA_MARGIN_BANDS) {
+    return normalized as keyof typeof EBITDA_MARGIN_BANDS;
+  }
+  if (normalized.startsWith('service')) {
+    return 'service';
+  }
+  if (normalized.startsWith('manufact')) {
+    return 'manufacturing';
+  }
+  if (normalized.startsWith('construct')) {
+    return 'construction';
+  }
+  if (normalized.startsWith('trad')) {
+    return 'trading';
+  }
+  return 'trading';
+}
+
+function getTargetEbitdaMargin(label: string, year: number) {
+  const band = EBITDA_MARGIN_BANDS[resolveSegmentKey(label)];
+  const yearlyStep = (band.max - band.min) / 2;
+  return Math.min(band.min + ((year - 1) * yearlyStep), band.max);
+}
+
+function getComfortNpMargin(label: string, year: number) {
+  const band = NP_MARGIN_BANDS[resolveSegmentKey(label)];
+  const min = Math.min(band.min + ((year - 1) * 0.003), band.max - 0.01);
+  const max = Math.max(band.max - ((3 - Math.min(year, 3)) * 0.003), min + 0.01);
+  return { min, max };
+}
+
+function buildIndirectExpenses(indExpTotal: number, profile: BusinessProfile, rng: () => number, variability: number) {
+  let totalFixedCosts = 0;
+  const weights = EXP_LABELS.map((expenseLabel) => {
+    const expRatio = profile.exp[expenseLabel.k as keyof typeof profile.exp] as number;
+    return {
+      ...expenseLabel,
+      weight: Math.max(expRatio * (1 + centeredRandom(rng, 0.06 * variability)), 0.005),
+    };
+  });
+  const totalWeight = weights.reduce((acc, expense) => acc + expense.weight, 0);
+  let allocated = 0;
+  const indirectExpenses = weights.map((expenseLabel, index) => {
+    const ratio = expenseLabel.weight / Math.max(totalWeight, 1);
+    const value = index === weights.length - 1
+      ? Math.max(indExpTotal - allocated, 0)
+      : organic(indExpTotal * ratio, rng);
+    allocated += value;
+    totalFixedCosts += value * expenseLabel.fixed;
+    return { label: expenseLabel.l, value };
+  });
+
+  // ── Loan-amount-aware adjustments ──────────────────────────────────────────
+  // 1. SALARY: if numEmployees is explicitly set, derive salary from headcount.
+  //    ₹12,000/month per employee is a conservative MSME floor (2024 India).
+  //    0 employees = owner-operated → salary line stays very small (just a token
+  //    amount for casual helpers), sourced from the proportional split above.
+  if (typeof profile.numEmployees === 'number' && profile.numEmployees > 0) {
+    const salaryItem = indirectExpenses.find(e => e.label === 'Salaries & Wages')!;
+    const monthlyCTC = 12_000 + Math.floor(rng() * 4_000); // ₹12K–₹16K per person
+    const targetSalary = organic(profile.numEmployees * monthlyCTC * 12, rng);
+    const delta = targetSalary - salaryItem.value;
+    salaryItem.value = targetSalary;
+    // Absorb delta from misc / office (flex items) to keep total ~stable
+    const miscItem = indirectExpenses.find(e => e.label === 'Miscellaneous Expenses')!;
+    miscItem.value = Math.max(miscItem.value - delta, 0);
+  }
+
+  // 2. RENT: if own premises, zero out rent and redistribute to other items.
+  if (profile.ownPremises === true) {
+    const rentItem = indirectExpenses.find(e => e.label === 'Rent & Rates')!;
+    const freed = rentItem.value;
+    rentItem.value = 0;
+    // Spread freed rent into office, power, misc proportionally
+    const flexKeys = ['Office / Shop Expenses', 'Power & Fuel', 'Miscellaneous Expenses'];
+    const flexItems = indirectExpenses.filter(e => flexKeys.includes(e.label));
+    const flexTotal = flexItems.reduce((s, e) => s + e.value, 0) || 1;
+    flexItems.forEach(e => { e.value += Math.round((e.value / flexTotal) * freed); });
+  }
+
+  // Recompute totalFixedCosts from the final distribution
+  totalFixedCosts = indirectExpenses.reduce((s, exp) => {
+    const label = EXP_LABELS.find(l => l.l === exp.label);
+    return s + exp.value * (label?.fixed ?? 0.5);
+  }, 0);
+
+  return { indirectExpenses, totalFixedCosts };
+}
+
+export function assessDebtService(ebitda: number, interest: number, tlRepayment: number, year: number, targetBias: number = 0, rng?: () => number) {
+  const baseDebtService = interest + tlRepayment;
+
+  if (ebitda <= 0) {
+    return {
+      assessedDebtService: Math.max(baseDebtService, 1),
+      debtServiceBuffer: 0,
+      dscr: 0,
+    };
+  }
+
+  // For CC-only (no term loan repayment), DSCR = EBITDA/interest (effectively ICR).
+  // For WC facilities, a high ICR (5-10×) is a GREEN flag — the business clearly services
+  // its interest. Banks don't penalise CC borrowers for strong cash coverage.
+  if (tlRepayment <= 0) {
+    return {
+      assessedDebtService: Math.max(baseDebtService, 1),
+      debtServiceBuffer: 0,
+      dscr: ebitda / Math.max(baseDebtService, 1),
+    };
+  }
+
+  // For TL cases: moderate padding only if DSCR exceeds comfortable ceiling
+  const { target, ceiling } = getDscrTargetBand(year, targetBias);
+  const rawDscr = ebitda / Math.max(baseDebtService, 1);
+
+  if (rawDscr > ceiling) {
+    const debtServiceBuffer = Math.max(Math.floor((ebitda / target) - baseDebtService), 0);
+    const assessedDebtService = baseDebtService + debtServiceBuffer;
+    return {
+      assessedDebtService: Math.max(assessedDebtService, 1),
+      debtServiceBuffer,
+      dscr: ebitda / Math.max(assessedDebtService, 1),
+    };
+  }
+
+  return {
+    assessedDebtService: Math.max(baseDebtService, 1),
+    debtServiceBuffer: 0,
+    dscr: rawDscr,
+  };
 }
 
 /**
@@ -49,34 +245,85 @@ function calculateTax(profit: number): number {
   return Math.floor(tax * 1.04); // 4% H&E Cess
 }
 
-export function generateProjections(limits: LoanLimits, profile: BusinessProfile, projectionYears: number = 3, baseYear: number = 2024): ProjectedYear[] {
+function solveProfitBeforeTaxForNetProfit(targetNetProfit: number) {
+  if (targetNetProfit <= 0) {
+    return 0;
+  }
+
+  let low = targetNetProfit;
+  let high = Math.max(targetNetProfit * 1.5, 1000);
+
+  while ((high - calculateTax(high)) < targetNetProfit) {
+    high *= 1.25;
+  }
+
+  for (let i = 0; i < 28; i++) {
+    const mid = (low + high) / 2;
+    const derivedNetProfit = mid - calculateTax(mid);
+    if (derivedNetProfit < targetNetProfit) {
+      low = mid;
+    } else {
+      high = mid;
+    }
+  }
+
+  return Math.ceil(high);
+}
+
+export function generateProjections(limits: LoanLimits, profile: BusinessProfile, projectionYears: number = 3, baseYear: number = 2024, options: ProjectionOptions = {}): ProjectedYear[] {
   const projections: ProjectedYear[] = [];
+  const rng = createSeededRandom(createRunSeed(options.seed));
+  const variability = clamp(options.variability ?? 1, 0, 1.5);
+  const segKey = resolveSegmentKey(profile.label);
   
   // Use a sensible baseline for random scale if CC Limit is 0
   const baselineVol = (limits.ccLimit || limits.existingCc || limits.termLoan || 500000);
+  const salesTilt = 1 + centeredRandom(rng, 0.02 * variability);
+  const purchaseTilt = 1 + centeredRandom(rng, 0.008 * variability);
+  const expenseTilt = 1 + centeredRandom(rng, 0.012 * variability);
+  const capitalTilt = 1 + centeredRandom(rng, 0.03 * variability);
+  const fixedAssetTilt = 1 + centeredRandom(rng, 0.04 * variability);
+  const drawingsTilt = 1 + centeredRandom(rng, 0.05 * variability);
+  const dscrBias = centeredRandom(rng, 0.04 * variability);
   
-  let sales = Math.max(organic(baselineVol * profile.salesMult), baselineVol * 5);
-  let purchases = organic(sales * profile.purchaseRatio);
+  // ═══════════════════════════════════════════════════════════════
+  // HARD RULE: Sales MUST be ≥ 5× CC Limit. NON-NEGOTIABLE.
+  // Uses 5.05× floor so Nayak MPBF (20% of turnover) is always
+  // slightly above the requested CC limit — not an exact round figure.
+  // ═══════════════════════════════════════════════════════════════
+  const SALES_FLOOR_MULT = 5.0;
+  const salesFloor = Math.ceil(baselineVol * SALES_FLOOR_MULT);
+  let sales = Math.max(
+    addNoise(baselineVol * profile.salesMult * salesTilt, rng, 0.015 * variability),
+    salesFloor
+  );
+  let purchases = addNoise(sales * profile.purchaseRatio * purchaseTilt, rng, 0.008 * variability);
   
-  let capital = organic(baselineVol * profile.capitalMult);
-  let grossFA = organic(baselineVol * profile.grossFAMult);
+  let capital = addNoise(baselineVol * profile.capitalMult * capitalTilt, rng, 0.012 * variability);
+  let grossFA = addNoise(baselineVol * profile.grossFAMult * fixedAssetTilt, rng, 0.015 * variability);
   let accDepn = 0;
   let wdv = grossFA;
   
   // Normalize Year 1 opening stock to prevent artificial profit inflation
-  let openStock = organic((purchases / 12) * profile.stockMonths); 
+  let openStock = addNoise((purchases / 12) * profile.stockMonths, rng, 0.015 * variability); 
   
   // Initialize Bank Debt Split from direct inputs
   let bankBorrowings = limits.isRenewal ? limits.existingCc : 0;
   let openingTermLoan = limits.isRenewal ? limits.existingTl : 0;
   let annualTlRepayment = 0; 
   
-  // Year 1 base installed capacity (around 70-75% util) helps ensure increasing trend for next 3 years
-  let installedCapacity = profile.installedCap || organic(sales * 1.35); 
+  // Segment-specific capacity utilization
+  const capBand = CAP_UTIL_BANDS[segKey];
+  const capStartNoise = centeredRandom(rng, 0.03 * variability);
+  const capGrowthNoise = centeredRandom(rng, 0.01 * variability);
+  let installedCapacity = profile.installedCap || addNoise(
+    sales / (capBand.start + capStartNoise),
+    rng, 0.01 * variability
+  );
 
-  let curDebtorDays = profile.debtorDays;
-  let curCreditorDays = profile.creditorDays;
-  let curStockMonths = profile.stockMonths;
+  let curDebtorDays = Math.max(15, Math.round(profile.debtorDays * (1 + centeredRandom(rng, 0.04 * variability))));
+  let curCreditorDays = Math.max(10, Math.round(profile.creditorDays * (1 + centeredRandom(rng, 0.04 * variability))));
+  let curStockMonths = Math.max(0.5, profile.stockMonths * (1 + centeredRandom(rng, 0.05 * variability)));
 
   for (let i = 1; i <= projectionYears; i++) {
     const projStartYear = baseYear + i;
@@ -84,21 +331,22 @@ export function generateProjections(limits: LoanLimits, profile: BusinessProfile
 
     if (i === 1) {
       openingTermLoan += limits.termLoan; // Incorporate newly proposed term loan in Year 1
-      annualTlRepayment = organic(openingTermLoan / 5); 
+      annualTlRepayment = organic(openingTermLoan / 5, rng); 
     }
 
     if (i > 1) {
-      sales = Math.max(organic(sales * (1 + profile.revGrowth)), baselineVol * 5);
+      const realizedGrowth = Math.max(profile.revGrowth + centeredRandom(rng, 0.008 * variability), profile.revGrowth * 0.82);
+      sales = Math.max(organic(sales * (1 + realizedGrowth), rng), salesFloor);
       
       // Healthy business: direct costs reduce slightly as % of sales due to economies of scale (GP Margin increases)
       const costEfficiency = (i - 1) * 0.015; // 1.5% improvement per projected year
-      const noisyPurchaseRatio = profile.purchaseRatio * (1 - costEfficiency + (Math.random() * 0.01 - 0.005)); 
-      purchases = organic(sales * noisyPurchaseRatio);
+      const noisyPurchaseRatio = profile.purchaseRatio * purchaseTilt * (1 - costEfficiency + centeredRandom(rng, 0.004 * variability)); 
+      purchases = organic(sales * noisyPurchaseRatio, rng);
       
       // Working capital cycle forcibly improves YoY by strict days
-      curDebtorDays = Math.max(15, curDebtorDays - (Math.floor(Math.random() * 3) + 1)); // Drops 1-3 days YoY
-      curCreditorDays = Math.min(120, curCreditorDays + (Math.floor(Math.random() * 3) + 1)); // Extends 1-3 days YoY
-      curStockMonths = Math.max(0.5, curStockMonths - 0.1); 
+      curDebtorDays = Math.max(15, curDebtorDays - (Math.floor(rng() * 3) + 1)); // Drops 1-3 days YoY
+      curCreditorDays = Math.min(120, curCreditorDays + (Math.floor(rng() * 3) + 1)); // Extends 1-3 days YoY
+      curStockMonths = Math.max(0.5, curStockMonths - (0.05 + (rng() * 0.03))); 
     }
     
     // --- DYNAMIC CAPEX LOGIC ---
@@ -106,7 +354,7 @@ export function generateProjections(limits: LoanLimits, profile: BusinessProfile
     if (currentUtil > 95) { // Expand just enough to sustain ~90% util without crashing the trend
       const targetCapacity = Math.floor(sales * 1.10); 
       const growthRatio = (targetCapacity - installedCapacity) / installedCapacity;
-      const capexAmount = Math.floor(grossFA * growthRatio);
+      const capexAmount = organic(grossFA * growthRatio * (1 + centeredRandom(rng, 0.04 * variability)), rng);
       
       grossFA += capexAmount;
       wdv += capexAmount; 
@@ -114,232 +362,277 @@ export function generateProjections(limits: LoanLimits, profile: BusinessProfile
       currentUtil = (sales / installedCapacity) * 100; 
     }
 
+    // Segment-specific capacity utilization trajectory  
+    const targetCapUtil = clamp(
+      (capBand.start + capStartNoise) + (i - 1) * (capBand.growth + capGrowthNoise),
+      0.50, 0.95
+    ) * 100;
+    // Blend actual util with target for organic feel
+    currentUtil = currentUtil * 0.3 + targetCapUtil * 0.7;
+
     // --- P&L MATH ---
     const otherInc = 0; 
     const totalRev = sales + otherInc;
-    const closeStock = organic((purchases / 12) * curStockMonths);
+    const closeStock = organic((purchases / 12) * curStockMonths, rng);
     
     // Healthy business: better operating leverage (EBITDA / NP Margins increase)
     const opEfficiency = (i - 1) * 0.02; // 2% improvement in exp ratio per year
-    const noisyIndExpRatio = profile.indExpRatio * (1 - opEfficiency + (Math.random() * 0.01 - 0.005));
-    const indExpTotal = organic(sales * noisyIndExpRatio);
-    
-    let totalFixedCosts = 0;
-    const indirectExpenses = EXP_LABELS.map(e => {
-      const expRatio = profile.exp[e.k as keyof typeof profile.exp] as number;
-      const val = organic(indExpTotal * expRatio);
-      totalFixedCosts += val * e.fixed; 
-      return { label: e.l, value: val };
-    });
+    const noisyIndExpRatio = profile.indExpRatio * expenseTilt * (1 - opEfficiency + centeredRandom(rng, 0.004 * variability));
+    let indExpTotal = organic(sales * noisyIndExpRatio, rng);
 
     const cogs = (openStock + purchases) - closeStock;
-    const totalCosts = cogs + indExpTotal;
+    const targetEbitdaMargin = getTargetEbitdaMargin(profile.label, i);
+    const targetEbitda = sales * targetEbitdaMargin;
+    const rawEbitda = sales - cogs - indExpTotal;
+    if (rawEbitda < (sales * EBITDA_MARGIN_BANDS[resolveSegmentKey(profile.label)].min) || rawEbitda > (sales * EBITDA_MARGIN_BANDS[resolveSegmentKey(profile.label)].max)) {
+      indExpTotal = organic(Math.max(sales - cogs - targetEbitda, sales * 0.04), rng);
+    }
+
+    let { indirectExpenses, totalFixedCosts } = buildIndirectExpenses(indExpTotal, profile, rng, variability);
     const grossProfit = sales - cogs;
-    const depnYr = organic(wdv * profile.depnRate);
+    const depnYr = organic(wdv * profile.depnRate, rng);
     wdv = Math.max(wdv - depnYr, 0);
 
-    const profitBeforeInt = grossProfit - indExpTotal - depnYr;
-    
     // Interest calculated on CC Limit (11.5%) + Term Loan (11.0%)
     // Assume full utilization of proposed limits during the projected year
     const effectiveCcForInt = (i === 1 && !limits.isRenewal) ? limits.ccLimit : (bankBorrowings || limits.ccLimit);
-    const ccInterest = organic(effectiveCcForInt * 0.115);
-    const tlInterest = organic(openingTermLoan * 0.110);
+    const ccInterest = organic(effectiveCcForInt * 0.115, rng);
+    const tlInterest = organic(openingTermLoan * 0.110, rng);
     const interest = ccInterest + tlInterest;
-    
-    const profitBeforeTax = profitBeforeInt - interest;
-    
-    const tax = calculateTax(profitBeforeTax);
-    
-    const netProfit = profitBeforeTax - tax; 
-    const ebitda = netProfit + tax + depnYr + interest;
+    let profitBeforeInt = grossProfit - indExpTotal - depnYr;
+    let profitBeforeTax = profitBeforeInt - interest;
+    let tax = calculateTax(profitBeforeTax);
+    let netProfit = profitBeforeTax - tax; 
+    let ebitda = netProfit + tax + depnYr + interest;
+
+    const npComfortBand = getComfortNpMargin(profile.label, i);
+    const npMargin = netProfit / Math.max(sales, 1);
+    if (npMargin < npComfortBand.min || npMargin > npComfortBand.max) {
+      const targetNpMargin = npMargin < npComfortBand.min ? (npComfortBand.min + 0.0015) : (npComfortBand.max - 0.0015);
+      const targetNetProfit = sales * targetNpMargin;
+      const targetProfitBeforeTax = solveProfitBeforeTaxForNetProfit(targetNetProfit);
+      const maxIndirectExpense = Math.max(grossProfit - depnYr - interest, sales * 0.04);
+      indExpTotal = clamp(grossProfit - depnYr - interest - targetProfitBeforeTax, sales * 0.04, maxIndirectExpense);
+      ({ indirectExpenses, totalFixedCosts } = buildIndirectExpenses(indExpTotal, profile, rng, variability));
+      profitBeforeInt = grossProfit - indExpTotal - depnYr;
+      profitBeforeTax = profitBeforeInt - interest;
+      tax = calculateTax(profitBeforeTax);
+      netProfit = profitBeforeTax - tax;
+      ebitda = netProfit + tax + depnYr + interest;
+    }
+
+    const totalCosts = cogs + indExpTotal;
 
     // --- TERM LOAN REPAYMENT ---
     const tlRepayment = Math.min(annualTlRepayment, openingTermLoan);
     const closingTermLoan = openingTermLoan - tlRepayment;
     const cmltd = Math.min(annualTlRepayment, closingTermLoan); // Next year's dues
 
-    // --- GRANULAR BALANCE SHEET MATH ---
-    // Proprietors in MSME typically withdraw 50–70% of net profit.
-    // Using a progressive multiplier: starts at profile base (~38-42%), increases 8% per year.
-    // This prevents capital hoarding that inflates cash beyond the loan amount.
-    let dynamicDrawingsMult = Math.min(profile.drawingsMult + ((i - 1) * 0.08), 0.75);
-    let drawings = organic(Math.max(baselineVol * 0.05, netProfit * dynamicDrawingsMult));
-    capital = capital + netProfit - drawings;
-    
-    const rawUnsecured = baselineVol * 0.10; 
-    let quasiEquity = organic(rawUnsecured * (profile.quasiEquityPct || 0.6));
-    let marketUnsecured = organic(rawUnsecured - quasiEquity);
-    
-    let creditors = organic((purchases / 365) * curCreditorDays);
-    const totalOtherCL = organic(sales * profile.otherCLPct);
-    const statutoryDues = organic(totalOtherCL * (profile.statutoryDuesPct || 0.4));
+    // ═══════════════════════════════════════════════════════════════
+    // CLEAN BALANCE SHEET — ONE PASS, NO FIGHTING LOOPS
+    // Strategy: size each item from operational ratios, then solve
+    // cash as the balancing item to hit target Current Ratio.
+    // ═══════════════════════════════════════════════════════════════
+
+    // ── Step 1: Fixed Assets ──
+    accDepn += depnYr;
+    const netFA = Math.max(grossFA - accDepn, 0);
+
+    // ── Step 2: Operational Current Assets (from business cycle) ──
+    const inventory = closeStock;
+    const totalDebtors = organic((sales / 365) * curDebtorDays, rng);
+    const debtorsOver6M = organic(totalDebtors * (profile.debtorAgingPct || 0.05), rng);
+    const debtorsUnder6M = totalDebtors - debtorsOver6M;
+    const loansAdv = organic(sales * profile.loansAdvPct, rng);
+    const operationalCA = inventory + totalDebtors + loansAdv; // Cash added later
+
+    // ── Step 3: Current Liabilities (from operational cycle) ──
+    let creditors = organic((purchases / 365) * curCreditorDays, rng);
+    const totalOtherCL = organic(sales * profile.otherCLPct, rng);
+    const statutoryDues = organic(totalOtherCL * (profile.statutoryDuesPct || 0.4), rng);
     const generalOtherCL = totalOtherCL - statutoryDues;
-    
     let totalCL = creditors + totalOtherCL + cmltd;
 
-    let inventory = closeStock; 
-    let totalDebtors = organic((sales / 365) * curDebtorDays);
-    let debtorsOver6M = organic(totalDebtors * (profile.debtorAgingPct || 0.05));
-    let debtorsUnder6M = totalDebtors - debtorsOver6M;
-    let loansAdv = organic(sales * profile.loansAdvPct);
-    
-    accDepn += depnYr;
-    let netFA = Math.max(grossFA - accDepn, 0);
+    // ── Step 4: Bank Borrowings = CC Limit (full utilization) ──
+    bankBorrowings = limits.ccLimit;
 
-    let totalAssetsExCash = netFA + inventory + totalDebtors + loansAdv;
-    
-    // Note: totalLiabDraft relies on closingTermLoan and other non-bank liabilities
-    let totalLiabDraft = capital + quasiEquity + marketUnsecured + closingTermLoan + creditors + totalOtherCL;
-    
-    let minCash = organic(sales * profile.cashPct);
-    let targetAssets = totalAssetsExCash + minCash;
-    let fundingGap = targetAssets - totalLiabDraft;
-    
-    let cashBank = minCash;
-    
-    if (limits.ccLimit > 0) {
-        // --- BANK CMA CC UTILIZATION LOGIC ---
-        // In CMA projections, the bank expects to see active CC utilization:
-        // - Minimum 70% utilization (shows the facility is productive)
-        // - If funding gap > CC limit, full utilization + unsecured for shortfall
-        // - If funding gap < CC limit, use full limit but show modest surplus as cash
-        // - Cash is capped to prevent the "why borrow if you have cash?" red flag
-        
-        const minUtilization = organic(limits.ccLimit * 0.70);
-        
-        if (fundingGap >= limits.ccLimit) {
-            // Business needs more than CC limit — full utilization + unsecured
-            bankBorrowings = limits.ccLimit;
-            const shortfall = fundingGap - limits.ccLimit;
-            marketUnsecured += shortfall;
-            cashBank = minCash;
-        } else if (fundingGap > 0) {
-            // Business needs less than CC limit — show healthy utilization
-            bankBorrowings = Math.max(fundingGap, minUtilization);
-            const surplus = bankBorrowings - fundingGap;
-            // Surplus from over-utilization shows as modest cash buffer
-            cashBank = minCash + surplus;
-        } else {
-            // No funding gap — business is flush. Still draw at least 70% CC.
-            bankBorrowings = minUtilization;
-            cashBank = minCash + Math.abs(fundingGap) + (bankBorrowings);
-        }
-        
-        // Hard cap: cash should stay modest — bank red flag if cash > loan amount.
-        // Use profile-aligned cap: max of (3× minCash) or (25% of CC limit).
-        // Protects capital from erosion below a safe floor.
-        const maxCash = Math.max(minCash * 3, limits.ccLimit * 0.25);
-        if (cashBank > maxCash) {
-            const excess = cashBank - maxCash;
-            // Never erode capital below the loan amount (borrower skin-in-game)
-            const capitalFloor = Math.max(limits.ccLimit * 0.30, baselineVol * 0.25);
-            const drainable = Math.max(0, capital - capitalFloor);
-            const actualDrain = Math.min(excess, drainable);
-            if (actualDrain > 0) {
-                drawings += actualDrain;
-                capital  -= actualDrain;
-                cashBank -= actualDrain;
-            }
-        }
-    } else {
-        // User entered 0 for CC Limit, so we auto-calculate the exact needed amount
-        if (fundingGap > 0) {
-            bankBorrowings = fundingGap;
-            cashBank = minCash;
-        } else {
-            bankBorrowings = 0;
-            cashBank = minCash;
-        }
+    // ── Step 5: Unsecured Loans & Quasi-Equity ──
+    const rawUnsecured = baselineVol * 0.10;
+    const quasiEquity = organic(rawUnsecured * (profile.quasiEquityPct || 0.6), rng);
+    let marketUnsecured = organic(rawUnsecured - quasiEquity, rng);
+
+    // ── Step 6: Capital — sized for healthy ROE (25-40%) ──
+    // A CA sizes capital so the owner's equity is proportional to the business.
+    // Floor: max of (NP/targetROE), (sales × margin%), (prior capital × 0.95)
+    const targetROE = clamp(0.32 - (i - 1) * 0.02 + centeredRandom(rng, 0.03), 0.22, 0.40);
+    const capitalFloorROE = netProfit > 0 ? netProfit / targetROE : capital;
+    const capitalFloorSales = sales * clamp(0.16 + centeredRandom(rng, 0.02), 0.14, 0.22);
+    const capitalFloorPrior = capital * 0.95; // Never shrink drastically
+
+    // Nominal drawings (~35-50% of NP — realistic for MSME proprietor)
+    const dynamicDrawingsMult = clamp(
+      (profile.drawingsMult * drawingsTilt) + ((i - 1) * 0.06),
+      0.25, 0.65
+    );
+    const nominalDrawings = organic(Math.max(baselineVol * 0.03, netProfit * dynamicDrawingsMult), rng);
+    const capitalFromRetention = capital + netProfit - nominalDrawings;
+
+    // Pick the best floor
+    let targetCapital = Math.max(capitalFromRetention, capitalFloorROE, capitalFloorSales, capitalFloorPrior);
+    let drawings = Math.max(capital + netProfit - targetCapital, 0);
+    capital = targetCapital;
+
+    // ── Step 7: Solve Cash for Target Current Ratio ──
+    // CR = totalCA / (bankBorrowings + totalCL)
+    // Strategy: First reduce creditors if CL is too heavy, then solve cash.
+    const targetCR = clamp(1.28 + (i - 1) * 0.03 + centeredRandom(rng, 0.025 * variability), 1.22, 1.42);
+    const minCash = organic(sales * profile.cashPct, rng);
+
+    // Phase A: Check if CR is achievable with reasonable cash
+    // Max acceptable cash = 60% of CC limit (owner keeps buffer for opportunity purchases)
+    const maxReasonableCash = Math.max(minCash * 5, limits.ccLimit * 0.60);
+    let testCA = operationalCA + maxReasonableCash;
+    let testCR = testCA / Math.max(bankBorrowings + totalCL, 1);
+
+    if (testCR < targetCR) {
+      // Even with max cash, CR is too low → need to reduce CL
+      // Convert creditors to unsecured loans (realistic: pay suppliers faster, borrow informally)
+      const neededCAForCR = targetCR * (bankBorrowings + totalCL);
+      const shortfall = neededCAForCR - testCA;
+      // Reduce CL to bring denominator down: CR = testCA / (BB + totalCL - reduction)
+      // targetCR = testCA / (BB + totalCL - reduction)
+      // reduction = (BB + totalCL) - testCA/targetCR
+      const clReduction = Math.max((bankBorrowings + totalCL) - testCA / targetCR, 0);
+      const maxCreditorDrain = creditors * 0.50; // Don't drain more than 50%
+      const actualDrain = Math.min(clReduction, maxCreditorDrain);
+      if (actualDrain > 0) {
+        creditors -= actualDrain;
+        marketUnsecured += actualDrain * 0.4; // Part goes to unsecured
+        totalCL -= actualDrain;
+      }
     }
 
-    let totalCA = inventory + totalDebtors + cashBank + loansAdv;
-    
-    // --- RATIO ENFORCEMENT ENGINE ---
-    // (1) Current Ratio >= 1.33 Strategy (Improves YoY): 
-    // Current Ratio = totalCA / (bankBorrowings + totalCL)
-    // If below target, convert some short-term creditors into long-term unsecured loans
-    const targetCR = 1.33 + ((i - 1) * 0.05); // Y1: 1.33, Y2: 1.38, Y3: 1.43
-    let crLoops = 0;
-    while ((totalCA / Math.max(bankBorrowings + totalCL, 1)) < targetCR && crLoops < 50) {
-       const crShift = organic(totalCL * 0.05);
-       if (creditors > crShift * 1.5) {
-          creditors -= crShift;
-          marketUnsecured += crShift;
-          totalCL -= crShift;
-       } else {
-          // If creditors are drained, inject external proprietor cash to beef up Current Assets
-          capital += crShift;
-          cashBank += crShift;
-          totalCA += crShift;
-       }
-       crLoops++;
+    // Phase B: Now solve cash from the (possibly adjusted) CR equation
+    const clDenom = bankBorrowings + totalCL;
+    const neededCA = targetCR * clDenom;
+    let cashBank = clamp(neededCA - operationalCA, minCash, maxReasonableCash);
+
+    let totalCA = operationalCA + cashBank;
+
+    // ── Steps 8-10: Unified Balance Sheet Finalization ──
+    // Strategy:
+    //  a) Compute nonCapitalLiab (everything except owners' equity)
+    //  b) Plug capital = totalAssets - nonCapitalLiab
+    //  c) If D:E floor breached, inject promoter cash → grow both assets and capital
+    //  d) Re-check CR after injection; inject more if still short
+    //  e) reconAdj = 0 always (capital is the balancing item)
+
+    const totalBankDebt = bankBorrowings + closingTermLoan;
+    const nonCapitalLiab = quasiEquity + marketUnsecured + bankBorrowings + closingTermLoan +
+                           creditors + totalOtherCL + cmltd;
+
+    let totalAssets = netFA + totalCA;
+
+    // a) Initial capital plug
+    let plugCapital = totalAssets - nonCapitalLiab;
+
+    // b) D:E floor: capital (excl. quasiEquity for TNW) must give D:E ≤ 2.0
+    //    TNW = capital + quasiEquity; D:E = totalBankDebt / TNW ≤ 2.0
+    //    => TNW ≥ totalBankDebt / 2.0  => capital ≥ totalBankDebt/2.0 - quasiEquity
+    const deFloorCapital = Math.max(totalBankDebt / 2.0 - quasiEquity, 0);
+    if (plugCapital < deFloorCapital) {
+      // Promoter injection: bring in cash to raise capital to the D:E floor
+      const injection = Math.ceil(deFloorCapital - plugCapital);
+      cashBank += injection;
+      totalCA += injection;
+      totalAssets += injection;
+      plugCapital = deFloorCapital;
     }
 
-    // (2) D:E Ratio <= 2.0 Strategy (Improves YoY):
-    // D:E UI Formula: (bankBorrowings + closingTermLoan) / TNW
-    // Proprietor injects personal funds — realistic for MSME (bank asks borrower to bring own funds)
-    // Cap: injected capital cannot exceed 100% of pre-loop capital (i.e., capital can at most double)
-    const targetDE = 2.0 - ((i - 1) * 0.1); // Y1: 2.0, Y2: 1.9, Y3: 1.8
-    let deLoops = 0;
-    const capitalPreDE = capital;
-    while ((bankBorrowings + closingTermLoan) / Math.max(capital + quasiEquity, 1) > targetDE && deLoops < 50) {
-       if (capital > capitalPreDE * 2.0) break; // Hard cap: max 2× initial capital via injection
-       const capitalInjection = organic(capital * 0.10);
-       capital  += capitalInjection;
-       cashBank += capitalInjection;
-       totalCA  += capitalInjection;
-       deLoops++;
+    // c) Re-check CR after any injection above
+    //    CR = totalCA / (bankBorrowings + totalCL)
+    const crDenom = bankBorrowings + totalCL;
+    const targetCRCheck = targetCR; // same target as computed in Phase B
+    if (totalCA / Math.max(crDenom, 1) < targetCRCheck) {
+      const neededCA2 = Math.ceil(targetCRCheck * crDenom);
+      const crInjection = Math.max(neededCA2 - totalCA, 0);
+      if (crInjection > 0) {
+        cashBank += crInjection;
+        totalCA += crInjection;
+        totalAssets += crInjection;
+        plugCapital += crInjection; // assets grew, so capital plug grows too
+      }
     }
 
-    // (3) TOL/TNW <= 3.0 Strategy (Improves YoY):
-    // Bank regulatory cap is 3.0
-    // Prefer converting unsecured market loans → equity (reclassification) before injecting fresh capital
-    // Cap fresh capital injection at 80% of pre-loop capital to stay realistic
-    const targetTolTnw = 2.9 - ((i - 1) * 0.1);
-    let tolTnwLoops = 0;
-    const capitalPreTol = capital;
+    // e) ROE ceiling: cap ROE at 80% — projections with ROE > 80% look unrealistic
+    //    to credit analysts. Promoter is assumed to bring in accumulated savings.
+    const roeCeiling = 0.80;
+    if (netProfit > 0 && plugCapital > 0 && netProfit / plugCapital > roeCeiling) {
+      const roeCapFloor = Math.ceil(netProfit / roeCeiling);
+      const roeInjection = roeCapFloor - plugCapital;
+      if (roeInjection > 0) {
+        cashBank += roeInjection;
+        totalCA += roeInjection;
+        totalAssets += roeInjection;
+        plugCapital = roeCapFloor;
+      }
+    }
+
+    // f) CR ceiling hard-cap at 1.65 — if the ROE injection pushed CR above this,
+    //    trim cashBank. Capital stays higher than needed for CR (from ROE floor),
+    //    so we reduce cashBank and accept the balance sheet rebalance via capital plug.
+    const crHardCap = 1.65;
+    const crAfterRoe = totalCA / Math.max(crDenom, 1);
+    if (crAfterRoe > crHardCap) {
+      const maxCA = Math.floor(crHardCap * crDenom);
+      const trim = totalCA - maxCA;
+      if (trim > 0 && cashBank - trim >= minCash) {
+        cashBank -= trim;
+        totalCA -= trim;
+        totalAssets -= trim;
+        plugCapital -= trim; // capital shrinks symmetrically — ROE may rise slightly, still ≤ 80%
+      }
+    }
+
+    capital = Math.max(plugCapital, 1);
+    const totalLiab = capital + nonCapitalLiab;
+    const reconAdj = 0; // Balance sheet always balances by construction
+
+    // d) TOL/TNW (informational, for ratio output)
+    const finalTnw = capital + quasiEquity;
     let totalOutsideLiab = totalCL + bankBorrowings + marketUnsecured + (closingTermLoan - cmltd);
-    while ((totalOutsideLiab / Math.max(capital + quasiEquity, 1)) > targetTolTnw && tolTnwLoops < 50) {
-        if (marketUnsecured > 5000) {
-            // Step 1: reclassify unsecured borrowings as quasi-equity (no cash needed)
-            const shift = organic(marketUnsecured * 0.15);
-            marketUnsecured -= shift;
-            capital         += shift; // treated as proprietor's contribution
-        } else {
-            // Step 2: fresh proprietor injection (capped)
-            if (capital >= capitalPreTol * 1.8) break; // Hard cap
-            const shift = organic(capital * 0.10);
-            capital         += shift;
-            cashBank        += shift;
-            totalCA         += shift;
-            totalAssetsExCash += shift;
-        }
+    if (totalOutsideLiab / Math.max(finalTnw, 1) > 3.0) {
+      if (marketUnsecured > 5000) {
+        const shift = organic(marketUnsecured * 0.40, rng);
+        marketUnsecured -= shift;
+        capital += shift;
         totalOutsideLiab = totalCL + bankBorrowings + marketUnsecured + (closingTermLoan - cmltd);
-        tolTnwLoops++;
+      }
     }
-
-    // Recalculate true finals after all adjustments
-    const totalAssets = netFA + totalCA;
-    const totalLiab = capital + quasiEquity + marketUnsecured + bankBorrowings + closingTermLoan + creditors + totalOtherCL;
-    // reconAdj: any residual rounding gap between Assets and Liabilities.
-    // A non-zero value flags a balance sheet that doesn't foot — critical for bank submission.
-    const reconAdj = Math.abs(totalAssets - totalLiab) < 500 ? 0 : (totalAssets - totalLiab);
-    
-    const tnw = capital + quasiEquity;
     
     const variableCosts = (purchases + (indExpTotal - totalFixedCosts));
     const contribution = sales - variableCosts;
     const bepSales = (totalFixedCosts + interest + depnYr) / (contribution / sales);
     
-    // True DSCR = Operating Cash / Debt Obligations
-    let rawDscr = ebitda / Math.max(interest + tlRepayment, 1);
-    const dscr = Math.min(rawDscr, 5.0); // Capped at 5.0 to avoid unrealistic explosive metrics
+    // DSCR — natural for CC-only, managed for TL cases
+    const debtServiceAssessment = assessDebtService(ebitda, interest, tlRepayment, i, dscrBias, rng);
+    const dscr = debtServiceAssessment.dscr;
 
-    // FACR scales organically even if Term Loan is 0
-    const effectiveTLForFacr = closingTermLoan > 0 ? closingTermLoan : organic(netFA / (1.5 + i * 0.15));
-    let rawFacr = netFA / effectiveTLForFacr;
-    const facr = Math.min(rawFacr, 5.0);
+    // FACR — segment-specific with noise (not uniform)
+    let facr: number;
+    if (closingTermLoan > 0) {
+      facr = netFA / Math.max(closingTermLoan, 1);
+    } else {
+      // No TL: derive organic FACR based on segment + year + noise
+      const baseFacr = ({
+        trading: 1.35, service: 1.25, manufacturing: 1.55, construction: 1.45,
+      })[segKey] || 1.40;
+      facr = clamp(
+        baseFacr + (i - 1) * 0.12 + centeredRandom(rng, 0.08 * variability),
+        1.15, 2.50
+      );
+    }
+    facr = Math.min(facr, 5.0);
 
     projections.push({
       year: i, fyLabel, sales, otherInc, totalRev, openStock, purchases, indirectExpenses, totalIndExp: indExpTotal,
@@ -351,14 +644,25 @@ export function generateProjections(limits: LoanLimits, profile: BusinessProfile
       cmltd, tlRepayment,
       creditors, statutoryDues, otherCL: generalOtherCL, totalCL, totalLiab,
       
-      grossFA, accDepn, netFA, inventory, debtors: totalDebtors, debtorsUnder6M, debtorsOver6M,
+      grossFA, accDepn, netFA, inventory,
+      rawMaterials: segKey === 'manufacturing' ? organic(inventory * 0.60, rng)
+                  : segKey === 'construction' ? organic(inventory * 0.70, rng)
+                  : 0,
+      stockInProcess: segKey === 'manufacturing' ? organic(inventory * 0.10, rng) : 0,
+      finishedGoods: segKey === 'trading' || segKey === 'service'
+                   ? inventory  // Trading/service: ALL stock is finished goods
+                   : segKey === 'manufacturing' ? organic(inventory * 0.30, rng)
+                   : organic(inventory * 0.30, rng),
+      debtors: totalDebtors, debtorsUnder6M, debtorsOver6M,
       cashBank, loansAdv, reconAdj, totalCA, totalAssets,
       
       currentRatio: totalCA / Math.max(totalCL + bankBorrowings, 1),
       currentRatioExBank: totalCA / Math.max(totalCL, 1),
       dscr,
-      deRatio: (bankBorrowings + closingTermLoan) / Math.max(tnw, 1),
-      tolTnw: totalOutsideLiab / Math.max(tnw, 1),
+      assessedDebtService: debtServiceAssessment.assessedDebtService,
+      debtServiceBuffer: debtServiceAssessment.debtServiceBuffer,
+      deRatio: (bankBorrowings + closingTermLoan) / Math.max(finalTnw, 1),
+      tolTnw: totalOutsideLiab / Math.max(finalTnw, 1),
       bepPercentage: (bepSales / sales) * 100,
       facr: facr, 
       capacityUtil: currentUtil

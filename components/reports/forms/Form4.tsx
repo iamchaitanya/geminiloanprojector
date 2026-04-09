@@ -110,9 +110,13 @@ export default function Form4({ data, years, loanAmount }: { data: ProjectedYear
  <td className="px-6 py-3 pl-6 font-sans uppercase text-[10px]">15. ACTUAL/PROJECTED NET WORKING CAPITAL (NWC)</td>
  {data.map(d => <td key={d.year} className="px-6 py-3 text-right font-mono">{fmt(d.totalCA - (d.totalCL + d.bankBorrowings))}</td>)}
  </tr>
+ <tr className="text-[10px]">
+ <td className="px-6 py-1.5 pl-12 font-sans">Nayak MPBF (20% of Projected Sales)</td>
+ {data.map(d => <td key={d.year} className="px-6 py-1.5 text-right">{fmt(Math.floor(d.sales * 0.20))}</td>)}
+ </tr>
  <tr className="border-b border-black font-bold">
  <td className="px-6 py-4 pl-6 font-sans uppercase text-[11px]">16. ASSESSED BANK FINANCE (Req. Limits)</td>
- {data.map(d => <td key={d.year} className="px-6 py-4 text-right text-xl">{fmt(d.bankBorrowings)}</td>)}
+ {data.map(d => <td key={d.year} className="px-6 py-4 text-right text-xl">{fmt(Math.min(Math.floor(d.sales * 0.20), loanAmount))}</td>)}
  </tr>
  </tbody>
  </table>

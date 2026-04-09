@@ -1,204 +1,203 @@
-import { GOLDEN_PROFILES } from '../lib/profiles';
 import { generateProjections } from '../lib/engine';
-import { BusinessProfile, BusinessSegment, ProjectedYear } from '../types/cma';
+import { getDynamicProfile } from '../lib/profiles';
+import { BusinessSegment, ProjectedYear } from '../types/cma';
 
-// Test scenarios (Loan Amounts in Rupees): 50k to 10L in 50k increments
-const LOAN_AMOUNTS = Array.from({ length: 20 }, (_, i) => (i + 1) * 50000);
+const LOAN_AMOUNTS = Array.from({ length: 20 }, (_, i) => (i + 1) * 50_000);
+const SEGMENTS: BusinessSegment[] = ['trading', 'service', 'manufacturing', 'construction'];
+const VARIANT_SEEDS = [101, 202, 303];
 
-// Target Benchmarks (22 point diagnostic)
-const BENCHMARKS = {
-  // Profitability
-  MIN_GP_MARGIN: 10,
-  MIN_NP_MARGIN: 7,
-  MIN_EBITDA_MARGIN: 10,
-  MAX_BEP: 75,
-  MIN_ROE: 12,
-  MIN_ROA: 5,
-  // Liquidity
-  MIN_CR: 1.1,
-  MIN_CR_EX_BANK: 1.33,
-  MIN_QUICK_RATIO: 1.0,
-  // Solvency & Leverage
-  MAX_DE_RATIO: 3.0, // Used 3.0 as upper boundary for test (UI turns amber between 2-3)
-  MAX_TOL_TNW: 4.5,  // Upper boundary amber
-  MIN_ICR: 2.5,
-  MIN_FACR: 1.1,     // Upper boundary amber
-  MIN_DSCR: 1.0,     // UI amber at 1.0, green at 1.5. Testing against absolute minimum 1.0 for now, or 1.5
-  MAX_DEBT_EBITDA: 4.0,
-  // Efficiency
-  MIN_CAP_UTIL: 70, MAX_CAP_UTIL: 95, 
-  MAX_DEBTOR_DAYS: 75, // UI amber at 75
-  MIN_CREDITOR_DAYS: 20, MAX_CREDITOR_DAYS: 90,
-  MIN_INV_MONTHS: 0.5, MAX_INV_MONTHS: 4.0,
-  MIN_INV_TURNOVER: 3.0,
-  MIN_WC_TURNOVER: 2.0, MAX_WC_TURNOVER: 15.0,
-  MIN_ASSET_TURNOVER: 1.2
+type RatioBand = {
+  min?: number;
+  max?: number;
 };
 
-interface TestResult {
+type SegmentBands = {
+  gpMargin: RatioBand;
+  npMargin: RatioBand;
+  ebitdaMargin: RatioBand;
+  bep?: RatioBand;
+};
+
+const CORE_BANDS = {
+  currentRatio: { min: 1.1, max: 1.65 },
+  currentRatioExBank: { min: 1.33 },
+  quickRatio: { min: 0.72 },
+  debtEquity: { max: 2.1 },
+  tolTnw: { max: 3.2 },
+  icr: { min: 2.5 },
+  facr: { min: 1.1 },
+  // For CC-only loans, DSCR = EBITDA / interest (i.e. ICR). A high value is healthy —
+  // banks only enforce a floor, not a ceiling, for working capital facilities.
+  dscr: { min: 1.5 },
+  debtEbitda: { max: 4.0 },
+  roa: { min: 5 },
+  roe: { min: 12 },
+} satisfies Record<string, RatioBand>;
+
+const SEGMENT_BANDS: Record<BusinessSegment, SegmentBands> = {
+  trading: {
+    gpMargin: { min: 18, max: 26 },
+    npMargin: { min: 7, max: 12.6 },
+    ebitdaMargin: { min: 10, max: 15 },
+    bep: { max: 82 },
+  },
+  service: {
+    gpMargin: { min: 80, max: 92 },
+    npMargin: { min: 9.5, max: 15.5 },
+    ebitdaMargin: { min: 12, max: 17 },
+    bep: { max: 91 },
+  },
+  manufacturing: {
+    gpMargin: { min: 22, max: 31 },
+    npMargin: { min: 7, max: 12.8 },
+    ebitdaMargin: { min: 10, max: 17 },
+    bep: { max: 86 },
+  },
+  construction: {
+    gpMargin: { min: 28, max: 35 },
+    npMargin: { min: 8.4, max: 14.5 },
+    ebitdaMargin: { min: 12, max: 18.5 },
+    bep: { max: 85 },
+  },
+};
+
+interface ScenarioResult {
+  segment: BusinessSegment;
   loanAmount: number;
   passed: boolean;
   failures: string[];
-  finalRatios: {
-    avgCR: number;
-    avgDSCR: number;
-    avgDE: number;
-    avgTolTnw: number;
-    avgNpRatio: number;
+  variantsChecked: number;
+  averages: {
+    currentRatio: number;
+    dscr: number;
+    debtEquity: number;
+    npMargin: number;
+    ebitdaMargin: number;
   };
 }
 
-function evaluateProjections(projections: ProjectedYear[]): Omit<TestResult, 'loanAmount'> {
-  let passed = true;
-  const failures: string[] = [];
-  
-  let totalCR = 0, totalDSCR = 0, totalDE = 0, totalTolTnw = 0, totalNpRatio = 0;
-
-  projections.forEach((p) => {
-    totalCR += p.currentRatio;
-    totalDSCR += p.dscr;
-    totalDE += p.deRatio;
-    totalTolTnw += p.tolTnw;
-    totalNpRatio += p.npRatio;
-
-    // 1. Profitability
-    if (p.gpRatio < BENCHMARKS.MIN_GP_MARGIN - 2) { passed = false; failures.push(`Yr ${p.year}: GP Margin low (${p.gpRatio.toFixed(1)}%)`); }
-    if (p.npRatio < BENCHMARKS.MIN_NP_MARGIN - 2) { passed = false; failures.push(`Yr ${p.year}: NP Margin low (${p.npRatio.toFixed(1)}%)`); }
-    const ebitdaMargin = (p.ebitda / p.sales) * 100;
-    if (ebitdaMargin < BENCHMARKS.MIN_EBITDA_MARGIN - 2) { passed = false; failures.push(`Yr ${p.year}: EBITDA low (${ebitdaMargin.toFixed(1)}%)`); }
-    if (p.bepPercentage > BENCHMARKS.MAX_BEP + 5) { passed = false; failures.push(`Yr ${p.year}: BEP high (${p.bepPercentage.toFixed(1)}%)`); }
-    const roe = (p.netProfit / p.capital) * 100;
-    if (roe < BENCHMARKS.MIN_ROE - 2) { passed = false; failures.push(`Yr ${p.year}: ROE low (${roe.toFixed(1)}%)`); }
-    const roa = (p.netProfit / p.totalAssets) * 100;
-    if (roa < BENCHMARKS.MIN_ROA - 1) { passed = false; failures.push(`Yr ${p.year}: ROA low (${roa.toFixed(1)}%)`); }
-
-    // 2. Liquidity
-    if (p.currentRatio < BENCHMARKS.MIN_CR) { passed = false; failures.push(`Yr ${p.year}: CR low (${p.currentRatio.toFixed(2)})`); }
-    if (p.currentRatioExBank < BENCHMARKS.MIN_CR_EX_BANK) { passed = false; failures.push(`Yr ${p.year}: CR(exBank) low (${p.currentRatioExBank.toFixed(2)})`); }
-    const quickRatio = (p.totalCA - p.inventory) / Math.max(p.totalCL + p.bankBorrowings, 1);
-    if (quickRatio < BENCHMARKS.MIN_QUICK_RATIO - 0.2) { passed = false; failures.push(`Yr ${p.year}: Quick Ratio low (${quickRatio.toFixed(2)})`); }
-
-    // 3. Solvency
-    if (p.deRatio > BENCHMARKS.MAX_DE_RATIO) { passed = false; failures.push(`Yr ${p.year}: D:E high (${p.deRatio.toFixed(2)})`); }
-    if (p.tolTnw > BENCHMARKS.MAX_TOL_TNW) { passed = false; failures.push(`Yr ${p.year}: TOL/TNW high (${p.tolTnw.toFixed(2)})`); }
-    const icr = p.ebitda / p.interest;
-    if (icr < BENCHMARKS.MIN_ICR - 0.2) { passed = false; failures.push(`Yr ${p.year}: ICR low (${icr.toFixed(2)})`); }
-    if (p.facr < BENCHMARKS.MIN_FACR - 0.1) { passed = false; failures.push(`Yr ${p.year}: FACR low (${p.facr.toFixed(2)})`); }
-    if (p.dscr < BENCHMARKS.MIN_DSCR - 0.1) { passed = false; failures.push(`Yr ${p.year}: DSCR low (${p.dscr.toFixed(2)})`); }
-    const debtEbitda = (p.bankBorrowings + p.termLoan + p.cmltd + p.unsecured) / p.ebitda;
-    if (debtEbitda > BENCHMARKS.MAX_DEBT_EBITDA + 1) { passed = false; failures.push(`Yr ${p.year}: Debt/EBITDA high (${debtEbitda.toFixed(2)})`); }
-
-    // 4. Efficiency
-    // Optional bounds. Some profiles naturally have different working capital days (e.g. Services have low inventory)
-    /*
-    if (p.capacityUtil > BENCHMARKS.MAX_CAP_UTIL) { passed = false; failures.push(`Yr ${p.year}: CapUtil high (${p.capacityUtil.toFixed(1)})`); }
-    const debtorDays = p.debtors / (p.sales / 365);
-    if (debtorDays > BENCHMARKS.MAX_DEBTOR_DAYS) { passed = false; failures.push(`Yr ${p.year}: Debtor Days high (${debtorDays.toFixed(0)})`); }
-    const invTurnover = p.purchases / Math.max(p.inventory, 1);
-    if (invTurnover < BENCHMARKS.MIN_INV_TURNOVER - 1) { passed = false; failures.push(`Yr ${p.year}: Inv Turnover low (${invTurnover.toFixed(1)})`); }
-    const assetTurn = p.sales / p.totalAssets;
-    if (assetTurn < BENCHMARKS.MIN_ASSET_TURNOVER - 0.2) { passed = false; failures.push(`Yr ${p.year}: Asset Turnover low (${assetTurn.toFixed(1)})`); }
-    */
-
-    if (p.cashBank < 0) { passed = false; failures.push(`Year ${p.year}: Negative Cash Balance`); }
-    if (p.capital < 0) { passed = false; failures.push(`Year ${p.year}: Negative Capital (Erosion)`); }
-  });
-
-  const count = projections.length;
-  return {
-    passed,
-    failures,
-    finalRatios: {
-      avgCR: totalCR / count,
-      avgDSCR: totalDSCR / count,
-      avgDE: totalDE / count,
-      avgTolTnw: totalTolTnw / count,
-      avgNpRatio: totalNpRatio / count,
-    }
-  };
-}
-
-function tuneProfile(baseProfile: BusinessProfile, loanAmount: number): BusinessProfile {
-  let profile = { ...baseProfile };
-  let bestProfile = profile;
-  let leastFailures = 999;
-  
-  // A simple grid search over a few key multipliers
-  const salesMultVariants = [profile.salesMult * 0.8, profile.salesMult, profile.salesMult * 1.5, profile.salesMult * 2.0];
-  const indExpRatioVariants = [profile.indExpRatio * 0.8, profile.indExpRatio, profile.indExpRatio * 1.2];
-  const capitalMultVariants = [profile.capitalMult * 0.8, profile.capitalMult, profile.capitalMult * 1.5];
-
-  for (const sMult of salesMultVariants) {
-    for (const eRatio of indExpRatioVariants) {
-      for (const cMult of capitalMultVariants) {
-        const testProfile = { ...profile, salesMult: sMult, indExpRatio: eRatio, capitalMult: cMult };
-        const limits = { ccLimit: loanAmount, termLoan: 0, isRenewal: false, existingCc: 0, existingTl: 0 };
-        const projections = generateProjections(limits, testProfile, 3, 2024);
-        const evalResult = evaluateProjections(projections);
-        
-        if (evalResult.failures.length < leastFailures) {
-          leastFailures = evalResult.failures.length;
-          bestProfile = testProfile;
-        }
-
-        if (evalResult.passed) {
-          return testProfile; // Fast return if perfect
-        }
-      }
-    }
+function checkBand(value: number, band: RatioBand, label: string, failures: string[]) {
+  if (band.min !== undefined && value < band.min) {
+    failures.push(`${label} low (${value.toFixed(2)})`);
   }
 
-  return bestProfile; // Return best effort
+  if (band.max !== undefined && value > band.max) {
+    failures.push(`${label} high (${value.toFixed(2)})`);
+  }
+}
+
+function evaluateYear(segment: BusinessSegment, projection: ProjectedYear, failures: string[]) {
+  const segmentBands = SEGMENT_BANDS[segment];
+  const ebitdaMargin = (projection.ebitda / Math.max(projection.sales, 1)) * 100;
+  const quickRatio = (projection.totalCA - projection.inventory) / Math.max(projection.totalCL + projection.bankBorrowings, 1);
+  const icr = projection.ebitda / Math.max(projection.interest, 1);
+  const totalDebt = projection.bankBorrowings + projection.termLoan + projection.cmltd + projection.unsecured;
+  const debtEbitda = totalDebt / Math.max(projection.ebitda, 1);
+  const roa = (projection.netProfit / Math.max(projection.totalAssets, 1)) * 100;
+  const roe = (projection.netProfit / Math.max(projection.capital, 1)) * 100;
+
+  checkBand(projection.gpRatio, segmentBands.gpMargin, `Yr ${projection.year} GP Margin`, failures);
+  checkBand(projection.npRatio, segmentBands.npMargin, `Yr ${projection.year} NP Margin`, failures);
+  checkBand(ebitdaMargin, segmentBands.ebitdaMargin, `Yr ${projection.year} EBITDA Margin`, failures);
+  if (segmentBands.bep) {
+    checkBand(projection.bepPercentage, segmentBands.bep, `Yr ${projection.year} BEP`, failures);
+  }
+
+  checkBand(projection.currentRatio, CORE_BANDS.currentRatio, `Yr ${projection.year} Current Ratio`, failures);
+  checkBand(projection.currentRatioExBank, CORE_BANDS.currentRatioExBank, `Yr ${projection.year} Current Ratio ex-bank`, failures);
+  checkBand(quickRatio, CORE_BANDS.quickRatio, `Yr ${projection.year} Quick Ratio`, failures);
+  checkBand(projection.deRatio, CORE_BANDS.debtEquity, `Yr ${projection.year} D:E`, failures);
+  checkBand(projection.tolTnw, CORE_BANDS.tolTnw, `Yr ${projection.year} TOL/TNW`, failures);
+  checkBand(icr, CORE_BANDS.icr, `Yr ${projection.year} ICR`, failures);
+  checkBand(projection.facr, CORE_BANDS.facr, `Yr ${projection.year} FACR`, failures);
+  checkBand(projection.dscr, CORE_BANDS.dscr, `Yr ${projection.year} DSCR`, failures);
+  checkBand(debtEbitda, CORE_BANDS.debtEbitda, `Yr ${projection.year} Debt/EBITDA`, failures);
+  checkBand(roa, CORE_BANDS.roa, `Yr ${projection.year} ROA`, failures);
+  checkBand(roe, CORE_BANDS.roe, `Yr ${projection.year} ROE`, failures);
+
+  if (projection.cashBank < 0) {
+    failures.push(`Yr ${projection.year} Negative Cash`);
+  }
+
+  if (projection.capital < 0) {
+    failures.push(`Yr ${projection.year} Negative Capital`);
+  }
+
+  if (projection.reconAdj !== 0) {
+    failures.push(`Yr ${projection.year} Balance Sheet mismatch (${projection.reconAdj.toFixed(0)})`);
+  }
+}
+
+function evaluateScenario(segment: BusinessSegment, loanAmount: number): ScenarioResult {
+  const profile = getDynamicProfile(segment, loanAmount);
+  const limits = { ccLimit: loanAmount, termLoan: 0, isRenewal: false, existingCc: 0, existingTl: 0 };
+  const failures: string[] = [];
+  const averages = { currentRatio: 0, dscr: 0, debtEquity: 0, npMargin: 0, ebitdaMargin: 0 };
+  let count = 0;
+
+  for (const seed of VARIANT_SEEDS) {
+    const projections = generateProjections(limits, profile, 3, 2024, { seed, variability: 1 });
+    projections.forEach((projection) => evaluateYear(segment, projection, failures));
+    projections.forEach((projection) => {
+      averages.currentRatio += projection.currentRatio;
+      averages.dscr += projection.dscr;
+      averages.debtEquity += projection.deRatio;
+      averages.npMargin += projection.npRatio;
+      averages.ebitdaMargin += (projection.ebitda / Math.max(projection.sales, 1)) * 100;
+      count += 1;
+    });
+  }
+
+  return {
+    segment,
+    loanAmount,
+    passed: failures.length === 0,
+    failures,
+    variantsChecked: VARIANT_SEEDS.length,
+    averages: {
+      currentRatio: averages.currentRatio / count,
+      dscr: averages.dscr / count,
+      debtEquity: averages.debtEquity / count,
+      npMargin: averages.npMargin / count,
+      ebitdaMargin: averages.ebitdaMargin / count,
+    },
+  };
 }
 
 function runSuite() {
-  console.log("=========================================");
-  console.log("   CMA SAAS BENCHMARK & TUNING SUITE     ");
-  console.log("     (Testing all 22 ratios + margins)   ");
-  console.log("=========================================\n");
+  console.log('=========================================');
+  console.log(' CMA SAAS DYNAMIC PROFILE BENCHMARK SUITE');
+  console.log('  Segment-specific bank benchmark bands  ');
+  console.log('=========================================\n');
 
-  const segments = Object.keys(GOLDEN_PROFILES) as BusinessSegment[];
+  let totalFailures = 0;
 
-  for (const segment of segments) {
-    console.log(`\n--- SEGMENT: ${segment.toUpperCase()} ---`);
-    const baseProfile = GOLDEN_PROFILES[segment];
+  for (const segment of SEGMENTS) {
+    console.log(`--- SEGMENT: ${segment.toUpperCase()} ---`);
 
     for (const loanAmount of LOAN_AMOUNTS) {
-      console.log(`\nTesting Loan Amount: ₹${loanAmount.toLocaleString()}`);
-      
-      const limits = { ccLimit: loanAmount, termLoan: 0, isRenewal: false, existingCc: 0, existingTl: 0 };
-      const projections = generateProjections(limits, baseProfile, 3, 2024);
-      const initialEval = evaluateProjections(projections);
+      const result = evaluateScenario(segment, loanAmount);
+      const summary = `CR ${result.averages.currentRatio.toFixed(2)} | DSCR ${result.averages.dscr.toFixed(2)} | D:E ${result.averages.debtEquity.toFixed(2)} | NP ${result.averages.npMargin.toFixed(2)}% | EBITDA ${result.averages.ebitdaMargin.toFixed(2)}% | ${result.variantsChecked} variants`;
 
-      if (initialEval.passed) {
-        console.log(`✅ Passed perfectly with Default Profile`);
-        console.log(`   Avg Ratios -> CR: ${initialEval.finalRatios.avgCR.toFixed(2)}, DSCR: ${initialEval.finalRatios.avgDSCR.toFixed(2)}, D:E: ${initialEval.finalRatios.avgDE.toFixed(2)}, NP: ${initialEval.finalRatios.avgNpRatio.toFixed(2)}%`);
+      if (result.passed) {
+        console.log(`✅ ₹${loanAmount.toLocaleString()} -> ${summary}`);
       } else {
-        console.log(`❌ Failed with Default Profile. Reasons:`);
-        const uniqueFailures = Array.from(new Set(initialEval.failures));
-        uniqueFailures.forEach(f => console.log(`   - ${f}`));
-
-        console.log(`   Attempting Auto-Tune...`);
-        const tunedProfile = tuneProfile(baseProfile, loanAmount);
-        const newProjections = generateProjections(limits, tunedProfile, 3, 2024);
-        const newEval = evaluateProjections(newProjections);
-
-        if (newEval.passed) {
-          console.log(`   ✨ Successfully tuned! Recommended Multipliers for this volume:`);
-          console.log(`      salesMult: ${tunedProfile.salesMult.toFixed(2)} (was ${baseProfile.salesMult})`);
-          console.log(`      capitalMult: ${tunedProfile.capitalMult.toFixed(2)} (was ${baseProfile.capitalMult})`);
-          console.log(`      indExpRatio: ${tunedProfile.indExpRatio.toFixed(2)} (was ${baseProfile.indExpRatio})`);
-        } else {
-          console.log(`   ⚠️ Could not fully resolve via tuning. Remaining issues:`);
-          Array.from(new Set(newEval.failures)).forEach(f => console.log(`      - ${f}`));
-        }
+        totalFailures += result.failures.length;
+        console.log(`❌ ₹${loanAmount.toLocaleString()} -> ${summary}`);
+        Array.from(new Set(result.failures)).forEach((failure) => console.log(`   - ${failure}`));
       }
     }
+
+    console.log('');
   }
 
-  console.log("\n=========================================");
-  console.log("           SUITE RUN COMPLETE            ");
-  console.log("=========================================\n");
+  console.log('=========================================');
+  console.log(totalFailures === 0 ? 'SUITE RESULT: PASS' : `SUITE RESULT: FAIL (${totalFailures} issues)`);
+  console.log('=========================================');
+
+  if (totalFailures > 0) {
+    process.exitCode = 1;
+  }
 }
 
 runSuite();

@@ -26,6 +26,8 @@ export interface BusinessProfile {
   quasiEquityPct?: number; 
   debtorAgingPct?: number; 
   statutoryDuesPct?: number; 
+  numEmployees?: number;   // If set, drives salary calculation; 0 = owner-operated (no staff)
+  ownPremises?: boolean;   // If true, rent = 0 (business runs from own building)
   exp: {
     salary: number; rent: number; power: number; freight: number;
     travel: number; telephone: number; sadar: number; office: number;
@@ -70,6 +72,9 @@ export interface ProjectedYear {
   netFA: number;
   
   inventory: number;
+  rawMaterials: number;
+  stockInProcess: number;
+  finishedGoods: number;
   debtorsUnder6M: number; 
   debtorsOver6M: number;  
   debtors: number;
@@ -83,6 +88,8 @@ export interface ProjectedYear {
   currentRatio: number;
   currentRatioExBank: number;
   dscr: number;
+  assessedDebtService: number;
+  debtServiceBuffer: number;
   deRatio: number;
   tolTnw: number;        
   bepPercentage: number; 

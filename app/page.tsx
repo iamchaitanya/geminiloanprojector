@@ -38,7 +38,10 @@ export default function CMAApp() {
     // Granular Audit Fields
     instCap: 0, quasiEq: 60, debtorAge: 5, statDues: 40,
     expBase: { salary: 0, rent: 0, power: 0, freight: 0, travel: 0, telephone: 0, sadar: 0, office: 0, welfare: 0, misc: 0 },
-    optSens: false, optDepn: true, optCF: true, sealFirm: 'Srinivasa Tax Consultants'
+    optSens: false, optDepn: true, optCF: true, sealFirm: 'Srinivasa Tax Consultants',
+    // Business structure inputs
+    numEmployees: 1 as number | '',   // 0 = owner-operated, no staff on payroll
+    ownPremises: false,               // true = own building, rent = ₹0
   });
 
   const [isOverride, setIsOverride] = useState(false);
@@ -119,7 +122,10 @@ export default function CMAApp() {
       quasiEquityPct: f.quasiEq / 100,
       debtorAgingPct: f.debtorAge / 100,
       statutoryDuesPct: f.statDues / 100,
-      exp: normalizedExpRatios as any
+      exp: normalizedExpRatios as any,
+      // Business structure
+      numEmployees: typeof f.numEmployees === 'number' ? f.numEmployees : undefined,
+      ownPremises: f.ownPremises,
     }, f.projYears, f.baseYear);
     setProjections(results);
     setIsGenerated(true);
@@ -328,10 +334,62 @@ export default function CMAApp() {
                <div><label className="l-label text-blue-800">Annual Personal Drawings (₹)</label><input type="number" value={f.drawings} onChange={e => update('drawings', Number(e.target.value))} className="legacy-input" /></div>
                <div><label className="l-label text-blue-800">Gross Fixed Assets (Block) (₹)</label><input type="number" value={f.grossFA} onChange={e => update('grossFA', Number(e.target.value))} className="legacy-input" /></div>
                
-               <div className="md:col-span-4 grid grid-cols-1 md:grid-cols-3 gap-4 pt-6 border-t border-slate-50">
-                  <label className="chk-box"><input type="checkbox" checked={f.optSens} onChange={e => update('optSens', e.target.checked)} /> Sensitivity Analysis</label>
-                  <label className="chk-box"><input type="checkbox" checked={f.optDepn} onChange={e => update('optDepn', e.target.checked)} /> Depreciation Schedule</label>
-                  <label className="chk-box"><input type="checkbox" checked={f.optCF} onChange={e => update('optCF', e.target.checked)} /> Cash Flow Statement</label>
+               <div className="md:col-span-4 grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 pt-6 border-t border-slate-50">
+
+                  {/* ── Business Structure Inputs ── */}
+                  <div className="md:col-span-3 flex items-center gap-2 mb-1">
+                    <div className="w-2 h-4 bg-[#c8401a] rounded-full" />
+                    <h4 className="text-[10px] font-bold text-[#7a7567] uppercase tracking-widest">Business Structure</h4>
+                  </div>
+
+                  <div>
+                    <label className="l-label">No. of Employees on Payroll</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number" min="0" max="50"
+                        value={f.numEmployees}
+                        onChange={e => update('numEmployees', e.target.value === '' ? '' : Number(e.target.value))}
+                        className="legacy-input"
+                        placeholder="0 = owner-operated"
+                      />
+                    </div>
+                    <p className="text-[8px] text-[#9a8680] mt-1 italic">
+                      {f.numEmployees === 0 || f.numEmployees === '' ? '👤 Owner-operated — salary line will be minimal' : `👥 ${f.numEmployees} staff · ~₹${new Intl.NumberFormat('en-IN').format(Number(f.numEmployees) * 14000)}/mo projected`}
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="l-label">Business Premises</label>
+                    <div className="flex rounded overflow-hidden border border-[#ccc8be] w-full">
+                      <button
+                        type="button"
+                        onClick={() => update('ownPremises', false)}
+                        className={`flex-1 py-2 text-[11px] font-bold transition-all ${
+                          !f.ownPremises ? 'bg-[#0f0e0b] text-white' : 'bg-white text-[#7a7567] hover:bg-slate-50'
+                        }`}
+                      >
+                        🏪 Rented
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => update('ownPremises', true)}
+                        className={`flex-1 py-2 text-[11px] font-bold transition-all border-l border-[#ccc8be] ${
+                          f.ownPremises ? 'bg-[#0f0e0b] text-white' : 'bg-white text-[#7a7567] hover:bg-slate-50'
+                        }`}
+                      >
+                        🏠 Own Building
+                      </button>
+                    </div>
+                    <p className="text-[8px] text-[#9a8680] mt-1 italic">
+                      {f.ownPremises ? 'Rent = ₹0 — building appears as Fixed Asset' : 'Market rent will be projected based on business size'}
+                    </p>
+                  </div>
+
+                  <div className="md:col-span-3 grid grid-cols-3 gap-4 pt-4 border-t border-slate-100">
+                    <label className="chk-box"><input type="checkbox" checked={f.optSens} onChange={e => update('optSens', e.target.checked)} /> Sensitivity Analysis</label>
+                    <label className="chk-box"><input type="checkbox" checked={f.optDepn} onChange={e => update('optDepn', e.target.checked)} /> Depreciation Schedule</label>
+                    <label className="chk-box"><input type="checkbox" checked={f.optCF} onChange={e => update('optCF', e.target.checked)} /> Cash Flow Statement</label>
+                  </div>
                </div>
             </div>
           )}
