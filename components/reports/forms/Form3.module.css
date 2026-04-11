@@ -24,6 +24,11 @@
   color: #000;
 }
 
+/* Rows that are always zero — visible on screen, hidden when printing */
+.zeroRow {
+  /* screen: show normally */
+}
+
 @media print {
   .table {
     min-width: 0;
@@ -34,5 +39,10 @@
   .colParticulars {
     min-width: 0;
     width: auto;
+  }
+
+  /* Hide always-zero rows on print to fit Form III on one A4 page */
+  .zeroRow {
+    display: none;
   }
 }

@@ -3,6 +3,7 @@ import React from "react";
 import { ProjectedYear } from "../../../lib/engine";
 import { fmt, fmtR } from "../../../lib/format";
 import s from "../shared.module.css";
+import own from "./Form3.module.css";
 
 // Row helper — declared outside Form3 to avoid react-hooks/static-components warning
 interface RProps {
@@ -11,10 +12,11 @@ interface RProps {
   bold?: boolean;
   indent?: number;
   num?: string;
+  zero?: boolean;
 }
-function R({ label, vals, bold, indent = 40, num }: RProps) {
+function R({ label, vals, bold, indent = 40, num, zero }: RProps) {
   return (
-    <tr className={bold ? s.subtotalRow : s.detailRow}>
+    <tr className={`${bold ? s.subtotalRow : s.detailRow}${zero ? ` ${own.zeroRow}` : ""}`}>
       <td className={s.tdParticulars}>
         <span style={{ marginLeft: `${indent}px`, display: 'inline-block' }}>
           {num ? `${num}) ` : ""}{label}
@@ -66,12 +68,12 @@ export default function Form3({ data, years }: { data: ProjectedYear[]; years: s
             <tr className={s.sectionHeader}>
               <td colSpan={ncols}>I. Current Liabilities</td>
             </tr>
-            <R num="1" label="Raw Materials, Stores and Spares" vals={data.map(() => fmt(0))} />
+            <R num="1" label="Raw Materials, Stores and Spares" vals={data.map(() => fmt(0))} zero />
             <R num="2" label="Short-Term Borrowings from Banks (WC Limits)" vals={data.map((d) => fmt(d.bankBorrowings))} bold />
             <R num="3" label="Sundry Creditors (Trade Payables)" vals={data.map((d) => fmt(d.creditors))} />
-            <R num="4" label="Advance Payments from Customers" vals={data.map(() => "0")} />
+            <R num="4" label="Advance Payments from Customers" vals={data.map(() => "0")} zero />
             <R num="5" label="Provision for Taxation" vals={data.map((d) => d.tax === 0 ? "0" : fmt(d.tax))} />
-            <R num="6" label="Dividend Payable" vals={data.map(() => "0")} />
+            <R num="6" label="Dividend Payable" vals={data.map(() => "0")} zero />
             <R num="7" label="Statutory Liabilities (GST/PF/TDS Payable)" vals={data.map((d) => fmt(d.statutoryDues))} />
             <R num="8" label="Instalments of Term Loans Due within 1 Year (CMLTD)" vals={data.map((d) => fmt(d.cmltd))} />
             <R num="9" label="Other Current Liabilities and Provisions" vals={data.map((d) => fmt(d.otherCL))} />
@@ -86,11 +88,11 @@ export default function Form3({ data, years }: { data: ProjectedYear[]; years: s
             <tr className={s.sectionHeader}>
               <td colSpan={ncols}>II. Term Liabilities (Long Term)</td>
             </tr>
-            <R num="11" label="Debentures (Not Maturing within One Year)" vals={data.map(() => "0")} />
-            <R num="12" label="Preference Shares (Redeemable after One Year)" vals={data.map(() => "0")} />
+            <R num="11" label="Debentures (Not Maturing within One Year)" vals={data.map(() => "0")} zero />
+            <R num="12" label="Preference Shares (Redeemable after One Year)" vals={data.map(() => "0")} zero />
             <R num="13" label="Term Loans (Excl. Current Instalments)" vals={data.map((d) => fmt(d.termLoan))} />
-            <R num="14" label="Deferred Payment Credits" vals={data.map(() => "0")} />
-            <R num="15" label="Fixed Deposits (Maturing after One Year)" vals={data.map(() => "0")} />
+            <R num="14" label="Deferred Payment Credits" vals={data.map(() => "0")} zero />
+            <R num="15" label="Fixed Deposits (Maturing after One Year)" vals={data.map(() => "0")} zero />
             <R num="16" label="Unsecured Loans / Quasi-Equity Additions" vals={data.map((d) => fmt(d.unsecured))} />
             <tr className={s.subtotalRow}>
               <td className={s.tdParticulars}>
@@ -110,10 +112,10 @@ export default function Form3({ data, years }: { data: ProjectedYear[]; years: s
               <td colSpan={ncols}>III. Net Worth / Promoter Funds</td>
             </tr>
             <R num="19" label="Proprietor's / Partners / Share Capital" vals={data.map((d) => fmt(d.capital))} bold />
-            <R num="20" label="Preference Share Capital" vals={data.map(() => "0")} />
-            <R num="21" label="General Reserves" vals={data.map(() => "0")} />
-            <R num="22" label="Revaluation Reserves" vals={data.map(() => "0")} />
-            <R num="23" label="Other Reserves (Excl. Provisions)" vals={data.map(() => "0")} />
+            <R num="20" label="Preference Share Capital" vals={data.map(() => "0")} zero />
+            <R num="21" label="General Reserves" vals={data.map(() => "0")} zero />
+            <R num="22" label="Revaluation Reserves" vals={data.map(() => "0")} zero />
+            <R num="23" label="Other Reserves (Excl. Provisions)" vals={data.map(() => "0")} zero />
             <R num="24" label="Surplus / Deficit in P & L Account" vals={data.map((d) => fmt(d.netProfit))} />
             <tr className={s.subtotalRow}>
               <td className={s.tdParticulars}>
@@ -138,14 +140,14 @@ export default function Form3({ data, years }: { data: ProjectedYear[]; years: s
               </td>
               {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.netFA)}</td>)}
             </tr>
-            <R num="30" label="Capital Work-in-Progress" vals={data.map(() => "0")} />
+            <R num="30" label="Capital Work-in-Progress" vals={data.map(() => "0")} zero />
 
             {/* V. NON-CURRENT ASSETS */}
             <tr className={s.sectionHeader}>
               <td colSpan={ncols}>V. Non-Current Assets</td>
             </tr>
-            <R num="31" label="Investments (Long-Term)" vals={data.map(() => "0")} />
-            <R num="32" label="Other Non-Current Assets (Incl. Deposits)" vals={data.map(() => "0")} />
+            <R num="31" label="Investments (Long-Term)" vals={data.map(() => "0")} zero />
+            <R num="32" label="Other Non-Current Assets (Incl. Deposits)" vals={data.map(() => "0")} zero />
 
             {/* VI. CURRENT ASSETS */}
             <tr className={s.sectionHeader}>
@@ -154,11 +156,11 @@ export default function Form3({ data, years }: { data: ProjectedYear[]; years: s
             <R num="33" label="Raw Materials (Stores & Spares)" vals={data.map((d) => fmt(d.rawMaterials))} />
             <R num="34" label="Stocks-in-Process" vals={data.map((d) => fmt(d.stockInProcess))} />
             <R num="35" label="Finished Goods" vals={data.map((d) => fmt(d.finishedGoods))} />
-            <R num="36" label="Other Spares (Consumables)" vals={data.map(() => "0")} />
+            <R num="36" label="Other Spares (Consumables)" vals={data.map(() => "0")} zero />
             <R num="37" label="Receivables (Trade Debtors) < 6 Months" vals={data.map((d) => fmt(d.debtorsUnder6M))} />
             <R num="38" label="Receivables (Trade Debtors) > 6 Months" vals={data.map((d) => fmt(d.debtorsOver6M))} />
             <R num="39" label="Total Receivables (37 + 38)" vals={data.map((d) => fmt(d.debtors))} bold />
-            <R num="40" label="Bills Purchased and Discounted" vals={data.map(() => "0")} />
+            <R num="40" label="Bills Purchased and Discounted" vals={data.map(() => "0")} zero />
             <R num="41" label="Cash and Bank Balances" vals={data.map((d) => fmt(d.cashBank))} />
             <R num="42" label="Advances to Suppliers / Other Current Assets" vals={data.map((d) => fmt(d.loansAdv + d.reconAdj))} />
             <tr className={s.subtotalRow}>
@@ -176,7 +178,7 @@ export default function Form3({ data, years }: { data: ProjectedYear[]; years: s
             <tr className={s.sectionHeader}>
               <td colSpan={ncols}>VII. Valuation &amp; Liquidity Audit</td>
             </tr>
-            <R num="45" label="Less: Intangible Assets" vals={data.map(() => "0")} />
+            <R num="45" label="Less: Intangible Assets" vals={data.map(() => "0")} zero />
             <tr className={s.subtotalRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '20px', display: 'inline-block' }}>46) Tangible Net Worth (TNW) (25 - 45)</span>
