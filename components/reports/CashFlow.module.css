@@ -1,107 +1,29 @@
-/* CashFlow.module.css — scoped styles for the Cash Flow Statement */
+/* ============================================================
+   CashFlow.module.css
+   Overrides for the Cash Flow Statement report ONLY.
+   Import alongside shared.module.css in CashFlow.tsx.
 
+   Usage in CashFlow.tsx:
+     import s from './shared.module.css';
+     import own from './CashFlow.module.css';
+   ============================================================ */
+
+/* Table width — Cash Flow is narrower than P&L */
 .table {
-  width: 100%;
-  min-width: 900px;
-  border-collapse: collapse;
-  border: 2px solid #000;
-  font-family: "Times New Roman", Times, serif;
-  font-size: var(--report-font-size) !important;
-  background: #fff;
-  color: #000;
+  min-width: 820px;
 }
 
-.table th {
-  font-size: var(--header-font-size) !important;
-}
-
-.table td {
-  padding: 5px 12px;
-  vertical-align: middle;
-  border-top: none;
-  border-bottom: none;
-  border-left: 1px solid #000;
-  border-right: 1px solid #000;
-  background: #fff;
-  color: #000;
-  font-family: "Times New Roman", Times, serif;
-  font-size: var(--report-font-size) !important;
-  line-height: 1.5;
-  font-style: normal;
-}
-
-.table thead th {
-  font-weight: bold;
-  text-align: center;
-  border-top: none;
-  border-bottom: 2px solid #000;
-  white-space: nowrap;
-  font-size: var(--header-font-size) !important;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
+/* Particulars column */
 .colParticulars {
-  text-align: left !important;
-  width: 32%;
+  width: 34%;
   min-width: 280px;
 }
 
-.tdParticulars { text-align: left; white-space: normal; }
-.tdValue {
-  text-align: center;
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: 'tnum' 1;
-}
-
-/* ── MAJOR SECTION HEADERS — bold + underline, no shading ─── */
-.sectionHeader td {
-  font-weight: 700;
-  text-decoration: underline;
-  text-align: left;
-  padding: 6px 12px;
-  border-top: 1px solid #000 !important;
-  border-bottom: 1px solid #000 !important;
-  border-left: none !important;
-  border-right: none !important;
-  background: #fff !important;
-}
-
-/* ── Working capital adjustment rows — normal weight ─────── */
-.adjustRow td {
-  font-weight: 400;
-  color: #000;
-  background: #fff !important;
-}
-
-/* ── Section subtotals ────────────────────────────────────── */
-.subtotalRow td {
-  font-weight: 700;
-  border-top: 1px solid #000 !important;
-  border-bottom: 1px solid #000 !important;
-  background: #fff !important;
-}
-
-/* ── Grand total (Closing Cash Balance) ───────────────────── */
-.grandTotalRow td {
-  font-weight: 700;
-  border-top: 2px solid #000 !important;
-  border-bottom: 2px solid #000 !important;
-  background: #fff !important;
-}
-
-/* ── Detail line items ────────────────────────────────────── */
-.detailRow td {
-  font-weight: 400;
-  background: #fff !important;
-}
-
+/* Section spacer */
 .spacerRow {
   height: 12px;
-  background: #fff;
 }
 .spacerRow td {
-  border-left: none !important;
-  border-right: none !important;
+  border-left: none;
+  border-right: none;
 }

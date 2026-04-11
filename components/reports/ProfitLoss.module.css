@@ -1,138 +1,25 @@
-/* ProfitLoss.module.css
-   Scoped table styles for the Profit & Loss report.
-   Traditional CA / bank-grade format.
-   ─────────────────────────────────────────────────────── */
+/* ============================================================
+   ProfitLoss.module.css
+   Overrides for the Profit & Loss report ONLY.
+   Import alongside shared.module.css in ProfitLoss.tsx.
 
+   Usage in ProfitLoss.tsx:
+     import s from './shared.module.css';
+     import own from './ProfitLoss.module.css';
+   ============================================================ */
+
+/* Table width — P&L has up to 5 year columns */
 .table {
-  width: 100%;
-  min-width: 900px;
-  border-collapse: collapse;
-  border: 2px solid #000;
-  font-family: "Times New Roman", Times, serif;
-  font-size: var(--report-font-size) !important;
-  background: #fff;
-  color: #000;
+  min-width: 860px;
 }
 
-/* ── All cells: NO horizontal lines by default ───────────── */
-.table th {
-  font-size: var(--header-font-size) !important;
-}
-
-.table td {
-  padding: 5px 12px;
-  vertical-align: middle;
-  border-top: none;
-  border-bottom: none;
-  border-left: 1px solid #000;
-  border-right: 1px solid #000;
-  background: #fff;
-  color: #000;
-  font-family: "Times New Roman", Times, serif;
-  font-size: var(--report-font-size) !important;
-  line-height: 1.5;
-  font-style: normal;
-}
-
-/* ── Column header row ───────────────────────────────────── */
-.table thead th {
-  font-weight: bold;
-  text-align: center;
-  border-top: none;
-  border-bottom: 2px solid #000;
-  white-space: nowrap;
-  font-size: var(--header-font-size) !important;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-.table thead th.colParticulars {
-  text-align: left;
-  width: 32%;
-  min-width: 280px;
-}
-
-/* ── Data cells ──────────────────────────────────────────── */
-.table tbody td {
-  font-weight: normal;
-}
-
-.table tbody td.tdParticulars {
-  text-align: left;
-  white-space: normal;
-}
-
-.tdValue {
-  text-align: center;
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: 'tnum' 1;
-}
-
+/* Particulars column — slightly wider for longer expense labels */
 .colParticulars {
-  text-align: left !important;
-  width: 32%;
+  width: 34%;
   min-width: 280px;
 }
 
-.tdParticulars {
-  text-align: left;
-  white-space: normal;
-}
-
-/* ── MAJOR SECTION HEADER rows — bold + underline, no shading ─── */
-.sectionHeader td {
-  font-weight: 700;
-  text-decoration: underline;
-  text-align: left;
-  padding: 6px 12px;
-  border-top: 1px solid #000 !important;
-  border-bottom: 1px solid #000 !important;
-  border-left: none !important;
-  border-right: none !important;
-  background: #fff !important;
-}
-
-/* ── Subtotal rows (bold, thin top/bottom rule) ──────────────── */
-.subtotalRow td {
-  font-weight: 700;
-  border-top: 1px solid #000 !important;
-  border-bottom: 1px solid #000 !important;
-  background: #fff !important;
-}
-
-/* ── Grand total rows (bold, thicker rule) ───────────────────── */
-.grandTotalRow td {
-  font-weight: 700;
-  border-top: 2px solid #000 !important;
-  border-bottom: 2px solid #000 !important;
-  background: #fff !important;
-}
-
-/* ── Detail line items — normal weight ───────────────────────── */
-.detailRow td {
-  font-weight: 400;
-  background: #fff !important;
-}
-
-/* ── Ratio / percentage rows — normal weight, normal colour ──── */
-.ratioRow td {
-  font-weight: 400;
-  color: #000;
-  font-size: var(--report-font-size) !important;
-  background: #fff !important;
-}
-
-/* ── Sub-item rows (indented items) ──────────────────────────── */
-.subRow td.tdParticulars {
-  padding-left: 28px;
-}
-
-/* ── Spacer rows ─────────────────────────────────────────────── */
-.spacerRow {
-  height: 12px;
-}
-.spacerRow td {
-  border-left: none !important;
-  border-right: none !important;
+/* Indirect expense sub-items — deeper indent */
+.indirectRow td.tdParticulars {
+  padding-left: 48px;
 }

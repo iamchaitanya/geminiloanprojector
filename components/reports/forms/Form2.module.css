@@ -1,0 +1,55 @@
+/* ============================================================
+   Form2.module.css
+   Overrides for CMA Form II — Operating Statement
+   (Projected Performance).
+   Import alongside shared.module.css in Form2.tsx.
+
+   Usage in Form2.tsx:
+     import s from '../shared.module.css';
+     import own from './Form2.module.css';
+   ============================================================ */
+
+/* Form II is the widest form — many year columns */
+.table {
+  min-width: 960px;
+}
+
+/* Particulars column */
+.colParticulars {
+  width: 32%;
+  min-width: 280px;
+}
+
+/* Footnote / internal audit block — hidden on print */
+.footnoteBlock {
+  padding: 16px 24px;
+  border-top: 1px solid #000;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  font-family: "Times New Roman", Times, serif;
+}
+
+.footnoteText {
+  font-size: 9px;
+  line-height: 1.6;
+  max-width: 600px;
+  color: #000;
+}
+
+.auditNote {
+  text-align: center;
+  font-size: 9px;
+  color: #000;
+}
+
+.auditNoteTitle {
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+@media print {
+  .footnoteBlock {
+    display: none;
+  }
+}

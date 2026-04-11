@@ -1,0 +1,39 @@
+/* ============================================================
+   Depreciation.module.css
+   Overrides for the Depreciation Schedule report ONLY.
+   Import alongside shared.module.css in Depreciation.tsx.
+
+   Usage in Depreciation.tsx:
+     import s from './shared.module.css';
+     import own from './Depreciation.module.css';
+   ============================================================ */
+
+/* Depreciation has many asset-wise columns — needs wider table */
+.table {
+  min-width: 1000px;
+}
+
+/* Tighter cell padding for dense asset rows */
+.table td {
+  padding: 2px 8px;
+}
+
+/* Asset name column */
+.colAsset {
+  text-align: left;
+  width: 28%;
+  min-width: 220px;
+}
+
+/* Asset name cell */
+.tdAsset {
+  text-align: left;
+  white-space: normal;
+}
+
+/* Rate column — narrower */
+.colRate {
+  text-align: center;
+  width: 7%;
+  min-width: 60px;
+}

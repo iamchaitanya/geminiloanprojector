@@ -1,103 +1,77 @@
-/* RatioAnalysis.module.css — scoped styles for Ratio Analysis & Benchmarks */
+/* ============================================================
+   RatioAnalysis.module.css
+   Overrides for the Ratio Analysis report ONLY.
+   Import alongside shared.module.css in RatioAnalysis.tsx.
 
+   Usage in RatioAnalysis.tsx:
+     import s from './shared.module.css';
+     import own from './RatioAnalysis.module.css';
+   ============================================================ */
+
+/* Table width */
 .table {
-  width: 100%;
   min-width: 900px;
-  border-collapse: collapse;
-  border: 2px solid #000;
-  font-family: "Times New Roman", Times, serif;
-  font-size: var(--report-font-size) !important;
-  background: #fff;
-  color: #000;
 }
 
-.table th {
-  font-size: var(--header-font-size) !important;
-}
-
-.table td {
-  padding: 5px 12px;
-  vertical-align: middle;
-  border-top: none;
-  border-bottom: none;
-  border-left: 1px solid #000;
-  border-right: 1px solid #000;
-  background: #fff;
-  color: #000;
-  font-family: "Times New Roman", Times, serif;
-  font-size: var(--report-font-size) !important;
-  line-height: 1.5;
-  font-style: normal;
-}
-
-.table thead th {
-  font-weight: bold;
-  text-align: center;
-  border-top: none;
-  border-bottom: 2px solid #000;
-  white-space: nowrap;
-  font-size: var(--header-font-size) !important;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
+/* Description column (label column in Ratio Analysis) */
 .colDescription {
-  text-align: left !important;
+  text-align: left;
   width: 32%;
   min-width: 280px;
 }
 
+/* Benchmark column header */
 .colBenchmark {
-  text-align: right !important;
+  text-align: right;
   white-space: nowrap;
-  font-size: var(--header-font-size) !important;
-  color: #000;
 }
 
-.tdDescription { text-align: left; white-space: normal; }
+/* Description cell */
+.tdDescription {
+  text-align: left;
+  white-space: normal;
+}
+
+/* Ratio value cell — bold numerics */
 .tdValue {
   text-align: center;
   white-space: nowrap;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
   font-feature-settings: 'tnum' 1;
-  font-weight: 700;
 }
 
+/* Benchmark value cell — right-aligned, small */
 .tdBenchmark {
   text-align: right;
   white-space: nowrap;
-  font-size: 10px;
+  font-size: 9px;
   color: #000;
 }
 
-/* ── Group header rows (Profitability, Liquidity, etc.) ──── */
-/* bold + underline; NO background shading, NO forced uppercase */
+/* Group header row (Profitability, Liquidity, etc.) */
 .groupRow td {
   font-weight: 700;
   text-decoration: underline;
   text-align: left;
-  padding: 6px 12px;
-  border-top: 1px solid #000 !important;
-  border-bottom: 1px solid #000 !important;
-  border-left: none !important;
-  border-right: none !important;
-  background: #fff !important;
-}
-
-/* ── Ratio rows — normal weight ──────────────────────────── */
-.ratioRow td {
-  font-weight: 400;
+  padding: 5px 10px;
+  border-top: 1px solid #000;
+  border-bottom: 1px solid #000;
+  border-left: none;
+  border-right: none;
+  background: #fff;
   color: #000;
-  background: #fff !important;
 }
 
+/* Individual ratio row — indented label */
 .ratioRow td.tdDescription {
   padding-left: 24px;
 }
 
+/* Hide benchmark column when printing */
 @media print {
   .colBenchmark,
   .tdBenchmark {
-    display: none !important;
+    display: none;
   }
 }

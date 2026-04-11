@@ -1,0 +1,34 @@
+/* ============================================================
+   Form4.module.css
+   Overrides for CMA Form IV — Comparative Statement of
+   Current Assets & Liabilities (Working Capital Analysis).
+   Import alongside shared.module.css in Form4.tsx.
+
+   Usage in Form4.tsx:
+     import s from '../shared.module.css';
+     import own from './Form4.module.css';
+   ============================================================ */
+
+/* Form IV — working capital statement, moderately wide */
+.table {
+  min-width: 900px;
+}
+
+/* Particulars column */
+.colParticulars {
+  width: 36%;
+  min-width: 300px;
+}
+
+/* Sub-classification rows (Imported / Indigenous split) */
+.subClassRow td.tdParticulars {
+  padding-left: 64px;
+}
+
+/* Nayak / Tandon method row — distinct from regular detail */
+.methodRow td {
+  font-weight: 400;
+  font-style: italic;
+  background: #fff;
+  color: #000;
+}

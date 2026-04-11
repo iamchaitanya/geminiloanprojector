@@ -1,146 +1,246 @@
-/* shared.module.css
-   Shared CA-grade table styles for all CMA Forms, Depreciation & Assumptions.
-   Each file imports this; it is NOT a global — Next.js CSS Modules scope it to each component.
-   ─────────────────────────────────────────────────────────────────────────── */
+/* ============================================================
+   shared.module.css
+   Single source of truth for ALL CMA report tables.
+   Imported by every report component and every Form.
+   To change font size across ALL reports → edit the variables
+   at the top of this file only.
+   ============================================================ */
 
+/* ── FONT SIZE VARIABLES ─────────────────────────────────────
+   Change these two values to resize text across all reports.
+   Screen values are used in browser; print values override
+   them when the user prints the document.
+   ─────────────────────────────────────────────────────────── */
+:root {
+  --r-body:   9.5pt;   /* table body cells            */
+  --r-header: 8.5pt;   /* column header (thead th)    */
+  --r-small:  8pt;     /* info rows, footnotes        */
+}
+
+@media print {
+  :root {
+    --r-body:   10pt;
+    --r-header: 9pt;
+    --r-small:  8.5pt;
+  }
+}
+
+/* ── TABLE BASE ──────────────────────────────────────────────
+   All reports share the same border-box, font stack,
+   background and colour. Width / min-width are set
+   per-component so each form can breathe at its own size.
+   ─────────────────────────────────────────────────────────── */
 .table {
   width: 100%;
-  min-width: 900px;
   border-collapse: collapse;
   border: 2px solid #000;
   font-family: "Times New Roman", Times, serif;
-  font-size: var(--report-font-size) !important;
+  font-size: var(--r-body);
   background: #fff;
   color: #000;
 }
 
-.table th {
-  font-size: var(--header-font-size) !important;
+/* ── THEAD ───────────────────────────────────────────────────
+   Column headers: bold, centred, uppercase, 2px bottom rule.
+   ─────────────────────────────────────────────────────────── */
+.table thead th {
+  font-family: "Times New Roman", Times, serif;
+  font-size: var(--r-header);
+  font-weight: 700;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  padding: 5px 12px;
+  border-bottom: 2px solid #000;
+  background: #fff;
+  color: #000;
 }
 
+/* ── TD DEFAULT ──────────────────────────────────────────────
+   All body cells: vertical grid lines only (no horizontal
+   rules by default — row classes add them selectively).
+   ─────────────────────────────────────────────────────────── */
 .table td {
-  padding: 5px 12px;
+  font-family: "Times New Roman", Times, serif;
+  font-size: var(--r-body);
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1.5;
   vertical-align: middle;
-  border-top: none;
-  border-bottom: none;
+  padding: 3px 10px;
   border-left: 1px solid #000;
   border-right: 1px solid #000;
   background: #fff;
   color: #000;
-  font-family: "Times New Roman", Times, serif;
-  font-size: var(--report-font-size) !important;
-  line-height: 1.5;
-  font-style: normal;
 }
 
-/* Column header row */
-.table thead th {
-  font-weight: bold;
-  text-align: center;
-  border-top: none;
-  border-bottom: 2px solid #000;
-  white-space: nowrap;
-  font-size: var(--header-font-size) !important;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
+/* ── COLUMN HELPERS ──────────────────────────────────────────
+   .colParticulars  — applied to <col> or <th> for label column
+   .colValue        — applied to <col> or <th> for numeric columns
+   ─────────────────────────────────────────────────────────── */
 .colParticulars {
-  text-align: left !important;
+  text-align: left;
   width: 32%;
-  min-width: 280px;
+  min-width: 260px;
 }
 
+.colValue {
+  text-align: center;
+}
+
+/* ── CELL HELPERS ────────────────────────────────────────────
+   Applied directly to <td> elements.
+   ─────────────────────────────────────────────────────────── */
 .tdParticulars {
   text-align: left;
   white-space: normal;
 }
 
 .tdValue {
-  text-align: center;
+  text-align: right;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
   font-feature-settings: 'tnum' 1;
 }
 
-/* ── PAGE TITLE — ALL CAPS, bold (used as a full-width title row) ─── */
-.pageTitle td {
-  font-weight: 700;
-  text-transform: uppercase;
-  font-size: var(--report-font-size) !important;
-  text-align: left;
-  padding: 6px 12px;
-}
+/* ── ROW TYPES ───────────────────────────────────────────────
+   Apply these classes to <tr> elements.
+   None of these use !important — specificity is sufficient
+   because CSS Modules generates unique class names.
 
-/* ── MAJOR SECTION HEADERS (e.g. "1) Income / Revenue") ─────────── */
-/* bold + underline; NO background shading, NO forced uppercase       */
+   Hierarchy (visual weight top → bottom):
+     grandTotalRow  — 2px top + bottom, bold
+     subtotalRow    — 1px top + bottom, bold
+     sectionHeader  — 1px top + bottom, bold, underline, no side borders
+     detailRow      — no borders, normal weight
+     ratioRow       — no borders, normal weight (% / metric rows)
+     infoRow        — no borders, small font (annotations)
+     adjustRow      — no borders, normal weight (WC adj rows)
+     spacerRow      — empty separator row
+   ─────────────────────────────────────────────────────────── */
+
+/* Section header — bold underline, full-width spanning cells */
 .sectionHeader td {
   font-weight: 700;
+  font-size: var(--r-body);
   text-decoration: underline;
   text-align: left;
-  padding: 6px 12px;
-  border-top: 1px solid #000 !important;
-  border-bottom: 1px solid #000 !important;
-  border-left: none !important;
-  border-right: none !important;
-  background: #fff !important;
+  padding: 5px 10px;
+  border-top: 1px solid #000;
+  border-bottom: 1px solid #000;
+  border-left: none;
+  border-right: none;
+  background: #fff;
+  color: #000;
 }
 
-/* ── SUBTOTAL ROWS ────────────────────────────────────────────────── */
+/* Subsection header — bold only, no underline */
+.subsectionHeader td {
+  font-weight: 700;
+  font-size: var(--r-body);
+  text-align: left;
+  padding: 3px 10px;
+  background: #fff;
+  color: #000;
+}
+
+/* Subtotal row — 1px top and bottom border */
 .subtotalRow td {
   font-weight: 700;
-  border-top: 1px solid #000 !important;
-  border-bottom: 1px solid #000 !important;
-  background: #fff !important;
+  font-size: var(--r-body);
+  border-top: 1px solid #000;
+  border-bottom: 1px solid #000;
+  background: #fff;
+  color: #000;
 }
 
-/* ── GRAND TOTAL ROWS ────────────────────────────────────────────── */
+/* Grand total row — 2px top and bottom border */
 .grandTotalRow td {
   font-weight: 700;
-  border-top: 2px solid #000 !important;
-  border-bottom: 2px solid #000 !important;
-  background: #fff !important;
+  font-size: var(--r-body);
+  border-top: 2px solid #000;
+  border-bottom: 2px solid #000;
+  background: #fff;
+  color: #000;
 }
 
-/* ── DETAIL LINE ITEMS — normal weight ───────────────────────────── */
+/* Detail row — normal weight, no extra border */
 .detailRow td {
   font-weight: 400;
-  background: #fff !important;
+  font-size: var(--r-body);
+  background: #fff;
+  color: #000;
 }
 
-/* ── RATIO / PERCENTAGE ROWS — normal weight, normal colour ─────── */
+/* Ratio / percentage annotation row */
 .ratioRow td {
   font-weight: 400;
+  font-size: var(--r-body);
+  background: #fff;
   color: #000;
-  background: #fff !important;
-  font-size: var(--report-font-size) !important;
 }
 
-/* ── INFO ROWS (e.g. holding-period annotations) ─────────────────── */
+/* Info row — smaller text, used for holding-period / day annotations */
 .infoRow td {
   font-weight: 400;
-  font-size: var(--report-font-size) !important;
+  font-size: var(--r-small);
+  background: #fff;
   color: #000;
-  background: #fff !important;
 }
 
-/* ── Sub-item indented rows ──────────────────────────────────────── */
-.subRow td.tdParticulars {
-  padding-left: 28px !important;
-}
-
-/* ── Spacer rows ─────────────────────────────────────────────────── */
-.spacerRow {
-  height: 12px;
-}
-.spacerRow td {
-  border-left: none !important;
-  border-right: none !important;
-}
-
-/* ── Adjustment rows (WC diff items in CashFlow) ─────────────────── */
+/* Adjustment row (working capital adjustments in CashFlow) */
 .adjustRow td {
   font-weight: 400;
-  background: #fff !important;
+  font-size: var(--r-body);
+  background: #fff;
+  color: #000;
 }
 
+/* Page-level title row (full-width, all caps) */
+.pageTitle td {
+  font-weight: 700;
+  font-size: var(--r-body);
+  text-transform: uppercase;
+  text-align: left;
+  padding: 5px 10px;
+}
+
+/* Spacer row — empty visual gap between sections */
+.spacerRow {
+  height: 10px;
+}
+.spacerRow td {
+  border-left: none;
+  border-right: none;
+}
+
+/* Sub-row — extra indent for nested items */
+.subRow td.tdParticulars {
+  padding-left: 28px;
+}
+
+/* ── PRINT RULES ─────────────────────────────────────────────
+   Applied to all report tables when printing.
+   Strips app chrome, ensures clean white output on paper.
+   ─────────────────────────────────────────────────────────── */
+@media print {
+  .table,
+  .table td,
+  .table th {
+    background: #fff;
+    color: #000;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .table {
+    border: 2px solid #000;
+    page-break-inside: auto;
+  }
+
+  .table tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+}
