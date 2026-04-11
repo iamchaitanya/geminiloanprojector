@@ -26,7 +26,7 @@ for (const seg of SEGMENTS) {
   for (const amt of AMOUNTS) {
     const p = getDynamicProfile(seg, amt);
     const d = generateProjections(
-      { ccLimit: amt, termLoan: 0, isRenewal: false, existingCc: 0, existingTl: 0 },
+      { ccLimit: amt, termLoan: 0, isRenewal: false, existingCc: 0, existingTl: 0, ccIntRate: 11.5, tlIntRate: 12, tenure: 60 },
       { ...p, label: seg, exp: p.exp }, 3, 2024, { seed: 42, variability: 1 }
     );
     console.log(`  ${seg.padEnd(16)}| Rs.${fmt(amt).padStart(7)}|   ${r(d[0].dscr)}x  |   ${r(d[1].dscr)}x  |   ${r(d[2].dscr)}x`);
@@ -43,7 +43,7 @@ for (const seg of SEGMENTS) {
   for (const amt of [100000, 500000, 1000000]) {
     const p = getDynamicProfile(seg, amt);
     const d = generateProjections(
-      { ccLimit: amt, termLoan: 0, isRenewal: false, existingCc: 0, existingTl: 0 },
+      { ccLimit: amt, termLoan: 0, isRenewal: false, existingCc: 0, existingTl: 0, ccIntRate: 11.5, tlIntRate: 12, tenure: 60 },
       { ...p, label: seg, exp: p.exp }, 3, 2024, { seed: 42, variability: 1 }
     );
     console.log(`  ${seg.padEnd(16)}| Rs.${fmt(amt).padStart(7)}|   ${r(d[0].facr)}x  |   ${r(d[1].facr)}x  |   ${r(d[2].facr)}x`);
@@ -62,7 +62,7 @@ for (const seg of SEGMENTS) {
   for (const amt of AMOUNTS) {
     const p = getDynamicProfile(seg, amt);
     const d = generateProjections(
-      { ccLimit: amt, termLoan: 0, isRenewal: false, existingCc: 0, existingTl: 0 },
+      { ccLimit: amt, termLoan: 0, isRenewal: false, existingCc: 0, existingTl: 0, ccIntRate: 11.5, tlIntRate: 12, tenure: 60 },
       { ...p, label: seg, exp: p.exp }, 3, 2024, { seed: 42, variability: 1 }
     );
     const deY3 = d[2].deRatio;
@@ -82,7 +82,7 @@ for (const seg of SEGMENTS) {
   for (const amt of AMOUNTS) {
     const p = getDynamicProfile(seg, amt);
     const d = generateProjections(
-      { ccLimit: amt, termLoan: 0, isRenewal: false, existingCc: 0, existingTl: 0 },
+      { ccLimit: amt, termLoan: 0, isRenewal: false, existingCc: 0, existingTl: 0, ccIntRate: 11.5, tlIntRate: 12, tenure: 60 },
       { ...p, label: seg, exp: p.exp }, 3, 2024, { seed: 42, variability: 1 }
     );
     const crY3 = d[2].currentRatio;
@@ -102,7 +102,7 @@ for (const seg of SEGMENTS) {
   for (const amt of [100000, 500000, 1000000]) {
     const p = getDynamicProfile(seg, amt);
     const d = generateProjections(
-      { ccLimit: amt, termLoan: 0, isRenewal: false, existingCc: 0, existingTl: 0 },
+      { ccLimit: amt, termLoan: 0, isRenewal: false, existingCc: 0, existingTl: 0, ccIntRate: 11.5, tlIntRate: 12, tenure: 60 },
       { ...p, label: seg, exp: p.exp }, 3, 2024, { seed: 42, variability: 1 }
     );
     console.log(`  ${seg.padEnd(16)}| Rs.${fmt(amt).padStart(7)}|   ${r(d[0].capacityUtil)}%  |   ${r(d[1].capacityUtil)}%  |   ${r(d[2].capacityUtil)}%`);
@@ -121,7 +121,7 @@ for (const seg of SEGMENTS) {
   for (const amt of AMOUNTS) {
     const p = getDynamicProfile(seg, amt);
     const d = generateProjections(
-      { ccLimit: amt, termLoan: 0, isRenewal: false, existingCc: 0, existingTl: 0 },
+      { ccLimit: amt, termLoan: 0, isRenewal: false, existingCc: 0, existingTl: 0, ccIntRate: 11.5, tlIntRate: 12, tenure: 60 },
       { ...p, label: seg, exp: p.exp }, 3, 2024, { seed: 42, variability: 1 }
     );
     const icrVals = d.map(yr => yr.ebitda / Math.max(yr.interest, 1));

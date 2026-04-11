@@ -81,7 +81,7 @@ for (const segment of SEGMENTS) {
 
   for (const loanAmt of LOAN_AMOUNTS) {
     const profile = getDynamicProfile(segment, loanAmt);
-    const limits = { ccLimit: loanAmt, termLoan: 0, isRenewal: false, existingCc: 0, existingTl: 0 };
+    const limits = { ccLimit: loanAmt, termLoan: 0, isRenewal: false, existingCc: 0, existingTl: 0, ccIntRate: 11.5, tlIntRate: 12, tenure: 60 };
     const data = generateProjections(limits, {
       ...profile,
       label: segment,
