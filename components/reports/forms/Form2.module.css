@@ -52,4 +52,16 @@
   .footnoteBlock {
     display: none;
   }
+
+  /* Remove fixed min-widths so the table scales to fit A4 page width */
+  .table {
+    min-width: 0;
+    width: 100%;
+    table-layout: auto;
+  }
+
+  .colParticulars {
+    min-width: 0;
+    width: auto;
+  }
 }
