@@ -2,25 +2,17 @@
    Form5.module.css
    Overrides for CMA Form V — Assessment of Maximum
    Permissible Bank Finance (MPBF).
-   Import alongside shared.module.css in Form5.tsx.
-
-   Usage in Form5.tsx:
-     import s from '../shared.module.css';
-     import own from './Form5.module.css';
    ============================================================ */
 
-/* Form V is the simplest form — narrow calculation table */
 .table {
   min-width: 700px;
 }
 
-/* Particulars column — wider because labels are long */
 .colParticulars {
   width: 42%;
   min-width: 300px;
 }
 
-/* Tandon / Nayak section separator */
 .methodHeader td {
   font-weight: 700;
   text-decoration: underline;
@@ -34,9 +26,21 @@
   color: #000;
 }
 
-/* Margin / contribution rows — bracket-formatted values */
 .marginRow td {
   font-weight: 400;
   color: #000;
   background: #fff;
+}
+
+@media print {
+  .table {
+    min-width: 0;
+    width: 100%;
+    table-layout: auto;
+  }
+
+  .colParticulars {
+    min-width: 0;
+    width: auto;
+  }
 }

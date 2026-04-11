@@ -2,33 +2,37 @@
    Form3.module.css
    Overrides for CMA Form III — Analysis of Balance Sheet
    (Sources & Applications).
-   Import alongside shared.module.css in Form3.tsx.
-
-   Usage in Form3.tsx:
-     import s from '../shared.module.css';
-     import own from './Form3.module.css';
    ============================================================ */
 
-/* Form III is a long multi-section balance sheet — needs full width */
 .table {
   min-width: 960px;
 }
 
-/* Liabilities & Assets label column */
 .colParticulars {
   width: 36%;
   min-width: 300px;
 }
 
-/* Numbered item rows — deep indent for sub-items */
 .numberedRow td.tdParticulars {
   padding-left: 40px;
 }
 
-/* Valuation audit section rows */
 .valuationRow td {
   font-weight: 400;
   font-style: italic;
   background: #fff;
   color: #000;
+}
+
+@media print {
+  .table {
+    min-width: 0;
+    width: 100%;
+    table-layout: auto;
+  }
+
+  .colParticulars {
+    min-width: 0;
+    width: auto;
+  }
 }

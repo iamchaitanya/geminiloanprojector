@@ -2,42 +2,45 @@
    Form6.module.css
    Overrides for CMA Form VI — Funds Flow Statement
    (Comparison of Projections).
-   Import alongside shared.module.css in Form6.tsx.
-
-   Usage in Form6.tsx:
-     import s from '../shared.module.css';
-     import own from './Form6.module.css';
    ============================================================ */
 
-/* Form VI — funds flow, Sources and Applications */
 .table {
   min-width: 900px;
 }
 
-/* Particulars column */
 .colParticulars {
   width: 36%;
   min-width: 300px;
 }
 
-/* Sources section rows */
 .sourcesRow td {
   font-weight: 400;
   background: #fff;
   color: #000;
 }
 
-/* Applications section rows */
 .applicationsRow td {
   font-weight: 400;
   background: #fff;
   color: #000;
 }
 
-/* Reconciliation / verification row — italic annotation */
 .reconcileRow td {
   font-weight: 400;
   font-style: italic;
   background: #fff;
   color: #000;
+}
+
+@media print {
+  .table {
+    min-width: 0;
+    width: 100%;
+    table-layout: auto;
+  }
+
+  .colParticulars {
+    min-width: 0;
+    width: auto;
+  }
 }
