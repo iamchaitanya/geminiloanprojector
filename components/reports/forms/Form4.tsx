@@ -31,160 +31,160 @@ export default function Form4({ data, years }: { data: ProjectedYear[]; years: s
           <thead><tr><th className={s.colParticulars}>Particulars</th>{YH}</tr></thead>
           <tbody>
             {/* I. CURRENT ASSETS */}
-            <tr className={s.sectionRow}>
-              <td colSpan={ncols} style={{ textAlign: 'left', fontWeight: 800 }}>I. CURRENT ASSETS</td>
+            <tr className={s.sectionHeader}>
+              <td colSpan={ncols}>I. Current Assets</td>
             </tr>
 
-            <tr>
+            <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
-                <span style={{ marginLeft: '40px', display: 'inline-block' }}>1) Raw Materials (Stores & Spares)</span>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>1) Raw Materials (Stores &amp; Spares)</span>
               </td>
               {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.rawMaterials)}</td>)}
             </tr>
-            <tr className={s.subRow}>
+            <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '64px', display: 'inline-block' }}>i) Imported</span>
               </td>
               {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(0)}</td>)}
             </tr>
-            <tr className={s.subRow}>
+            <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '64px', display: 'inline-block' }}>ii) Indigenous</span>
               </td>
               {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.rawMaterials)}</td>)}
             </tr>
-            <tr className={s.infoRow} style={{ background: '#f9f9f9' }}>
+            <tr className={s.infoRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>Holding Period (Months Consumption)</span>
               </td>
               {data.map((d) => <td key={d.year} className={s.tdValue}>{fmtR(d.inventory / Math.max(d.purchases / 12, 1))} Mo</td>)}
             </tr>
 
-            <tr>
+            <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>2) Stocks-in-Process</span>
               </td>
               {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.stockInProcess)}</td>)}
             </tr>
-            <tr>
+            <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>3) Finished Goods</span>
               </td>
               {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.finishedGoods)}</td>)}
             </tr>
-            <tr>
+            <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>4) Other Spares (Consumables)</span>
               </td>
               {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(0)}</td>)}
             </tr>
 
-            <tr>
+            <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>5) Receivables (Incl. Bills Discounted)</span>
               </td>
               {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.debtors)}</td>)}
             </tr>
-            <tr className={s.subRow}>
+            <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '64px', display: 'inline-block' }}>i) Up to 6 months (Liquid)</span>
               </td>
               {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.debtorsUnder6M)}</td>)}
             </tr>
-            <tr className={s.subRow}>
+            <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '64px', display: 'inline-block' }}>ii) More than 6 months</span>
               </td>
               {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.debtorsOver6M)}</td>)}
             </tr>
-            <tr className={s.infoRow} style={{ background: '#f9f9f9' }}>
+            <tr className={s.infoRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>Collection Period (Days Sales)</span>
               </td>
               {data.map((d) => <td key={d.year} className={s.tdValue}>{Math.round(d.debtors / Math.max(d.sales / 365, 1))} Days</td>)}
             </tr>
 
-            <tr>
+            <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>6) Advances To Suppliers / Advance Taxes</span>
               </td>
               {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.loansAdv)}</td>)}
             </tr>
-            <tr>
+            <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>7) Other current assets (Incl. Cash/Bank)</span>
               </td>
               {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.cashBank + d.reconAdj)}</td>)}
             </tr>
 
-            <tr className={s.subtotalRow} style={{ borderTop: '2.5px solid #000' }}>
+            <tr className={s.subtotalRow}>
               <td className={s.tdParticulars}>
-                <span style={{ fontWeight: 800, marginLeft: '20px', display: 'inline-block' }}>8) TOTAL CURRENT ASSETS (1 to 7)</span>
+                <span style={{ marginLeft: '20px', display: 'inline-block' }}>8) Total Current Assets (1 to 7)</span>
               </td>
-              {data.map((d) => <td key={d.year} className={s.tdValue} style={{ fontWeight: 800 }}>{fmt(d.totalCA)}</td>)}
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.totalCA)}</td>)}
             </tr>
 
             {/* II. CURRENT LIABILITIES */}
-            <tr className={s.sectionRow}>
-              <td colSpan={ncols} style={{ textAlign: 'left', fontWeight: 800 }}>II. CURRENT LIABILITIES (EXCL. BANK)</td>
+            <tr className={s.sectionHeader}>
+              <td colSpan={ncols}>II. Current Liabilities (Excl. Bank)</td>
             </tr>
-            <tr>
+            <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>9) Creditors For Purchases</span>
               </td>
               {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.creditors)}</td>)}
             </tr>
-            <tr className={s.infoRow} style={{ background: '#f9f9f9' }}>
+            <tr className={s.infoRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>Payment Period (Days Purchases)</span>
               </td>
               {data.map((d) => <td key={d.year} className={s.tdValue}>{Math.round(d.creditors / Math.max(d.purchases / 365, 1))} Days</td>)}
             </tr>
-            <tr>
+            <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>10) Advances from customers</span>
               </td>
               {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(0)}</td>)}
             </tr>
-            <tr>
+            <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>11) Installments of Term Loans (CMLTD)</span>
               </td>
               {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.cmltd)}</td>)}
             </tr>
-            <tr>
+            <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
-                <span style={{ marginLeft: '40px', display: 'inline-block' }}>12) Statutory & Other Provisions</span>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>12) Statutory &amp; Other Provisions</span>
               </td>
               {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.statutoryDues + d.otherCL + d.tax)}</td>)}
             </tr>
-            <tr className={s.subtotalRow} style={{ borderTop: '2.5px solid #000' }}>
+            <tr className={s.subtotalRow}>
               <td className={s.tdParticulars}>
-                <span style={{ fontWeight: 800, marginLeft: '20px', display: 'inline-block' }}>13) TOTAL CURRENT LIABILITIES (9 to 12)</span>
+                <span style={{ marginLeft: '20px', display: 'inline-block' }}>13) Total Current Liabilities (9 to 12)</span>
               </td>
-              {data.map((d) => <td key={d.year} className={s.tdValue} style={{ fontWeight: 800 }}>{fmt(d.totalCL)}</td>)}
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.totalCL)}</td>)}
             </tr>
 
             {/* III. WORKING CAPITAL ANALYSIS */}
-            <tr className={s.totalRow} style={{ borderTop: '3px solid #000', background: '#f5f5f5' }}>
-              <td className={s.tdParticulars} style={{ fontWeight: 900 }}>14) WORKING CAPITAL GAP (8 - 13)</td>
-              {data.map((d) => <td key={d.year} className={s.tdValue} style={{ fontWeight: 900 }}>{fmt(d.totalCA - d.totalCL)}</td>)}
+            <tr className={s.grandTotalRow}>
+              <td className={s.tdParticulars}>14) Working Capital Gap (8 - 13)</td>
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.totalCA - d.totalCL)}</td>)}
             </tr>
             <tr className={s.subtotalRow}>
               <td className={s.tdParticulars}>
-                <span style={{ fontWeight: 800, marginLeft: '20px', display: 'inline-block' }}>15) ACTUAL / PROJECTED NET WORKING CAPITAL</span>
+                <span style={{ marginLeft: '20px', display: 'inline-block' }}>15) Actual / Projected Net Working Capital</span>
               </td>
-              {data.map((d) => <td key={d.year} className={s.tdValue} style={{ fontWeight: 800 }}>{fmt(d.totalCA - (d.totalCL + d.bankBorrowings))}</td>)}
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.totalCA - (d.totalCL + d.bankBorrowings))}</td>)}
             </tr>
-            <tr className={s.infoRow} style={{ borderTop: '2px solid #000' }}>
+            <tr className={s.infoRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>Nayak Committee (20% of Projected Sales)</span>
               </td>
               {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(Math.floor(d.sales * 0.20))}</td>)}
             </tr>
-            <tr className={s.totalRow} style={{ borderTop: '3px solid #000', borderBottom: '3px double #000', background: '#eef2ff' }}>
-              <td className={s.tdParticulars} style={{ fontWeight: 900, fontSize: '12pt' }}>ASSESSED BANK FINANCE</td>
-              {data.map((d) => <td key={d.year} className={s.tdValue} style={{ fontWeight: 900 }}>{fmt(Math.floor(d.sales * 0.20))}</td>)}
+            <tr className={s.grandTotalRow}>
+              <td className={s.tdParticulars}>Assessed Bank Finance</td>
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(Math.floor(d.sales * 0.20))}</td>)}
             </tr>
           </tbody>
         </table>

@@ -38,23 +38,23 @@ export default function DscrSchedule({ data, years }: { data: ProjectedYear[]; y
 
           <tbody>
             {/* A. CASH ACCRUALS */}
-            <tr className={s.sectionRow}>
-              <td colSpan={ncols} style={{ textAlign: 'left', fontWeight: 800 }}>A. CASH ACCRUALS (SOURCES OF FUNDS)</td>
+            <tr className={s.sectionHeader}>
+              <td colSpan={ncols}>A. Cash Accruals (Sources of Funds)</td>
             </tr>
 
-            <tr>
+            <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>1) Net Profit after Tax (PAT)</span>
               </td>
               {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.netProfit)}</td>)}
             </tr>
-            <tr>
+            <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
-                <span style={{ marginLeft: '40px', display: 'inline-block' }}>2) Add: Depreciation (Non-cash)</span>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>2) Add: Depreciation (Non-Cash)</span>
               </td>
               {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.depnYr)}</td>)}
             </tr>
-            <tr>
+            <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>3) Add: Interest on Term Loans / CC</span>
               </td>
@@ -62,23 +62,23 @@ export default function DscrSchedule({ data, years }: { data: ProjectedYear[]; y
             </tr>
             <tr className={s.subtotalRow}>
               <td className={s.tdParticulars}>
-                <span style={{ fontWeight: 800, marginLeft: '20px', display: 'inline-block' }}>TOTAL CASH ACCRUALS (1+2+3)</span>
+                <span style={{ marginLeft: '20px', display: 'inline-block' }}>Total Cash Accruals (1+2+3)</span>
               </td>
-              {data.map((d) => <td key={d.year} className={s.tdValue} style={{ fontWeight: 800 }}>{fmt(d.netProfit + d.depnYr + d.interest)}</td>)}
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.netProfit + d.depnYr + d.interest)}</td>)}
             </tr>
 
             {/* B. DEBT OBLIGATIONS */}
-            <tr className={s.sectionRow}>
-              <td colSpan={ncols} style={{ textAlign: 'left', fontWeight: 800 }}>B. DEBT OBLIGATIONS (APPLICATIONS)</td>
+            <tr className={s.sectionHeader}>
+              <td colSpan={ncols}>B. Debt Obligations (Applications)</td>
             </tr>
 
-            <tr>
+            <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>4) Interest on Term Loans / Working Capital</span>
               </td>
               {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.interest)}</td>)}
             </tr>
-            <tr>
+            <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>5) Repayment of Term Loan Installments</span>
               </td>
@@ -86,27 +86,32 @@ export default function DscrSchedule({ data, years }: { data: ProjectedYear[]; y
             </tr>
             <tr className={s.subtotalRow}>
               <td className={s.tdParticulars}>
-                <span style={{ fontWeight: 800, marginLeft: '20px', display: 'inline-block' }}>TOTAL DEBT SERVICE (4+5)</span>
+                <span style={{ marginLeft: '20px', display: 'inline-block' }}>Total Debt Service (4+5)</span>
               </td>
-              {data.map((d) => <td key={d.year} className={s.tdValue} style={{ fontWeight: 800 }}>{fmt(d.interest + d.tlRepayment)}</td>)}
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.interest + d.tlRepayment)}</td>)}
             </tr>
 
             {/* DSCR RESULT */}
-            <tr className={s.totalRow} style={{ borderTop: '3px solid #000', borderBottom: '3px double #000' }}>
-              <td className={s.tdParticulars} style={{ fontWeight: 900, fontSize: '11pt' }}>DEBT SERVICE COVERAGE RATIO (DSCR)</td>
+            <tr className={s.grandTotalRow}>
+              <td className={s.tdParticulars}>Debt Service Coverage Ratio (DSCR)</td>
               {data.map((d) => (
-                <td key={d.year} className={s.tdValue} style={{ fontWeight: 900 }}>{fmtR(d.dscr)}</td>
+                <td key={d.year} className={s.tdValue}>{fmtR(d.dscr)}</td>
               ))}
+            </tr>
+
+            {/* Weighted Average DSCR — subtotal-row per spec */}
+            <tr className={s.subtotalRow}>
+              <td className={s.tdParticulars}>Weighted Average DSCR</td>
+              <td colSpan={data.length} className={s.tdValue}>{fmtR(avgDscr)}</td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      {/* Average DSCR footer */}
+      {/* Average DSCR footer — benchmark display only */}
       <div style={{
-        padding: "16px 24px",
-        borderTop: "2px solid #000",
-        borderBottom: "1px solid #000",
+        padding: "12px 24px",
+        borderTop: "1px solid #000",
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
@@ -114,8 +119,8 @@ export default function DscrSchedule({ data, years }: { data: ProjectedYear[]; y
         background: "#fff",
       }}>
         <div>
-          <div style={{ fontWeight: "bold", fontSize: "11px", textTransform: "uppercase" }}>
-            Weighted Average DSCR
+          <div style={{ fontWeight: "bold", fontSize: "11px" }}>
+            Benchmark: Weighted Average DSCR ≥ 1.50 is considered bankable.
           </div>
           <div style={{ fontSize: "10px", marginTop: "2px" }}>
             Calculated over the entire projection period of {data.length} years.

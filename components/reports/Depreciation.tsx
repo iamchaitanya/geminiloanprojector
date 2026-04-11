@@ -53,7 +53,7 @@ function buildSchedule(data: ProjectedYear[]): AssetRow[][] {
     const adjFurnDepn  = Math.round(furnDepn  * scale);
     const adjCompDepn  = d.depnYr - adjBldgDepn - adjPlantDepn - adjFurnDepn;
 
-    let additions = { building: 0, plant: 0, furniture: 0, computer: 0 };
+    const additions = { building: 0, plant: 0, furniture: 0, computer: 0 };
     if (i > 0) {
       const addnTotal = Math.max(d.grossFA - data[i - 1].grossFA, 0);
       if (addnTotal > 0) {
@@ -112,7 +112,7 @@ export default function Depreciation({ data, years }: { data: ProjectedYear[]; y
                 fontFamily: '"Times New Roman", Times, serif', fontSize: "11px",
               }}>
                 <strong style={{ textTransform: "uppercase" }}>Schedule for Financial Year: {years[idx]}</strong>
-                <span style={{ fontSize: "9px", fontWeight: "bold", textTransform: "uppercase" }}>Income Tax Act Rates</span>
+                <span style={{ fontSize: "9px", fontWeight: "bold" }}>Income Tax Act Rates</span>
               </div>
 
               <div style={{ overflowX: "auto" }}>
@@ -165,7 +165,7 @@ export default function Depreciation({ data, years }: { data: ProjectedYear[]; y
                       return (
                         <>
                           {rows.map((row, ri) => (
-                            <tr key={ri}>
+                            <tr key={ri} className={s.detailRow}>
                               <td className={s.tdParticulars}>
                                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>{row.label}</span>
                               </td>
@@ -177,8 +177,8 @@ export default function Depreciation({ data, years }: { data: ProjectedYear[]; y
                               <td className={s.tdValue}>{fmtC(fmt(row.closeWDV))}</td>
                             </tr>
                           ))}
-                          <tr className={s.totalRow} style={{ borderTop: '2px solid #000', borderBottom: '3px double #000' }}>
-                            <td className={s.tdParticulars} style={{ fontWeight: 800 }}>TOTAL ASSETS DEP. SCHEDULE</td>
+                          <tr className={s.subtotalRow} style={{ borderTop: '2px solid #000', borderBottom: '3px double #000' }}>
+                            <td className={s.tdParticulars} style={{ fontWeight: 800 }}>Total Assets — Depreciation Schedule</td>
                             <td className={s.tdValue}>{fmtR("—")}</td>
                             <td className={s.tdValue} style={{ fontWeight: 800 }}>{fmtC(fmt(totals.openWDV))}</td>
                             <td className={s.tdValue} style={{ fontWeight: 800 }}>{fmtC(totals.additions > 0 ? fmt(totals.additions) : "—")}</td>

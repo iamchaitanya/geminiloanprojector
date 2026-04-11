@@ -9,35 +9,39 @@
   border-collapse: collapse;
   border: 2px solid #000;
   font-family: "Times New Roman", Times, serif;
-  font-size: 12px;
+  font-size: var(--report-font-size) !important;
   background: #fff;
   color: #000;
 }
 
 /* ── All cells: NO horizontal lines by default ───────────── */
-.table th,
+.table th {
+  font-size: var(--header-font-size) !important;
+}
+
 .table td {
   padding: 5px 12px;
   vertical-align: middle;
   border-top: none;
   border-bottom: none;
-  border-left: 1px solid #000;   /* vertical column dividers */
+  border-left: 1px solid #000;
   border-right: 1px solid #000;
   background: #fff;
   color: #000;
   font-family: "Times New Roman", Times, serif;
-  font-size: 12px;
+  font-size: var(--report-font-size) !important;
   line-height: 1.5;
+  font-style: normal;
 }
 
 /* ── Column header row ───────────────────────────────────── */
 .table thead th {
   font-weight: bold;
   text-align: center;
-  border-top: none;             /* outer table border handles it */
+  border-top: none;
   border-bottom: 2px solid #000;
   white-space: nowrap;
-  font-size: 11px;
+  font-size: var(--header-font-size) !important;
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
@@ -65,43 +69,70 @@
   font-feature-settings: 'tnum' 1;
 }
 
-/* ── Section header rows (I. INCOME, II. EXPENDITURE) ───── */
-.sectionRow td {
-  background: #f0f0f0 !important;
-  font-weight: bold;
-  font-size: 11px;
-  text-transform: uppercase;
-  border-top: 1.5px solid #000 !important;
-  border-bottom: 1.5px solid #000 !important;
-  border-left: none !important;
-  border-right: none !important;
-  padding: 6px 12px;
-  letter-spacing: 0.04em;
+.colParticulars {
+  text-align: left !important;
+  width: 32%;
+  min-width: 280px;
 }
 
-/* ── Subtotal rows (bold, thin top rule) ─────────────────── */
-.subtotalRow td {
-  font-weight: bold;
+.tdParticulars {
+  text-align: left;
+  white-space: normal;
+}
+
+/* ── MAJOR SECTION HEADER rows — bold + underline, no shading ─── */
+.sectionHeader td {
+  font-weight: 700;
+  text-decoration: underline;
+  text-align: left;
+  padding: 6px 12px;
   border-top: 1px solid #000 !important;
   border-bottom: 1px solid #000 !important;
+  border-left: none !important;
+  border-right: none !important;
+  background: #fff !important;
 }
 
-/* ── Total rows (bold, thick double-rule) ────────────────── */
-.totalRow td {
-  font-weight: bold;
+/* ── Subtotal rows (bold, thin top/bottom rule) ──────────────── */
+.subtotalRow td {
+  font-weight: 700;
+  border-top: 1px solid #000 !important;
+  border-bottom: 1px solid #000 !important;
+  background: #fff !important;
+}
+
+/* ── Grand total rows (bold, thicker rule) ───────────────────── */
+.grandTotalRow td {
+  font-weight: 700;
   border-top: 2px solid #000 !important;
   border-bottom: 2px solid #000 !important;
+  background: #fff !important;
 }
 
-/* ── Ratio / info rows (slightly muted) ──────────────────── */
+/* ── Detail line items — normal weight ───────────────────────── */
+.detailRow td {
+  font-weight: 400;
+  background: #fff !important;
+}
+
+/* ── Ratio / percentage rows — normal weight, normal colour ──── */
 .ratioRow td {
-  font-weight: normal;
-  color: #555;
-  font-size: 11px;
+  font-weight: 400;
+  color: #000;
+  font-size: var(--report-font-size) !important;
+  background: #fff !important;
 }
 
-/* ── Sub-item rows (indented items) ──────────────────────── */
+/* ── Sub-item rows (indented items) ──────────────────────────── */
 .subRow td.tdParticulars {
   padding-left: 28px;
-  font-size: 11px;
+}
+
+/* ── Spacer rows ─────────────────────────────────────────────── */
+.spacerRow {
+  height: 12px;
+}
+.spacerRow td {
+  border-left: none !important;
+  border-right: none !important;
 }

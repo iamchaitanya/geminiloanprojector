@@ -71,6 +71,7 @@
   /* Report (print-safe) vars */
   --background: #ffffff;
   --foreground: #1e293b;
+  --report-font-size: 9.5pt;
 }
 
 /* Theme tokens */
@@ -83,15 +84,22 @@
 
 /* ═══════════════════════════ BASE ═══════════════════════════ */
 
-*, *::before, *::after { box-sizing: border-box; }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
 
-html, body {
+html,
+body {
   overflow-x: hidden;
   max-width: 100vw;
 }
 
 @media print {
-  html, body {
+
+  html,
+  body {
     overflow: visible !important;
     max-width: none !important;
   }
@@ -107,73 +115,172 @@ body {
 }
 
 /* Tabular numbers for all numeric content */
-table, .font-mono, [class*="font-mono"] {
+table,
+.font-mono,
+[class*="font-mono"] {
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
 }
 
 /* ═══════════════════════════ SCROLLBAR ═══════════════════════════ */
 
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: var(--surface-01); }
-::-webkit-scrollbar-thumb { background: var(--surface-03); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--accent-600); }
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--surface-01);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--surface-03);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-600);
+}
 
 /* ═══════════════════════════ KEYFRAMES ═══════════════════════════ */
 
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(16px); }
-  to   { opacity: 1; transform: none; }
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes shimmer {
-  0%   { background-position: -200% center; }
-  100% { background-position: 200% center; }
+  0% {
+    background-position: -200% center;
+  }
+
+  100% {
+    background-position: 200% center;
+  }
 }
 
 @keyframes pulseGlow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
-  50%       { box-shadow: 0 0 0 8px rgba(59, 130, 246, 0); }
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+  }
+
+  50% {
+    box-shadow: 0 0 0 8px rgba(59, 130, 246, 0);
+  }
 }
 
 @keyframes borderPulse {
-  0%, 100% { border-color: rgba(59, 130, 246, 0.3); }
-  50%       { border-color: rgba(59, 130, 246, 0.7); }
+
+  0%,
+  100% {
+    border-color: rgba(59, 130, 246, 0.3);
+  }
+
+  50% {
+    border-color: rgba(59, 130, 246, 0.7);
+  }
 }
 
 @keyframes countUp {
-  from { transform: translateY(10px); opacity: 0; }
-  to   { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 @keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  20%, 60% { transform: translateX(-4px); }
-  40%, 80% { transform: translateX(4px); }
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  20%,
+  60% {
+    transform: translateX(-4px);
+  }
+
+  40%,
+  80% {
+    transform: translateX(4px);
+  }
 }
 
 @keyframes pulseError {
-  0%, 100% { box-shadow: 0 0 0 1px var(--rose-400), 0 0 0 0 var(--rose-glow); border-color: var(--rose-400); }
-  50% { box-shadow: 0 0 0 2px var(--rose-400), 0 0 0 6px var(--rose-glow); border-color: var(--rose-400); }
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 1px var(--rose-400), 0 0 0 0 var(--rose-glow);
+    border-color: var(--rose-400);
+  }
+
+  50% {
+    box-shadow: 0 0 0 2px var(--rose-400), 0 0 0 6px var(--rose-glow);
+    border-color: var(--rose-400);
+  }
 }
 
 /* ═══════════════════════════ UTILITY CLASSES ═══════════════════════════ */
 
-.animate-fade-in-up { animation: fadeInUp 0.5s ease-out both; }
-.animate-fade-in    { animation: fadeIn 0.4s ease-out both; }
-.animate-count-up   { animation: countUp 0.4s ease-out both; }
+.animate-fade-in-up {
+  animation: fadeInUp 0.5s ease-out both;
+}
 
-.stagger-1 { animation-delay: 0.05s; }
-.stagger-2 { animation-delay: 0.1s; }
-.stagger-3 { animation-delay: 0.15s; }
-.stagger-4 { animation-delay: 0.2s; }
-.stagger-5 { animation-delay: 0.25s; }
-.stagger-6 { animation-delay: 0.3s; }
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out both;
+}
+
+.animate-count-up {
+  animation: countUp 0.4s ease-out both;
+}
+
+.stagger-1 {
+  animation-delay: 0.05s;
+}
+
+.stagger-2 {
+  animation-delay: 0.1s;
+}
+
+.stagger-3 {
+  animation-delay: 0.15s;
+}
+
+.stagger-4 {
+  animation-delay: 0.2s;
+}
+
+.stagger-5 {
+  animation-delay: 0.25s;
+}
+
+.stagger-6 {
+  animation-delay: 0.3s;
+}
 
 /* Glass card */
 .glass-card {
@@ -196,7 +303,7 @@ table, .font-mono, [class*="font-mono"] {
 
 /* Modern Validation State */
 .form-shake {
-  animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+  animation: shake 0.5s cubic-bezier(.36, .07, .19, .97) both;
 }
 
 .field-error-pulse {
@@ -221,7 +328,13 @@ table, .font-mono, [class*="font-mono"] {
    Prevents misaligned dropdowns by stripping all stacking-context shifting properties 
    below a generous breakpoint (1024px). */
 @media (max-width: 1024px) {
-  .glass-card, .header-glass, .glass-card-animated, header, section, main {
+
+  .glass-card,
+  .header-glass,
+  .glass-card-animated,
+  header,
+  section,
+  main {
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
     transform: none !important;
@@ -251,12 +364,16 @@ table, .font-mono, [class*="font-mono"] {
   background-size: 200% auto;
   transition: background-position 0.5s ease, transform 0.15s, box-shadow 0.15s;
 }
+
 .shimmer-btn:hover {
   background-position: right center;
-  box-shadow: 0 0 24px rgba(59, 130, 246, 0.5), 0 4px 16px rgba(0,0,0,0.3);
+  box-shadow: 0 0 24px rgba(59, 130, 246, 0.5), 0 4px 16px rgba(0, 0, 0, 0.3);
   transform: translateY(-1px);
 }
-.shimmer-btn:active { transform: scale(0.98); }
+
+.shimmer-btn:active {
+  transform: scale(0.98);
+}
 
 /* Input styles */
 .fintech-input {
@@ -274,19 +391,27 @@ table, .font-mono, [class*="font-mono"] {
   position: relative;
   z-index: 10;
 }
+
 .fintech-input option {
   font-size: 0.95rem;
   background: var(--navy-900);
   color: var(--text-primary);
   padding: 12px;
 }
-.fintech-input::placeholder { color: var(--text-muted); }
+
+.fintech-input::placeholder {
+  color: var(--text-muted);
+}
+
 .fintech-input:focus {
   border-color: var(--border-accent);
   background: rgba(59, 130, 246, 0.06);
   box-shadow: 0 0 0 3px var(--accent-glow);
 }
-.fintech-input:hover:not(:focus) { border-color: var(--border-default); }
+
+.fintech-input:hover:not(:focus) {
+  border-color: var(--border-default);
+}
 
 /* Label style - Force Electric Blue */
 label.fintech-label {
@@ -308,6 +433,7 @@ label.fintech-label {
   border-radius: 8px;
   overflow: hidden;
 }
+
 .seg-btn {
   flex: 1;
   padding: 0.4rem 0.75rem;
@@ -321,11 +447,16 @@ label.fintech-label {
   background: transparent;
   color: var(--text-secondary);
 }
-.seg-btn:hover:not(.seg-active) { background: rgba(255,255,255,0.06); color: var(--text-primary); }
+
+.seg-btn:hover:not(.seg-active) {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-primary);
+}
+
 .seg-btn.seg-active {
   background: var(--accent-600);
   color: #fff;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), 0 0 10px var(--accent-glow);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15), 0 0 10px var(--accent-glow);
 }
 
 /* Checkbox pill */
@@ -333,7 +464,7 @@ label.fintech-label {
   display: flex;
   gap: 10px;
   align-items: center;
-  background: rgba(255,255,255,0.03);
+  background: rgba(255, 255, 255, 0.03);
   border: 1.5px solid var(--border-subtle);
   padding: 10px 14px;
   border-radius: 8px;
@@ -343,8 +474,18 @@ label.fintech-label {
   cursor: pointer;
   transition: all 0.15s ease;
 }
-.chk-pill:hover { border-color: var(--border-accent); color: var(--text-primary); background: rgba(59,130,246,0.06); }
-.chk-pill input { width: 16px; height: 16px; accent-color: var(--accent-500); }
+
+.chk-pill:hover {
+  border-color: var(--border-accent);
+  color: var(--text-primary);
+  background: rgba(59, 130, 246, 0.06);
+}
+
+.chk-pill input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent-500);
+}
 
 /* Status badge */
 .badge {
@@ -357,10 +498,30 @@ label.fintech-label {
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
-.badge-blue   { background: rgba(59,130,246,0.15); color: #93c5fd; border: 1px solid rgba(59,130,246,0.3); }
-.badge-emerald{ background: rgba(16,185,129,0.15); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.3); }
-.badge-amber  { background: rgba(245,158,11,0.15); color: #fcd34d; border: 1px solid rgba(245,158,11,0.3); }
-.badge-purple { background: rgba(139,92,246,0.15); color: #c4b5fd; border: 1px solid rgba(139,92,246,0.3); }
+
+.badge-blue {
+  background: rgba(59, 130, 246, 0.15);
+  color: #93c5fd;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.badge-emerald {
+  background: rgba(16, 185, 129, 0.15);
+  color: #6ee7b7;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.badge-amber {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fcd34d;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.badge-purple {
+  background: rgba(139, 92, 246, 0.15);
+  color: #c4b5fd;
+  border: 1px solid rgba(139, 92, 246, 0.3);
+}
 
 /* Section divider */
 .section-divider {
@@ -377,6 +538,7 @@ label.fintech-label {
   padding: 14px 16px;
   transition: all 0.2s ease;
 }
+
 .kpi-card:hover {
   border-color: var(--border-default);
   background: var(--surface-glass-hover);
@@ -385,10 +547,21 @@ label.fintech-label {
 }
 
 /* Accent bar */
-.accent-bar-blue   { border-left: 3px solid var(--accent-500); }
-.accent-bar-emerald{ border-left: 3px solid var(--emerald-500); }
-.accent-bar-amber  { border-left: 3px solid var(--amber-500); }
-.accent-bar-purple { border-left: 3px solid #8b5cf6; }
+.accent-bar-blue {
+  border-left: 3px solid var(--accent-500);
+}
+
+.accent-bar-emerald {
+  border-left: 3px solid var(--emerald-500);
+}
+
+.accent-bar-amber {
+  border-left: 3px solid var(--amber-500);
+}
+
+.accent-bar-purple {
+  border-left: 3px solid #8b5cf6;
+}
 
 /* ═══════════════════════════════════════════════════════════════
    REPORT VIEW — ON-SCREEN SECTION CHROME
@@ -466,11 +639,13 @@ label.fintech-label {
 .cma-formal-report .report-section-header {
   margin-bottom: 24px !important;
 }
-.cma-formal-report .report-section-wrapper > div:not(.report-section-header) {
+
+.cma-formal-report .report-section-wrapper>div:not(.report-section-header) {
   margin-left: 24px !important;
   margin-right: 24px !important;
   margin-bottom: 24px !important;
 }
+
 /* Base table reset */
 .cma-formal-report table,
 .cma-formal-report [class*="_table_"] {
@@ -509,7 +684,7 @@ label.fintech-label {
 .cma-formal-report [class*="_table_"] th,
 .cma-formal-report [class*="_table_"] td {
   font-family: "Times New Roman", Times, serif !important;
-  font-size: 9.5pt !important;
+  font-size: var(--report-font-size) !important;
   line-height: 1.2 !important;
   padding: 2px 6px !important;
   border-left: 1px solid #000 !important;
@@ -519,7 +694,7 @@ label.fintech-label {
   color: #000 !important;
   text-transform: none !important;
   vertical-align: middle !important;
-  font-weight: normal !important;
+  font-weight: normal;
 }
 
 /* Default number columns right aligned */
@@ -541,6 +716,7 @@ label.fintech-label {
 .cma-formal-report [class*="_table_"] td.force-center {
   text-align: center !important;
 }
+
 .cma-formal-report table thead th:first-child,
 .cma-formal-report table tbody td:first-child {
   white-space: normal !important;
@@ -553,14 +729,15 @@ label.fintech-label {
   text-align: center !important;
   font-weight: bold !important;
   white-space: nowrap !important;
-  width: 1% !important; /* Forces columns to exact width of content */
+  width: 1% !important;
+  /* Forces columns to exact width of content */
   border-top: 1px solid #000 !important;
   border-bottom: 2px solid #000 !important;
 }
 
 /* The date part (first line) */
 .cma-formal-report table thead th span:first-child {
-  font-size: 9.5pt !important;
+  font-size: var(--header-font-size) !important;
   font-weight: bold !important;
 }
 
@@ -578,12 +755,16 @@ label.fintech-label {
 .cma-formal-report [class*="_table_"] tr[class*="subtotalRow"] td,
 .cma-formal-report table tr[class*="totalRow"] td,
 .cma-formal-report [class*="_table_"] tr[class*="totalRow"] td,
+.cma-formal-report table tr[class*="grandTotalRow"] td,
+.cma-formal-report [class*="_table_"] tr[class*="grandTotalRow"] td,
 .cma-formal-report table td[class*="sectionRow"],
 .cma-formal-report [class*="_table_"] td[class*="sectionRow"],
 .cma-formal-report table td[class*="subtotalRow"],
 .cma-formal-report [class*="_table_"] td[class*="subtotalRow"],
 .cma-formal-report table td[class*="totalRow"],
 .cma-formal-report [class*="_table_"] td[class*="totalRow"],
+.cma-formal-report table td[class*="grandTotalRow"],
+.cma-formal-report [class*="_table_"] td[class*="grandTotalRow"],
 .cma-formal-report table tr[class*="groupRow"] td,
 .cma-formal-report [class*="_table_"] tr[class*="groupRow"] td,
 .cma-formal-report table td[class*="groupRow"],
@@ -617,8 +798,15 @@ label.fintech-label {
 .cma-formal-report tr[class*="totalRow"] td {
   border-top: 2px solid #000 !important;
 }
+
 .cma-formal-report tr[class*="totalRow"] td {
   border-bottom: 1px solid #000 !important;
+}
+
+/* Grand Total Rows — double top AND bottom border */
+.cma-formal-report tr[class*="grandTotalRow"] td {
+  border-top: 2px solid #000 !important;
+  border-bottom: 2px solid #000 !important;
 }
 
 /* Remove internal extra styling on specifics */
@@ -636,8 +824,8 @@ label.fintech-label {
 
   .report-toc,
   .report-cover-badge,
-  .no-print { 
-    display: none !important; 
+  .no-print {
+    display: none !important;
     height: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
@@ -653,14 +841,14 @@ label.fintech-label {
   }
 
   .cma-formal-report .report-section-header,
-  .report-section-wrapper > .report-section-header {
+  .report-section-wrapper>.report-section-header {
     display: none !important;
     height: 0 !important;
     overflow: hidden !important;
   }
 
   /* Force fresh pages for each section, but skip the first visible one */
-  .cma-formal-report section:not(.no-print) ~ section:not(.no-print) {
+  .cma-formal-report section:not(.no-print)~section:not(.no-print) {
     page-break-before: always;
     break-before: page;
   }
@@ -672,13 +860,36 @@ label.fintech-label {
     overflow: visible !important;
   }
 
-  /* Backgrounds & Typography */
-  .cma-formal-report {
-    background: transparent !important;
-    color: #001 !important;
+  :root {
+    --report-font-size: 14pt;
+    --header-font-size: 8.5pt;
+  }
+
+  /* ── UNIVERSAL REPORT TABLE OVERRIDE (Forced 16pt) ── */
+  /* Targets all reports whether they use .cma-formal-report or .report-section-wrapper */
+  div[class*="wrapper"] table td,
+  div[class*="report"] table td,
+  table[class*="table"] td,
+  [class*="tdValue"],
+  [class*="tdParticulars"] {
+    font-size: var(--report-font-size) !important;
     font-family: "Times New Roman", Times, serif !important;
-    font-size: 10.5pt !important;
-    line-height: 1.5 !important;
+    line-height: 1.2 !important;
+    color: #000 !important;
+    background: transparent !important;
+  }
+
+  div[class*="wrapper"] table th,
+  div[class*="wrapper"] table th span,
+  div[class*="report"] table th,
+  div[class*="report"] table th span,
+  table[class*="table"] th,
+  table[class*="table"] th span {
+    font-size: var(--header-font-size) !important;
+    font-family: "Times New Roman", Times, serif !important;
+    line-height: 1.2 !important;
+    color: #000 !important;
+    background: transparent !important;
   }
 
   .cma-formal-report table {
@@ -689,22 +900,27 @@ label.fintech-label {
 
   .cma-formal-report th,
   .cma-formal-report td {
-    border: 1px solid #000 !important; /* Full Grid */
+    border: 1px solid #000 !important;
+    /* Full Grid */
     padding-top: 6px !important;
     padding-bottom: 6px !important;
     padding-right: 12px !important;
-    padding-left: 12px; /* NO !important here so components can override it for indentation */
+    padding-left: 12px;
+    /* NO !important here so components can override it for indentation */
     color: #000 !important;
     font-family: "Times New Roman", Times, serif !important;
   }
 
-  .cma-formal-report div, .cma-formal-report span {
+  .cma-formal-report div,
+  .cma-formal-report span {
     background: transparent !important;
     color: #000 !important;
   }
 }
 
-@page { margin: 15mm; }
+@page {
+  margin: 15mm;
+}
 
 /* ── MOBILE CTA BOTTOM CLAMP ── */
 @media (max-width: 640px) {
@@ -731,7 +947,13 @@ label.fintech-label {
 }
 
 @keyframes slideUp {
-  from { transform: translateY(100%); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
-}
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
 
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}

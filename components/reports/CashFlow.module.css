@@ -6,12 +6,15 @@
   border-collapse: collapse;
   border: 2px solid #000;
   font-family: "Times New Roman", Times, serif;
-  font-size: 12px;
+  font-size: var(--report-font-size) !important;
   background: #fff;
   color: #000;
 }
 
-.table th,
+.table th {
+  font-size: var(--header-font-size) !important;
+}
+
 .table td {
   padding: 5px 12px;
   vertical-align: middle;
@@ -22,8 +25,9 @@
   background: #fff;
   color: #000;
   font-family: "Times New Roman", Times, serif;
-  font-size: 12px;
+  font-size: var(--report-font-size) !important;
   line-height: 1.5;
+  font-style: normal;
 }
 
 .table thead th {
@@ -32,7 +36,7 @@
   border-top: none;
   border-bottom: 2px solid #000;
   white-space: nowrap;
-  font-size: 11px;
+  font-size: var(--header-font-size) !important;
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
@@ -51,39 +55,46 @@
   font-feature-settings: 'tnum' 1;
 }
 
-.sectionRow td {
-  background: #f0f0f0 !important;
-  font-weight: bold;
-  font-size: 11px;
-  text-transform: uppercase;
-  border-top: 1.5px solid #000 !important;
-  border-bottom: 1.5px solid #000 !important;
+/* ── MAJOR SECTION HEADERS — bold + underline, no shading ─── */
+.sectionHeader td {
+  font-weight: 700;
+  text-decoration: underline;
+  text-align: left;
+  padding: 6px 12px;
+  border-top: 1px solid #000 !important;
+  border-bottom: 1px solid #000 !important;
   border-left: none !important;
   border-right: none !important;
-  padding: 6px 12px;
-  letter-spacing: 0.04em;
+  background: #fff !important;
 }
 
-/* Working capital adjustment rows — slightly muted */
+/* ── Working capital adjustment rows — normal weight ─────── */
 .adjustRow td {
-  color: #555;
-  font-size: 11px;
+  font-weight: 400;
+  color: #000;
+  background: #fff !important;
 }
 
-/* Section subtotals */
+/* ── Section subtotals ────────────────────────────────────── */
 .subtotalRow td {
-  font-weight: bold;
-  border-top: 1px solid #aaa !important;
-  border-bottom: 1px solid #aaa !important;
+  font-weight: 700;
+  border-top: 1px solid #000 !important;
+  border-bottom: 1px solid #000 !important;
+  background: #fff !important;
 }
 
-/* Final totals (Net increase in cash, Closing balance) */
-.totalRow td {
-  font-weight: bold;
+/* ── Grand total (Closing Cash Balance) ───────────────────── */
+.grandTotalRow td {
+  font-weight: 700;
   border-top: 2px solid #000 !important;
   border-bottom: 2px solid #000 !important;
-  padding-top: 10px;
-  padding-bottom: 10px;
+  background: #fff !important;
+}
+
+/* ── Detail line items ────────────────────────────────────── */
+.detailRow td {
+  font-weight: 400;
+  background: #fff !important;
 }
 
 .spacerRow {

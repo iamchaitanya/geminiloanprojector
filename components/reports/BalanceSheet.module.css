@@ -6,12 +6,15 @@
   border-collapse: collapse;
   border: 2px solid #000;
   font-family: "Times New Roman", Times, serif;
-  font-size: 12px;
+  font-size: var(--report-font-size) !important;
   background: #fff;
   color: #000;
 }
 
-.table th,
+.table th {
+  font-size: var(--header-font-size) !important;
+}
+
 .table td {
   padding: 5px 12px;
   vertical-align: middle;
@@ -22,8 +25,9 @@
   background: #fff;
   color: #000;
   font-family: "Times New Roman", Times, serif;
-  font-size: 12px;
+  font-size: var(--report-font-size) !important;
   line-height: 1.5;
+  font-style: normal;
 }
 
 .table thead th {
@@ -32,7 +36,7 @@
   border-top: none;
   border-bottom: 2px solid #000;
   white-space: nowrap;
-  font-size: 11px;
+  font-size: var(--header-font-size) !important;
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
@@ -55,49 +59,48 @@
   font-feature-settings: 'tnum' 1;
 }
 
-/* Section header dividers */
-.sectionRow td {
-  background: #f0f0f0 !important;
-  font-weight: bold;
-  font-size: 11px;
-  text-transform: uppercase;
-  border-top: 1.5px solid #000 !important;
-  border-bottom: 1.5px solid #000 !important;
-  border-left: none !important;
-  border-right: none !important;
+/* ── MAJOR SECTION HEADERS — bold + underline, no shading ─── */
+.sectionHeader td {
+  font-weight: 700;
+  text-decoration: underline;
+  text-align: left;
   padding: 6px 12px;
-  letter-spacing: 0.04em;
-}
-
-/* Secondary header row (Assets sub-header) */
-.subHeaderRow th {
-  font-weight: bold;
-  text-align: center;
-  border-top: 2px solid #000 !important;
-  border-bottom: 2px solid #000 !important;
-  font-size: 11px;
-  text-transform: uppercase;
-}
-
-.subHeaderRow th.colParticulars {
-  text-align: left !important;
-}
-
-.subtotalRow td {
-  font-weight: bold;
   border-top: 1px solid #000 !important;
   border-bottom: 1px solid #000 !important;
+  border-left: none !important;
+  border-right: none !important;
+  background: #fff !important;
 }
 
-.totalRow td {
-  font-weight: bold;
+/* ── SUB-SECTION HEADERS ─────────────────────────────────── */
+.subsectionHeader td {
+  font-weight: 700;
+  background: #fff !important;
+}
+
+/* ── SUBTOTAL ROWS ────────────────────────────────────────── */
+.subtotalRow td {
+  font-weight: 700;
+  border-top: 1px solid #000 !important;
+  border-bottom: 1px solid #000 !important;
+  background: #fff !important;
+}
+
+/* ── GRAND TOTAL ROWS ─────────────────────────────────────── */
+.grandTotalRow td {
+  font-weight: 700;
   border-top: 2px solid #000 !important;
   border-bottom: 2px solid #000 !important;
-  padding-top: 10px;
-  padding-bottom: 10px;
+  background: #fff !important;
 }
 
-/* Spacer between Sources and Applications */
+/* ── DETAIL LINE ITEMS ────────────────────────────────────── */
+.detailRow td {
+  font-weight: 400;
+  background: #fff !important;
+}
+
+/* ── Spacer between Sources and Applications ──────────────── */
 .spacerRow {
   height: 16px;
   background: #fff;

@@ -54,23 +54,23 @@ export default function Form6({ data, years }: { data: ProjectedYear[]; years: s
           </thead>
           <tbody>
             {/* A. SOURCES */}
-            <tr className={s.sectionRow}><td colSpan={ncols} style={{ textAlign: 'left', fontWeight: 800 }}>A. SOURCES OF FUNDS</td></tr>
+            <tr className={s.sectionHeader}><td colSpan={ncols}>A. Sources of Funds</td></tr>
 
-            <tr>
+            <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>1) Net Profit after Tax (PAT)</span>
               </td>
               {data.map((d, i) => <td key={i} className={s.tdValue}>{fmt(d.netProfit)}</td>)}
             </tr>
-            <tr>
+            <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
-                <span style={{ marginLeft: '40px', display: 'inline-block' }}>2) Add: Depreciation (Non-cash)</span>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>2) Add: Depreciation (Non-Cash)</span>
               </td>
               {data.map((d, i) => <td key={i} className={s.tdValue}>{fmt(d.depnYr)}</td>)}
             </tr>
-            <tr>
+            <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
-                <span style={{ marginLeft: '40px', display: 'inline-block' }}>3) Increase in Capital / Proprietor's Funds</span>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>3) Increase in Capital / Proprietor&apos;s Funds</span>
               </td>
               {data.map((d, i) => {
                 const p = prev(i);
@@ -78,7 +78,7 @@ export default function Form6({ data, years }: { data: ProjectedYear[]; years: s
                 return <td key={i} className={s.tdValue}>{fmt(diff > 0 ? diff : 0)}</td>;
               })}
             </tr>
-            <tr>
+            <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>4) Increase in Term Loans / Unsecured Loans</span>
               </td>
@@ -89,7 +89,7 @@ export default function Form6({ data, years }: { data: ProjectedYear[]; years: s
                 return <td key={i} className={s.tdValue}>{fmt(ti + ui)}</td>;
               })}
             </tr>
-            <tr>
+            <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>5) Sale / Decrease in Fixed Assets</span>
               </td>
@@ -99,23 +99,23 @@ export default function Form6({ data, years }: { data: ProjectedYear[]; years: s
                 return <td key={i} className={s.tdValue}>{fmt(diff > 0 ? diff : 0)}</td>;
               })}
             </tr>
-            <tr className={s.subtotalRow} style={{ borderTop: '2px solid #000' }}>
+            <tr className={s.subtotalRow}>
               <td className={s.tdParticulars}>
-                <span style={{ fontWeight: 800, marginLeft: '20px', display: 'inline-block' }}>TOTAL SOURCES (A)</span>
+                <span style={{ marginLeft: '20px', display: 'inline-block' }}>Total Sources (A)</span>
               </td>
               {data.map((d, i) => {
                 const p = prev(i);
                 const ci = Math.max(d.capital - (p.capital + d.netProfit), 0);
                 const ti = Math.max(0, d.termLoan - p.termLoan + d.tlRepayment) + Math.max(0, d.unsecured - p.unsecured);
                 const fd = Math.max(p.grossFA - d.grossFA, 0);
-                return <td key={i} className={s.tdValue} style={{ fontWeight: 800 }}>{fmt(d.netProfit + d.depnYr + ci + ti + fd)}</td>;
+                return <td key={i} className={s.tdValue}>{fmt(d.netProfit + d.depnYr + ci + ti + fd)}</td>;
               })}
             </tr>
 
             {/* B. APPLICATIONS */}
-            <tr className={s.sectionRow}><td colSpan={ncols} style={{ textAlign: 'left', fontWeight: 800 }}>B. APPLICATION OF FUNDS</td></tr>
+            <tr className={s.sectionHeader}><td colSpan={ncols}>B. Application of Funds</td></tr>
 
-            <tr>
+            <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>6) Capital Expenditure (Increase in Fixed Assets)</span>
               </td>
@@ -125,7 +125,7 @@ export default function Form6({ data, years }: { data: ProjectedYear[]; years: s
                 return <td key={i} className={s.tdValue}>{fmt(diff > 0 ? diff : 0)}</td>;
               })}
             </tr>
-            <tr>
+            <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>7) Repayment of Term Loans / Unsecured Loans</span>
               </td>
@@ -135,9 +135,9 @@ export default function Form6({ data, years }: { data: ProjectedYear[]; years: s
                 return <td key={i} className={s.tdValue}>{fmt(d.tlRepayment + ud)}</td>;
               })}
             </tr>
-            <tr>
+            <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
-                <span style={{ marginLeft: '40px', display: 'inline-block' }}>8) Dividend / Proprietor's Drawings</span>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>8) Dividend / Proprietor&apos;s Drawings</span>
               </td>
               {data.map((d, i) => {
                 const p = prev(i);
@@ -145,22 +145,22 @@ export default function Form6({ data, years }: { data: ProjectedYear[]; years: s
                 return <td key={i} className={s.tdValue}>{fmt(drawings)}</td>;
               })}
             </tr>
-            <tr className={s.subtotalRow} style={{ borderTop: '2px solid #000' }}>
+            <tr className={s.subtotalRow}>
               <td className={s.tdParticulars}>
-                <span style={{ fontWeight: 800, marginLeft: '20px', display: 'inline-block' }}>TOTAL APPLICATIONS (B)</span>
+                <span style={{ marginLeft: '20px', display: 'inline-block' }}>Total Applications (B)</span>
               </td>
               {data.map((d, i) => {
                 const p = prev(i);
                 const fi = Math.max(d.grossFA - p.grossFA, 0);
                 const td2 = d.tlRepayment + Math.max(0, p.unsecured - d.unsecured);
                 const dr = Math.max((p.capital + d.netProfit) - d.capital, 0);
-                return <td key={i} className={s.tdValue} style={{ fontWeight: 800 }}>{fmt(fi + td2 + dr)}</td>;
+                return <td key={i} className={s.tdValue}>{fmt(fi + td2 + dr)}</td>;
               })}
             </tr>
 
             {/* RECONCILIATION */}
-            <tr className={s.totalRow} style={{ borderTop: '3.5px solid #000', borderBottom: '3.5px double #000', background: '#eef2ff' }}>
-              <td className={s.tdParticulars} style={{ fontWeight: 900 }}>C. NET INCREASE / (DECREASE) IN NWC (A - B)</td>
+            <tr className={s.grandTotalRow}>
+              <td className={s.tdParticulars}>C. Net Increase / (Decrease) in NWC (A - B)</td>
               {data.map((d, i) => {
                 const p = prev(i);
                 const ci = Math.max(d.capital - (p.capital + d.netProfit), 0);
@@ -171,11 +171,11 @@ export default function Form6({ data, years }: { data: ProjectedYear[]; years: s
                 const td2 = d.tlRepayment + Math.max(0, p.unsecured - d.unsecured);
                 const dr = Math.max((p.capital + d.netProfit) - d.capital, 0);
                 const totalB = fi + td2 + dr;
-                return <td key={i} className={s.tdValue} style={{ fontWeight: 900 }}>{fmt(totalA - totalB)}</td>;
+                return <td key={i} className={s.tdValue}>{fmt(totalA - totalB)}</td>;
               })}
             </tr>
 
-            <tr className={s.infoRow} style={{ background: '#f9f9f9', fontStyle: 'italic' }}>
+            <tr className={s.infoRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>Actual Change in NWC (Verified from Form III)</span>
               </td>

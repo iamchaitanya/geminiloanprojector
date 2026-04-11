@@ -8,11 +8,12 @@ interface Form1Props {
   existingCc: number; existingTl: number;
 }
 
-export default function Form1({ bizName, propName, proposedCc, proposedTl, existingCc, existingTl }: Form1Props) {
+export default function Form1({ proposedCc, proposedTl, existingCc, existingTl }: Form1Props) {
   const totalExisting = existingCc + existingTl;
   const totalProposed = proposedCc + proposedTl;
 
-  const fmtV = (v: number) => (v > 0 ? `₹${fmt(v)}` : "0");
+  // No ₹ prefix — matches the rest of the report
+  const fmtV = (v: number) => (v > 0 ? fmt(v) : "0");
 
   return (
     <div className="report-section-wrapper font-sans">
@@ -40,60 +41,60 @@ export default function Form1({ bizName, propName, proposedCc, proposedTl, exist
             </tr>
           </thead>
           <tbody>
-            <tr className={s.sectionRow}><td colSpan={3} style={{ textAlign: 'left', fontWeight: 800 }}>A. FUND BASED LIMITS</td></tr>
-            <tr>
+            <tr className={s.sectionHeader}><td colSpan={3}>A. Fund Based Limits</td></tr>
+            <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>1) Cash Credit / Overdraft</span>
               </td>
-              <td className={s.tdValue} style={existingCc > 0 ? { fontWeight: "700" } : {}}>{fmtV(existingCc)}</td>
-              <td className={s.tdValue} style={proposedCc > 0 ? { fontWeight: "800" } : {}}>{fmtV(proposedCc)}</td>
+              <td className={s.tdValue}>{fmtV(existingCc)}</td>
+              <td className={s.tdValue}>{fmtV(proposedCc)}</td>
             </tr>
-            <tr>
+            <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>2) Term Loan</span>
               </td>
-              <td className={s.tdValue} style={existingTl > 0 ? { fontWeight: "700" } : {}}>{fmtV(existingTl)}</td>
-              <td className={s.tdValue} style={proposedTl > 0 ? { fontWeight: "800" } : {}}>{fmtV(proposedTl)}</td>
+              <td className={s.tdValue}>{fmtV(existingTl)}</td>
+              <td className={s.tdValue}>{fmtV(proposedTl)}</td>
             </tr>
-            <tr>
+            <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>3) Bills Purchased / Discounted</span>
               </td>
               <td className={s.tdValue}>0</td>
               <td className={s.tdValue}>0</td>
             </tr>
-            <tr className={s.subtotalRow} style={{ borderTop: '2px solid #000' }}>
+            <tr className={s.subtotalRow}>
               <td className={s.tdParticulars}>
-                <span style={{ fontWeight: 800, marginLeft: '20px', display: 'inline-block' }}>Total Fund Based Limits (A)</span>
+                <span style={{ marginLeft: '20px', display: 'inline-block' }}>Total Fund Based Limits (A)</span>
               </td>
-              <td className={s.tdValue} style={{ fontWeight: 800 }}>{fmtV(totalExisting)}</td>
-              <td className={s.tdValue} style={{ fontWeight: 800 }}>{fmtV(totalProposed)}</td>
+              <td className={s.tdValue}>{fmtV(totalExisting)}</td>
+              <td className={s.tdValue}>{fmtV(totalProposed)}</td>
             </tr>
 
-            <tr className={s.sectionRow}><td colSpan={3} style={{ textAlign: 'left', fontWeight: 800 }}>B. NON-FUND BASED LIMITS</td></tr>
-            <tr>
+            <tr className={s.sectionHeader}><td colSpan={3}>B. Non-Fund Based Limits</td></tr>
+            <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>1) Letter of Credit (LC)</span>
               </td>
               <td className={s.tdValue}>0</td><td className={s.tdValue}>0</td>
             </tr>
-            <tr>
+            <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>2) Bank Guarantee (BG)</span>
               </td>
               <td className={s.tdValue}>0</td><td className={s.tdValue}>0</td>
             </tr>
-            <tr className={s.subtotalRow} style={{ borderTop: '2px solid #000' }}>
+            <tr className={s.subtotalRow}>
               <td className={s.tdParticulars}>
-                <span style={{ fontWeight: 800, marginLeft: '20px', display: 'inline-block' }}>Total Non-Fund Based Limits (B)</span>
+                <span style={{ marginLeft: '20px', display: 'inline-block' }}>Total Non-Fund Based Limits (B)</span>
               </td>
               <td className={s.tdValue}>0</td><td className={s.tdValue}>0</td>
             </tr>
 
-            <tr className={s.totalRow} style={{ borderTop: '3px solid #000', borderBottom: '3px double #000' }}>
-              <td className={s.tdParticulars} style={{ fontWeight: 900, textTransform: 'uppercase' }}>TOTAL LIMITS (A + B)</td>
-              <td className={s.tdValue} style={{ fontWeight: 900 }}>{fmtV(totalExisting)}</td>
-              <td className={s.tdValue} style={{ fontWeight: 900 }}>{fmtV(totalProposed)}</td>
+            <tr className={s.grandTotalRow}>
+              <td className={s.tdParticulars}>Total Limits (A + B)</td>
+              <td className={s.tdValue}>{fmtV(totalExisting)}</td>
+              <td className={s.tdValue}>{fmtV(totalProposed)}</td>
             </tr>
           </tbody>
         </table>
@@ -138,7 +139,7 @@ export default function Form1({ bizName, propName, proposedCc, proposedTl, exist
           </thead>
           <tbody>
             <tr>
-              <td colSpan={4} className={`${s.tdParticulars} force-center`} style={{ color: "#555", fontSize: "11px" }}>
+              <td colSpan={4} className={`${s.tdParticulars} force-center`} style={{ color: "#000", fontSize: "11px" }}>
                 No other bank facilities enjoyed by associate concerns as per available records.
               </td>
             </tr>
@@ -148,7 +149,7 @@ export default function Form1({ bizName, propName, proposedCc, proposedTl, exist
 
       <div className="no-print" style={{ padding: "12px 16px", borderTop: "1px solid #000", fontFamily: '"Times New Roman", Times, serif', fontSize: "8px" }}>
         * Note: This statement is prepared as per standard Credit Monitoring Arrangement (CMA) guidelines.
-        The data presented is projected and subject to bank's internal appraisal norms.
+        The data presented is projected and subject to bank&apos;s internal appraisal norms.
       </div>
     </div>
   );

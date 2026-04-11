@@ -66,23 +66,23 @@ export default function CashFlow({ data, years, loanAmount }: { data: ProjectedY
 
           <tbody>
             {/* A. OPERATING ACTIVITIES */}
-            <tr className={s.sectionRow}>
-              <td colSpan={ncols} style={{ textAlign: 'left', fontWeight: 800 }}>A. CASH FLOW FROM OPERATING ACTIVITIES</td>
+            <tr className={s.sectionHeader}>
+              <td colSpan={ncols}>A. Cash Flow from Operating Activities</td>
             </tr>
 
-            <tr>
+            <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>1) Net Profit after Tax</span>
               </td>
               {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.netProfit)}</td>)}
             </tr>
-            <tr>
+            <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
-                <span style={{ marginLeft: '40px', display: 'inline-block' }}>2) Add: Depreciation (non-cash)</span>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>2) Add: Depreciation (Non-Cash)</span>
               </td>
               {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.depnYr)}</td>)}
             </tr>
-            <tr>
+            <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>3) Add: Interest Charged Back</span>
               </td>
@@ -90,7 +90,7 @@ export default function CashFlow({ data, years, loanAmount }: { data: ProjectedY
             </tr>
 
             {/* Working capital adjustments */}
-            <tr>
+            <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>4) Working Capital Adjustments:</span>
               </td>
@@ -121,65 +121,65 @@ export default function CashFlow({ data, years, loanAmount }: { data: ProjectedY
               {data.map((d, i) => <td key={d.year} className={s.tdValue}>{fmtAcc(otherCLDiffs[i])}</td>)}
             </tr>
 
-            <tr className={s.subtotalRow} style={{ borderBottom: '3px solid #000' }}>
+            <tr className={s.subtotalRow}>
               <td className={s.tdParticulars}>
-                <span style={{ fontWeight: 800, marginLeft: '20px', display: 'inline-block' }}>NET CASH FROM OPERATING ACTIVITIES (A)</span>
+                <span style={{ marginLeft: '20px', display: 'inline-block' }}>Net Cash from Operating Activities (A)</span>
               </td>
-              {data.map((d, i) => <td key={d.year} className={s.tdValue} style={{ fontWeight: 800 }}>{fmt(cfA[i])}</td>)}
+              {data.map((d, i) => <td key={d.year} className={s.tdValue}>{fmt(cfA[i])}</td>)}
             </tr>
 
             <tr className={s.spacerRow} style={{ height: '24px' }}><td colSpan={ncols} /></tr>
 
             {/* B. INVESTING ACTIVITIES */}
-            <tr className={s.sectionRow}>
-              <td colSpan={ncols} style={{ textAlign: 'left', fontWeight: 800 }}>B. CASH FLOW FROM INVESTING ACTIVITIES</td>
+            <tr className={s.sectionHeader}>
+              <td colSpan={ncols}>B. Cash Flow from Investing Activities</td>
             </tr>
-            <tr>
+            <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>1) Purchase of Fixed Assets / Capex</span>
               </td>
               {data.map((d, i) => <td key={d.year} className={s.tdValue}>({fmt(capex[i])})</td>)}
             </tr>
-            <tr className={s.subtotalRow} style={{ borderBottom: '3px solid #000' }}>
+            <tr className={s.subtotalRow}>
               <td className={s.tdParticulars}>
-                <span style={{ fontWeight: 800, marginLeft: '20px', display: 'inline-block' }}>NET CASH FROM INVESTING ACTIVITIES (B)</span>
+                <span style={{ marginLeft: '20px', display: 'inline-block' }}>Net Cash from Investing Activities (B)</span>
               </td>
-              {data.map((d, i) => <td key={d.year} className={s.tdValue} style={{ fontWeight: 800 }}>({fmt(capex[i])})</td>)}
+              {data.map((d, i) => <td key={d.year} className={s.tdValue}>({fmt(capex[i])})</td>)}
             </tr>
 
             <tr className={s.spacerRow} style={{ height: '24px' }}><td colSpan={ncols} /></tr>
 
             {/* C. FINANCING ACTIVITIES */}
-            <tr className={s.sectionRow}>
-              <td colSpan={ncols} style={{ textAlign: 'left', fontWeight: 800 }}>C. CASH FLOW FROM FINANCING ACTIVITIES</td>
+            <tr className={s.sectionHeader}>
+              <td colSpan={ncols}>C. Cash Flow from Financing Activities</td>
             </tr>
-            <tr>
+            <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>1) CC Limit Availed / Loan Received</span>
               </td>
               {data.map((d, i) => <td key={d.year} className={s.tdValue}>{fmt(i === 0 ? loanAmount : 0)}</td>)}
             </tr>
-            <tr>
+            <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
-                <span style={{ marginLeft: '40px', display: 'inline-block' }}>2) Proprietor's Drawings / Withdrawals</span>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>2) Proprietor&apos;s Drawings / Withdrawals</span>
               </td>
               {data.map((d, i) => <td key={d.year} className={s.tdValue}>({fmt(Math.abs(drawings[i]))})</td>)}
             </tr>
-            <tr className={s.subtotalRow} style={{ borderBottom: '3px solid #000' }}>
+            <tr className={s.subtotalRow}>
               <td className={s.tdParticulars}>
-                <span style={{ fontWeight: 800, marginLeft: '20px', display: 'inline-block' }}>NET CASH FROM FINANCING ACTIVITIES (C)</span>
+                <span style={{ marginLeft: '20px', display: 'inline-block' }}>Net Cash from Financing Activities (C)</span>
               </td>
-              {data.map((d, i) => <td key={d.year} className={s.tdValue} style={{ fontWeight: 800 }}>{fmtAcc(cfC[i])}</td>)}
+              {data.map((d, i) => <td key={d.year} className={s.tdValue}>{fmtAcc(cfC[i])}</td>)}
             </tr>
 
             <tr className={s.spacerRow} style={{ height: '32px' }}><td colSpan={ncols} /></tr>
 
             {/* RECONCILIATION */}
-            <tr className={s.subtotalRow}>
-              <td className={s.tdParticulars} style={{ fontWeight: 800 }}>NET INCREASE / (DECREASE) IN CASH (A + B + C)</td>
-              {data.map((d, i) => <td key={d.year} className={s.tdValue} style={{ fontWeight: 800 }}>{fmtAcc(netCash[i])}</td>)}
+            <tr className={s.grandTotalRow}>
+              <td className={s.tdParticulars}>Net Increase / (Decrease) in Cash (A + B + C)</td>
+              {data.map((d, i) => <td key={d.year} className={s.tdValue}>{fmtAcc(netCash[i])}</td>)}
             </tr>
-            <tr>
+            <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>Add: Opening Cash &amp; Bank Balance</span>
               </td>
@@ -189,9 +189,9 @@ export default function CashFlow({ data, years, loanAmount }: { data: ProjectedY
                 </td>
               ))}
             </tr>
-            <tr className={s.totalRow} style={{ borderTop: '3px solid #000', borderBottom: '3px double #000' }}>
-              <td className={s.tdParticulars} style={{ fontWeight: 900, fontSize: '12pt' }}>CLOSING CASH &amp; BANK BALANCE</td>
-              {data.map((d) => <td key={d.year} className={s.tdValue} style={{ fontWeight: 900 }}>{fmt(d.cashBank)}</td>)}
+            <tr className={s.grandTotalRow}>
+              <td className={s.tdParticulars}>Closing Cash &amp; Bank Balance</td>
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.cashBank)}</td>)}
             </tr>
           </tbody>
         </table>
