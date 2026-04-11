@@ -83,6 +83,7 @@
   --foreground:        #1e293b;
   --report-font-size:  9.5pt;
   --header-font-size:  9.5pt;
+  --subheader-font-size: 7pt;
 
   /* Radius */
   --radius-sm:   0.375rem;
@@ -670,15 +671,21 @@
     border-bottom: 2px solid #000;
   }
 
+  /* Date line — full header font size */
   .cma-formal-report table thead th span:first-child {
     font-size:   var(--header-font-size);
     font-weight: bold;
   }
 
+  /* Actuals / Estimations label — smaller so it fits within the date column width */
   .cma-formal-report table thead th span:nth-child(2) {
-    font-size:   var(--header-font-size);
-    font-weight: normal;
-    display:     block;
+    font-size:      var(--subheader-font-size);
+    font-weight:    normal;
+    display:        block;
+    letter-spacing: -0.01em;
+    white-space:    nowrap;
+    overflow:       hidden;
+    text-overflow:  ellipsis;
   }
 
   .cma-formal-report table tr[class*="sectionRow"] td,
@@ -789,8 +796,9 @@
   }
 
   :root {
-    --report-font-size: 10.5pt;
-    --header-font-size: 9.5pt;
+    --report-font-size:    10.5pt;
+    --header-font-size:    9.5pt;
+    --subheader-font-size: 7pt;
   }
 
   div[class*="wrapper"] table td,
@@ -806,16 +814,28 @@
   }
 
   div[class*="wrapper"] table th,
-  div[class*="wrapper"] table th span,
+  div[class*="wrapper"] table th span:first-child,
   div[class*="report"]  table th,
-  div[class*="report"]  table th span,
+  div[class*="report"]  table th span:first-child,
   table[class*="table"] th,
-  table[class*="table"] th span {
+  table[class*="table"] th span:first-child {
     font-size:   var(--header-font-size);
     font-family: "Times New Roman", Times, serif;
     line-height: 1.2;
     color:       #000;
     background:  transparent;
+  }
+
+  /* Actuals/Estimations label in print */
+  div[class*="wrapper"] table th span:nth-child(2),
+  div[class*="report"]  table th span:nth-child(2),
+  table[class*="table"] th span:nth-child(2) {
+    font-size:      var(--subheader-font-size);
+    font-family:    "Times New Roman", Times, serif;
+    font-weight:    normal;
+    letter-spacing: -0.01em;
+    color:          #000;
+    background:     transparent;
   }
 
   .cma-formal-report table {
