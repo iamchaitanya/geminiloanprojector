@@ -37,3 +37,22 @@
   width: 7%;
   min-width: 60px;
 }
+
+@media print {
+  /* Remove fixed min-widths so the table scales to fit A4 page width */
+  .table {
+    min-width: 0;
+    width: 100%;
+    table-layout: auto;
+  }
+
+  .colAsset {
+    min-width: 0;
+    width: auto;
+  }
+
+  .colRate {
+    min-width: 0;
+    width: auto;
+  }
+}
