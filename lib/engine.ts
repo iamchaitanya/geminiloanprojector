@@ -42,6 +42,11 @@ const CAP_UTIL_BANDS = {
   construction:  { start: 0.53, growth: 0.085 },
 } as const;
 
+// Segment-specific minimum creditor days — trading businesses always get supplier credit
+const MIN_CREDITOR_DAYS: Record<string, number> = {
+  trading: 30, service: 18, manufacturing: 28, construction: 25,
+};
+
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
@@ -161,9 +166,14 @@ function buildIndirectExpenses(indExpTotal: number, profile: BusinessProfile, rn
     const targetSalary = organic(profile.numEmployees * monthlyCTC * 12, rng);
     const delta = targetSalary - salaryItem.value;
     salaryItem.value = targetSalary;
-    // Absorb delta from misc / office (flex items) to keep total ~stable
-    const miscItem = indirectExpenses.find(e => e.label === 'Miscellaneous Expenses')!;
-    miscItem.value = Math.max(miscItem.value - delta, 0);
+    // Absorb delta from office / welfare (flex items) to keep total ~stable
+    // Never drain misc — every real business has petty cash / miscellaneous expenses
+    const officeItem = indirectExpenses.find(e => e.label === 'Office / Shop Expenses')!;
+    const welfareItem = indirectExpenses.find(e => e.label === 'Staff Welfare')!;
+    const flexItems = [officeItem, welfareItem];
+    const flexTotal = flexItems.reduce((s, e) => s + e.value, 0) || 1;
+    const absorbable = Math.min(delta, flexTotal * 0.6); // never drain more than 60% of flex items
+    flexItems.forEach(e => { e.value = Math.max(e.value - Math.round((e.value / flexTotal) * absorbable), 0); });
   }
 
   // 2. RENT: if own premises, zero out rent and redistribute to other items.
@@ -171,11 +181,27 @@ function buildIndirectExpenses(indExpTotal: number, profile: BusinessProfile, rn
     const rentItem = indirectExpenses.find(e => e.label === 'Rent & Rates')!;
     const freed = rentItem.value;
     rentItem.value = 0;
-    // Spread freed rent into office, power, misc proportionally
-    const flexKeys = ['Office / Shop Expenses', 'Power & Fuel', 'Miscellaneous Expenses'];
+    // Spread freed rent into office, power (not misc — misc has its own floor)
+    const flexKeys = ['Office / Shop Expenses', 'Power & Fuel'];
     const flexItems = indirectExpenses.filter(e => flexKeys.includes(e.label));
     const flexTotal = flexItems.reduce((s, e) => s + e.value, 0) || 1;
     flexItems.forEach(e => { e.value += Math.round((e.value / flexTotal) * freed); });
+  }
+
+  // 3. MISC EXPENSE FLOOR: every real business has petty cash, repairs, bank charges.
+  //    A banker will question ₹0 miscellaneous expenses. Enforce a realistic floor.
+  const miscItem = indirectExpenses.find(e => e.label === 'Miscellaneous Expenses')!;
+  const miscFloor = organic(Math.max(indExpTotal * 0.018, 800), rng); // At least 1.8% of indirect or ₹800
+  if (miscItem.value < miscFloor) {
+    const shortfall = miscFloor - miscItem.value;
+    miscItem.value = miscFloor;
+    // Take from the largest expense line to keep total stable
+    const largestItem = indirectExpenses
+      .filter(e => e.label !== 'Miscellaneous Expenses' && e.label !== 'Rent & Rates')
+      .sort((a, b) => b.value - a.value)[0];
+    if (largestItem) {
+      largestItem.value = Math.max(largestItem.value - shortfall, 0);
+    }
   }
 
   // Recompute totalFixedCosts from the final distribution
@@ -322,7 +348,8 @@ export function generateProjections(limits: LoanLimits, profile: BusinessProfile
   );
 
   let curDebtorDays = Math.max(15, Math.round(profile.debtorDays * (1 + centeredRandom(rng, 0.04 * variability))));
-  let curCreditorDays = Math.max(10, Math.round(profile.creditorDays * (1 + centeredRandom(rng, 0.04 * variability))));
+  const minCredDays = MIN_CREDITOR_DAYS[segKey] || 20;
+  let curCreditorDays = Math.max(minCredDays, Math.round(profile.creditorDays * (1 + centeredRandom(rng, 0.04 * variability))));
   let curStockMonths = Math.max(0.5, profile.stockMonths * (1 + centeredRandom(rng, 0.05 * variability)));
 
   for (let i = 1; i <= projectionYears; i++) {
@@ -331,11 +358,21 @@ export function generateProjections(limits: LoanLimits, profile: BusinessProfile
 
     if (i === 1) {
       openingTermLoan += limits.termLoan; // Incorporate newly proposed term loan in Year 1
-      annualTlRepayment = organic(openingTermLoan / 5, rng); 
+      annualTlRepayment = organic(openingTermLoan / (limits.tenure || 5), rng); 
     }
 
     if (i > 1) {
-      const realizedGrowth = Math.max(profile.revGrowth + centeredRandom(rng, 0.028 * variability), profile.revGrowth * 0.75);
+      // ── REALISTIC GROWTH JITTER ──────────────────────────────────────────
+      // Real businesses don't grow at perfectly smooth rates. One year might
+      // see a slight dip or slower growth due to seasonal variation, a late
+      // monsoon, or a delayed government order. Introducing per-year micro-
+      // noise with occasional negative bias makes the trajectory credible.
+      const yearMood = rng(); // 0-1, where <0.15 = soft year, 0.15-0.85 = normal, >0.85 = strong
+      const moodBias = yearMood < 0.15 ? -0.025 : (yearMood > 0.85 ? 0.018 : 0);
+      const realizedGrowth = Math.max(
+        profile.revGrowth + centeredRandom(rng, 0.032 * variability) + moodBias,
+        profile.revGrowth * 0.60
+      );
       sales = Math.max(organic(sales * (1 + realizedGrowth), rng), salesFloor);
       
       // Healthy business: direct costs reduce slightly as % of sales (economies of scale).
@@ -344,10 +381,17 @@ export function generateProjections(limits: LoanLimits, profile: BusinessProfile
       const noisyPurchaseRatio = profile.purchaseRatio * purchaseTilt * (1 - costEfficiency + centeredRandom(rng, 0.004 * variability)); 
       purchases = organic(sales * noisyPurchaseRatio, rng);
       
-      // Working capital cycle forcibly improves YoY by strict days
-      curDebtorDays = Math.max(15, curDebtorDays - (Math.floor(rng() * 3) + 1)); // Drops 1-3 days YoY
-      curCreditorDays = Math.min(120, curCreditorDays + (Math.floor(rng() * 3) + 1)); // Extends 1-3 days YoY
-      curStockMonths = Math.max(0.5, curStockMonths - (0.05 + (rng() * 0.03))); 
+      // ── REALISTIC WC CYCLE IMPROVEMENT ─────────────────────────────────
+      // Not every year shows improvement — occasionally debtor days plateau
+      // or creditor days stall, just like real business negotiations.
+      const debtorImprovement = rng() < 0.20 ? 0 : (Math.floor(rng() * 3) + 1); // 20% chance of NO improvement
+      curDebtorDays = Math.max(15, curDebtorDays - debtorImprovement);
+      
+      const creditorImprovement = rng() < 0.25 ? 0 : (Math.floor(rng() * 2) + 1); // 25% chance of stall
+      curCreditorDays = Math.min(120, Math.max(minCredDays, curCreditorDays + creditorImprovement));
+      
+      const stockImprovement = rng() < 0.20 ? 0 : (0.04 + (rng() * 0.03)); // 20% chance of plateau
+      curStockMonths = Math.max(0.5, curStockMonths - stockImprovement); 
     }
     
     // --- DYNAMIC CAPEX LOGIC ---
@@ -396,11 +440,11 @@ export function generateProjections(limits: LoanLimits, profile: BusinessProfile
     const depnYr = organic(wdv * profile.depnRate, rng);
     wdv = Math.max(wdv - depnYr, 0);
 
-    // Interest calculated on CC Limit (11.5%) + Term Loan (11.0%)
+    // Interest calculated on CC Limit & Term Loan based on dynamic rates
     // Assume full utilization of proposed limits during the projected year
     const effectiveCcForInt = (i === 1 && !limits.isRenewal) ? limits.ccLimit : (bankBorrowings || limits.ccLimit);
-    const ccInterest = organic(effectiveCcForInt * 0.115, rng);
-    const tlInterest = organic(openingTermLoan * 0.110, rng);
+    const ccInterest = organic(effectiveCcForInt * (limits.ccIntRate / 100), rng);
+    const tlInterest = organic(openingTermLoan * (limits.tlIntRate / 100), rng);
     const interest = ccInterest + tlInterest;
     let profitBeforeInt = grossProfit - indExpTotal - depnYr;
     let profitBeforeTax = profitBeforeInt - interest;
@@ -516,34 +560,22 @@ export function generateProjections(limits: LoanLimits, profile: BusinessProfile
     // Strategy: First reduce creditors if CL is too heavy, then solve cash.
     // Wider CR target band: ±7% noise gives real spread of ~1.17–1.50 across borrowers.
     // Different seeds → meaningfully different liquidity profiles (not all stuck at 1.30).
-    const targetCR = clamp(1.22 + (i - 1) * 0.05 + centeredRandom(rng, 0.075 * variability), 1.17, 1.55);
+    // CR target: non-monotonic — Y2 might dip slightly before Y3 recovers,
+    // mimicking real business cycles where a growth year strains liquidity.
+    const crYearNoise = centeredRandom(rng, 0.075 * variability);
+    const crDipBias = (i === 2 && rng() < 0.35) ? -0.03 : 0; // 35% chance Y2 dips slightly
+    const targetCR = clamp(1.22 + (i - 1) * 0.05 + crYearNoise + crDipBias, 1.17, 1.55);
     const minCash = organic(sales * profile.cashPct, rng);
 
-    // Phase A: Check if CR is achievable with reasonable cash
-    // Max acceptable cash = 60% of CC limit (owner keeps buffer for opportunity purchases)
-    const maxReasonableCash = Math.max(minCash * 5, limits.ccLimit * 0.60);
-    let testCA = operationalCA + maxReasonableCash;
-    let testCR = testCA / Math.max(bankBorrowings + totalCL, 1);
+    // ── CREDITOR-SAFE CR SOLVER ─────────────────────────────────────────
+    // Creditors are OPERATIONAL — they reflect real supplier payment terms
+    // (40-45 days for trading, 30-42 for manufacturing, etc.). A CA would
+    // never artificially reduce creditors to inflate Current Ratio.
+    // Instead, we achieve CR through the asset side: owner's cash injection.
+    // Max cash = 120% of CC limit (owner maintains working liquidity).
+    const maxReasonableCash = Math.max(minCash * 5, limits.ccLimit * 1.20);
 
-    if (testCR < targetCR) {
-      // Even with max cash, CR is too low → need to reduce CL
-      // Convert creditors to unsecured loans (realistic: pay suppliers faster, borrow informally)
-      const neededCAForCR = targetCR * (bankBorrowings + totalCL);
-      const shortfall = neededCAForCR - testCA;
-      // Reduce CL to bring denominator down: CR = testCA / (BB + totalCL - reduction)
-      // targetCR = testCA / (BB + totalCL - reduction)
-      // reduction = (BB + totalCL) - testCA/targetCR
-      const clReduction = Math.max((bankBorrowings + totalCL) - testCA / targetCR, 0);
-      const maxCreditorDrain = creditors * 0.50; // Don't drain more than 50%
-      const actualDrain = Math.min(clReduction, maxCreditorDrain);
-      if (actualDrain > 0) {
-        creditors -= actualDrain;
-        marketUnsecured += actualDrain * 0.4; // Part goes to unsecured
-        totalCL -= actualDrain;
-      }
-    }
-
-    // Phase B: Now solve cash from the (possibly adjusted) CR equation
+    // Solve cash directly from CR equation: CR = (opCA + cash) / (BB + CL)
     const clDenom = bankBorrowings + totalCL;
     const neededCA = targetCR * clDenom;
     let cashBank = clamp(neededCA - operationalCA, minCash, maxReasonableCash);
@@ -595,9 +627,11 @@ export function generateProjections(limits: LoanLimits, profile: BusinessProfile
       }
     }
 
-    // e) ROE ceiling: cap ROE at 80% — projections with ROE > 80% look unrealistic
-    //    to credit analysts. Promoter is assumed to bring in accumulated savings.
-    const roeCeiling = 0.80;
+    // e) ROE ceiling: cap ROE at a realistic range (55-72%) — a hard 80.00% looks
+    //    like an engineered ceiling to any credit analyst. Real MSMEs show ROEs
+    //    of 25-65% depending on capital structure. Using a noisy band ensures no
+    //    two borrowers show the same suspicious round ROE figure.
+    const roeCeiling = clamp(0.62 + centeredRandom(rng, 0.10 * variability), 0.52, 0.72);
     if (netProfit > 0 && plugCapital > 0 && netProfit / plugCapital > roeCeiling) {
       const roeCapFloor = Math.ceil(netProfit / roeCeiling);
       const roeInjection = roeCapFloor - plugCapital;
@@ -621,7 +655,7 @@ export function generateProjections(limits: LoanLimits, profile: BusinessProfile
         cashBank -= trim;
         totalCA -= trim;
         totalAssets -= trim;
-        plugCapital -= trim; // capital shrinks symmetrically — ROE may rise slightly, still ≤ 80%
+        plugCapital -= trim; // capital shrinks symmetrically — ROE may rise slightly
       }
     }
 

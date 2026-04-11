@@ -130,7 +130,16 @@ function evaluateYear(segment: BusinessSegment, projection: ProjectedYear, failu
 
 function evaluateScenario(segment: BusinessSegment, loanAmount: number): ScenarioResult {
   const profile = getDynamicProfile(segment, loanAmount);
-  const limits = { ccLimit: loanAmount, termLoan: 0, isRenewal: false, existingCc: 0, existingTl: 0 };
+  const limits = { 
+    ccLimit: loanAmount, 
+    termLoan: 0, 
+    isRenewal: false, 
+    existingCc: 0, 
+    existingTl: 0,
+    ccIntRate: 11.5,
+    tlIntRate: 11.0,
+    tenure: 5
+  };
   const failures: string[] = [];
   const averages = { currentRatio: 0, dscr: 0, debtEquity: 0, npMargin: 0, ebitdaMargin: 0 };
   let count = 0;

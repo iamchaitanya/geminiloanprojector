@@ -1,0 +1,96 @@
+/* CashFlow.module.css — scoped styles for the Cash Flow Statement */
+
+.table {
+  width: 100%;
+  min-width: 900px;
+  border-collapse: collapse;
+  border: 2px solid #000;
+  font-family: "Times New Roman", Times, serif;
+  font-size: 12px;
+  background: #fff;
+  color: #000;
+}
+
+.table th,
+.table td {
+  padding: 5px 12px;
+  vertical-align: middle;
+  border-top: none;
+  border-bottom: none;
+  border-left: 1px solid #000;
+  border-right: 1px solid #000;
+  background: #fff;
+  color: #000;
+  font-family: "Times New Roman", Times, serif;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.table thead th {
+  font-weight: bold;
+  text-align: center;
+  border-top: none;
+  border-bottom: 2px solid #000;
+  white-space: nowrap;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.colParticulars {
+  text-align: left !important;
+  width: 32%;
+  min-width: 280px;
+}
+
+.tdParticulars { text-align: left; white-space: normal; }
+.tdValue {
+  text-align: center;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+.sectionRow td {
+  background: #f0f0f0 !important;
+  font-weight: bold;
+  font-size: 11px;
+  text-transform: uppercase;
+  border-top: 1.5px solid #000 !important;
+  border-bottom: 1.5px solid #000 !important;
+  border-left: none !important;
+  border-right: none !important;
+  padding: 6px 12px;
+  letter-spacing: 0.04em;
+}
+
+/* Working capital adjustment rows — slightly muted */
+.adjustRow td {
+  color: #555;
+  font-size: 11px;
+}
+
+/* Section subtotals */
+.subtotalRow td {
+  font-weight: bold;
+  border-top: 1px solid #aaa !important;
+  border-bottom: 1px solid #aaa !important;
+}
+
+/* Final totals (Net increase in cash, Closing balance) */
+.totalRow td {
+  font-weight: bold;
+  border-top: 2px solid #000 !important;
+  border-bottom: 2px solid #000 !important;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.spacerRow {
+  height: 12px;
+  background: #fff;
+}
+.spacerRow td {
+  border-left: none !important;
+  border-right: none !important;
+}

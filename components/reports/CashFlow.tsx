@@ -1,168 +1,201 @@
 // components/reports/CashFlow.tsx
-import { ProjectedYear } from"../../lib/engine";
-import { fmt } from"../../lib/format";
+import { ProjectedYear } from "../../lib/engine";
+import { fmt, fmtAcc } from "../../lib/format";
+import s from "./CashFlow.module.css";
 
-export default function CashFlow({ data, years, loanAmount }: { data: ProjectedYear[], years: string[], loanAmount: number }) {
- 
- return (
- <div className="border border-black rounded-none overflow-hidden">
- <div className="border-b border-black px-6 py-5 flex justify-between items-center border-b border-black">
- <div>
- <h3 className="text-[11px] font-bold font-semibold">Cash Flow Statement (Indirect Method)</h3>
- <p className="text-[11px] mt-1">As per AS-3 Revised Format</p>
- </div>
- <span className="text-[11px] font-semibold border border-black px-2.5 py-1 rounded-none">CASH FLOW</span>
- </div>
- 
- <div className="overflow-x-auto">
- <table className="min-w-full divide-black divide-black text-[11px] whitespace-nowrap font-mono">
- <thead className="border-b border-black">
- <tr>
- <th className="px-6 py-4 text-left font-semibold uppercase text-[11px] min-w-[350px]">Particulars</th>
- {years.map(y => <th key={y} className="px-6 py-4 text-right font-semibold uppercase text-[11px]">{y}</th>)}
- </tr>
- </thead>
- <tbody className="divide-black divide-black text-[#0f0e0b]">
- 
- {/* A. OPERATING ACTIVITIES */}
- <tr className="border-y border-black font-bold text-[0.68rem] uppercase">
- <td className="px-6 py-3 text-left font-sans" colSpan={years.length + 1}>A. CASH FLOW FROM OPERATING ACTIVITIES</td>
- </tr>
- <tr className="hover:">
- <td className="px-6 py-2.5 text-left font-sans pl-10">Net Profit after Tax</td>
- {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right">{fmt(d.netProfit)}</td>)}
- </tr>
- <tr className="hover:">
- <td className="px-6 py-2.5 text-left font-sans pl-10">Add: Depreciation (non-cash)</td>
- {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right">{fmt(d.depnYr)}</td>)}
- </tr>
- <tr className="hover:">
- <td className="px-6 py-2.5 text-left font-sans pl-10">Add: Interest Charged Back</td>
- {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right">{fmt(d.interest)}</td>)}
- </tr>
- 
- {/* Working Capital Changes */}
- <tr className="hover: text-[#8a8275] text-[11px]">
- <td className="px-6 py-2 text-left font-sans pl-14">(Increase) / Decrease in Debtors</td>
- {data.map((d, i) => {
- const diff = i === 0 ? d.debtors : d.debtors - data[i-1].debtors;
- return <td key={d.year} className="px-6 py-2 text-right">{fmt(-diff)}</td>;
- })}
- </tr>
- <tr className="hover: text-[#8a8275] text-[11px]">
- <td className="px-6 py-2 text-left font-sans pl-14">(Increase) / Decrease in Inventory</td>
- {data.map((d, i) => {
- const diff = i === 0 ? d.inventory : d.inventory - data[i-1].inventory;
- return <td key={d.year} className="px-6 py-2 text-right">{fmt(-diff)}</td>;
- })}
- </tr>
- <tr className="hover: text-[#8a8275] text-[11px]">
- <td className="px-6 py-2 text-left font-sans pl-14">Increase / (Decrease) in Creditors</td>
- {data.map((d, i) => {
- const diff = i === 0 ? d.creditors : d.creditors - data[i-1].creditors;
- return <td key={d.year} className="px-6 py-2 text-right">{fmt(diff)}</td>;
- })}
- </tr>
- <tr className="hover: text-[#8a8275] text-[11px]">
- <td className="px-6 py-2 text-left font-sans pl-14">Increase / (Decrease) in Other CL</td>
- {data.map((d, i) => {
- const diff = i === 0 ? d.otherCL : d.otherCL - data[i-1].otherCL;
- return <td key={d.year} className="px-6 py-2 text-right">{fmt(diff)}</td>;
- })}
- </tr>
+export default function CashFlow({ data, years, loanAmount }: { data: ProjectedYear[]; years: string[]; loanAmount: number }) {
+  const ncols = years.length + 1;
 
- <tr className="font-bold border-y border-[#ccc8be]">
- <td className="px-6 py-3 text-left font-sans pl-6">Net Cash from Operations (A)</td>
- {data.map((d, i) => {
- const incD = i === 0 ? d.debtors : d.debtors - data[i-1].debtors;
- const incI = i === 0 ? d.inventory : d.inventory - data[i-1].inventory;
- const incC = i === 0 ? d.creditors : d.creditors - data[i-1].creditors;
- const incO = i === 0 ? d.otherCL : d.otherCL - data[i-1].otherCL;
- const total = d.netProfit + d.depnYr + d.interest - incD - incI + incC + incO;
- return <td key={d.year} className="px-6 py-3 text-right">{fmt(total)}</td>;
- })}
- </tr>
+  const yearHeaders = years.map((y) => (
+    <th key={y} style={{ textAlign: "center" }}>
+      {y.includes("\n") ? y.split("\n").map((l, i) => <span key={i} style={{ display: "block" }}>{l}</span>) : y}
+    </th>
+  ));
 
- <tr className="h-4"></tr>
+  // Helpers to avoid repeating WC diff logic
+  const wcDiff = (key: keyof ProjectedYear) =>
+    data.map((d, i) => (i === 0 ? (d[key] as number) : (d[key] as number) - (data[i - 1][key] as number)));
 
- {/* B. INVESTING ACTIVITIES */}
- <tr className="border-y border-black font-bold text-[0.68rem] uppercase">
- <td className="px-6 py-3 text-left font-sans" colSpan={years.length + 1}>B. CASH FLOW FROM INVESTING ACTIVITIES</td>
- </tr>
- <tr className="hover:">
- <td className="px-6 py-2.5 text-left font-sans pl-10">Purchase of Fixed Assets / Capex</td>
- {data.map((d, i) => {
- const capex = i === 0 ? d.grossFA : d.grossFA - data[i-1].grossFA;
- return <td key={d.year} className="px-6 py-2.5 text-right">({fmt(capex)})</td>;
- })}
- </tr>
- <tr className="font-bold border-y border-[#ccc8be]">
- <td className="px-6 py-3 text-left font-sans pl-6">Net Cash from Investing (B)</td>
- {data.map((d, i) => {
- const capex = i === 0 ? d.grossFA : d.grossFA - data[i-1].grossFA;
- return <td key={d.year} className="px-6 py-3 text-right">({fmt(capex)})</td>;
- })}
- </tr>
+  const debtorDiffs = wcDiff("debtors");
+  const inventDiffs = wcDiff("inventory");
+  const credDiffs   = wcDiff("creditors");
+  const otherCLDiffs = wcDiff("otherCL");
 
- <tr className="h-4"></tr>
+  const cfA = data.map((d, i) =>
+    d.netProfit + d.depnYr + d.interest
+    - debtorDiffs[i] - inventDiffs[i]
+    + credDiffs[i] + otherCLDiffs[i]
+  );
 
- {/* C. FINANCING ACTIVITIES */}
- <tr className="border-y border-black font-bold text-[0.68rem] uppercase">
- <td className="px-6 py-3 text-left font-sans" colSpan={years.length + 1}>C. CASH FLOW FROM FINANCING ACTIVITIES</td>
- </tr>
- <tr className="hover:">
- <td className="px-6 py-2.5 text-left font-sans pl-10">CC Limit Availed / Loan Received</td>
- {data.map((d, i) => <td key={d.year} className="px-6 py-2.5 text-right">{fmt(i === 0 ? loanAmount : 0)}</td>)}
- </tr>
- <tr className="hover:">
- <td className="px-6 py-2.5 text-left font-sans pl-10">Proprietor's Drawings / Withdrawals</td>
- {data.map((d, i) => {
- const drawings = i === 0 ? (d.netProfit - d.capital + loanAmount) : (d.netProfit - (d.capital - data[i-1].capital));
- return <td key={d.year} className="px-6 py-2.5 text-right">({fmt(Math.abs(drawings))})</td>;
- })}
- </tr>
- <tr className="font-bold border-y border-[#ccc8be]">
- <td className="px-6 py-3 text-left font-sans pl-6">Net Cash from Financing (C)</td>
- {data.map((d, i) => {
- const drawings = i === 0 ? (d.netProfit - d.capital + loanAmount) : (d.netProfit - (d.capital - data[i-1].capital));
- const total = (i === 0 ? loanAmount : 0) - Math.abs(drawings);
- return <td key={d.year} className="px-6 py-3 text-right">{fmt(total)}</td>;
- })}
- </tr>
+  const capex = data.map((d, i) => (i === 0 ? d.grossFA : d.grossFA - data[i - 1].grossFA));
+  const cfB = capex.map((c) => -c);
 
- <tr className="h-6"></tr>
+  const drawings = data.map((d, i) =>
+    i === 0
+      ? d.netProfit - d.capital + loanAmount
+      : d.netProfit - (d.capital - data[i - 1].capital)
+  );
+  const cfC = data.map((d, i) => (i === 0 ? loanAmount : 0) - Math.abs(drawings[i]));
 
- {/* RECONCILIATION */}
- <tr className="font-bold border-t-2 border-[#ccc8be]">
- <td className="px-6 py-4 text-left font-sans uppercase">Net Increase / (Decrease) in Cash (A+B+C)</td>
- {data.map((d, i) => {
- // Calculation of Net CF
- const incD = i === 0 ? d.debtors : d.debtors - data[i-1].debtors;
- const incI = i === 0 ? d.inventory : d.inventory - data[i-1].inventory;
- const incC = i === 0 ? d.creditors : d.creditors - data[i-1].creditors;
- const incO = i === 0 ? d.otherCL : d.otherCL - data[i-1].otherCL;
- const cfA = d.netProfit + d.depnYr + d.interest - incD - incI + incC + incO;
- const cfB = -(i === 0 ? d.grossFA : d.grossFA - data[i-1].grossFA);
- const drawings = i === 0 ? (d.netProfit - d.capital + loanAmount) : (d.netProfit - (d.capital - data[i-1].capital));
- const cfC = (i === 0 ? loanAmount : 0) - Math.abs(drawings);
- return <td key={d.year} className="px-6 py-4 text-right text-[11px] font-bold">{fmt(cfA + cfB + cfC)}</td>;
- })}
- </tr>
- <tr className="hover: font-medium">
- <td className="px-6 py-3 text-left font-sans pl-6">Opening Cash & Bank Balance</td>
- {data.map((d, i) => {
- // Previous year's cash or initial (Sales * 2%)
- return <td key={d.year} className="px-6 py-3 text-right">{fmt(i === 0 ? d.sales * 0.02 : data[i-1].cashBank)}</td>;
- })}
- </tr>
- <tr className="border-y-2 border-black font-bold border-y-2 border-black">
- <td className="px-6 py-4 text-left font-sans">Closing Cash & Bank Balance</td>
- {data.map(d => <td key={d.year} className="px-6 py-4 text-right text-xl">{fmt(d.cashBank)}</td>)}
- </tr>
+  const netCash = data.map((_, i) => cfA[i] + cfB[i] + cfC[i]);
 
- </tbody>
- </table>
- </div>
- </div>
- );
+  return (
+    <div className="report-section-wrapper">
+      <div className="report-section-header">
+        <div>
+          <div className="report-section-num">Section 4</div>
+          <h3 className="report-section-title">Cash Flow Statement (Indirect Method)</h3>
+          <p className="report-section-subtitle">As per AS-3 Revised Format</p>
+        </div>
+        <span className="badge badge-emerald">CASH FLOW</span>
+      </div>
+
+      <div style={{ overflowX: "auto" }}>
+        <table className={s.table}>
+          <colgroup>
+            <col style={{ width: "32%", minWidth: "280px" }} />
+            {years.map((y) => <col key={y} />)}
+          </colgroup>
+
+          <thead>
+            <tr>
+              <th className={s.colParticulars}>Particulars</th>
+              {yearHeaders}
+            </tr>
+          </thead>
+
+          <tbody>
+            {/* A. OPERATING ACTIVITIES */}
+            <tr className={s.sectionRow}>
+              <td colSpan={ncols} style={{ textAlign: 'left', fontWeight: 800 }}>A. CASH FLOW FROM OPERATING ACTIVITIES</td>
+            </tr>
+
+            <tr>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>1) Net Profit after Tax</span>
+              </td>
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.netProfit)}</td>)}
+            </tr>
+            <tr>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>2) Add: Depreciation (non-cash)</span>
+              </td>
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.depnYr)}</td>)}
+            </tr>
+            <tr>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>3) Add: Interest Charged Back</span>
+              </td>
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.interest)}</td>)}
+            </tr>
+
+            {/* Working capital adjustments */}
+            <tr>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>4) Working Capital Adjustments:</span>
+              </td>
+              {years.map((y) => <td key={y} />)}
+            </tr>
+            <tr className={s.adjustRow}>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '64px', display: 'inline-block' }}>i) (Increase) / Decrease in Debtors</span>
+              </td>
+              {data.map((d, i) => <td key={d.year} className={s.tdValue}>{fmtAcc(-debtorDiffs[i])}</td>)}
+            </tr>
+            <tr className={s.adjustRow}>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '64px', display: 'inline-block' }}>ii) (Increase) / Decrease in Inventory</span>
+              </td>
+              {data.map((d, i) => <td key={d.year} className={s.tdValue}>{fmtAcc(-inventDiffs[i])}</td>)}
+            </tr>
+            <tr className={s.adjustRow}>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '64px', display: 'inline-block' }}>iii) Increase / (Decrease) in Creditors</span>
+              </td>
+              {data.map((d, i) => <td key={d.year} className={s.tdValue}>{fmtAcc(credDiffs[i])}</td>)}
+            </tr>
+            <tr className={s.adjustRow}>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '64px', display: 'inline-block' }}>iv) Increase / (Decrease) in Other CL</span>
+              </td>
+              {data.map((d, i) => <td key={d.year} className={s.tdValue}>{fmtAcc(otherCLDiffs[i])}</td>)}
+            </tr>
+
+            <tr className={s.subtotalRow} style={{ borderBottom: '3px solid #000' }}>
+              <td className={s.tdParticulars}>
+                <span style={{ fontWeight: 800, marginLeft: '20px', display: 'inline-block' }}>NET CASH FROM OPERATING ACTIVITIES (A)</span>
+              </td>
+              {data.map((d, i) => <td key={d.year} className={s.tdValue} style={{ fontWeight: 800 }}>{fmt(cfA[i])}</td>)}
+            </tr>
+
+            <tr className={s.spacerRow} style={{ height: '24px' }}><td colSpan={ncols} /></tr>
+
+            {/* B. INVESTING ACTIVITIES */}
+            <tr className={s.sectionRow}>
+              <td colSpan={ncols} style={{ textAlign: 'left', fontWeight: 800 }}>B. CASH FLOW FROM INVESTING ACTIVITIES</td>
+            </tr>
+            <tr>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>1) Purchase of Fixed Assets / Capex</span>
+              </td>
+              {data.map((d, i) => <td key={d.year} className={s.tdValue}>({fmt(capex[i])})</td>)}
+            </tr>
+            <tr className={s.subtotalRow} style={{ borderBottom: '3px solid #000' }}>
+              <td className={s.tdParticulars}>
+                <span style={{ fontWeight: 800, marginLeft: '20px', display: 'inline-block' }}>NET CASH FROM INVESTING ACTIVITIES (B)</span>
+              </td>
+              {data.map((d, i) => <td key={d.year} className={s.tdValue} style={{ fontWeight: 800 }}>({fmt(capex[i])})</td>)}
+            </tr>
+
+            <tr className={s.spacerRow} style={{ height: '24px' }}><td colSpan={ncols} /></tr>
+
+            {/* C. FINANCING ACTIVITIES */}
+            <tr className={s.sectionRow}>
+              <td colSpan={ncols} style={{ textAlign: 'left', fontWeight: 800 }}>C. CASH FLOW FROM FINANCING ACTIVITIES</td>
+            </tr>
+            <tr>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>1) CC Limit Availed / Loan Received</span>
+              </td>
+              {data.map((d, i) => <td key={d.year} className={s.tdValue}>{fmt(i === 0 ? loanAmount : 0)}</td>)}
+            </tr>
+            <tr>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>2) Proprietor's Drawings / Withdrawals</span>
+              </td>
+              {data.map((d, i) => <td key={d.year} className={s.tdValue}>({fmt(Math.abs(drawings[i]))})</td>)}
+            </tr>
+            <tr className={s.subtotalRow} style={{ borderBottom: '3px solid #000' }}>
+              <td className={s.tdParticulars}>
+                <span style={{ fontWeight: 800, marginLeft: '20px', display: 'inline-block' }}>NET CASH FROM FINANCING ACTIVITIES (C)</span>
+              </td>
+              {data.map((d, i) => <td key={d.year} className={s.tdValue} style={{ fontWeight: 800 }}>{fmtAcc(cfC[i])}</td>)}
+            </tr>
+
+            <tr className={s.spacerRow} style={{ height: '32px' }}><td colSpan={ncols} /></tr>
+
+            {/* RECONCILIATION */}
+            <tr className={s.subtotalRow}>
+              <td className={s.tdParticulars} style={{ fontWeight: 800 }}>NET INCREASE / (DECREASE) IN CASH (A + B + C)</td>
+              {data.map((d, i) => <td key={d.year} className={s.tdValue} style={{ fontWeight: 800 }}>{fmtAcc(netCash[i])}</td>)}
+            </tr>
+            <tr>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>Add: Opening Cash &amp; Bank Balance</span>
+              </td>
+              {data.map((d, i) => (
+                <td key={d.year} className={s.tdValue}>
+                  {fmt(i === 0 ? d.sales * 0.02 : data[i - 1].cashBank)}
+                </td>
+              ))}
+            </tr>
+            <tr className={s.totalRow} style={{ borderTop: '3px solid #000', borderBottom: '3px double #000' }}>
+              <td className={s.tdParticulars} style={{ fontWeight: 900, fontSize: '12pt' }}>CLOSING CASH &amp; BANK BALANCE</td>
+              {data.map((d) => <td key={d.year} className={s.tdValue} style={{ fontWeight: 900 }}>{fmt(d.cashBank)}</td>)}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
 }

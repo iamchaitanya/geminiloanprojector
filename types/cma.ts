@@ -41,6 +41,9 @@ export interface LoanLimits {
   isRenewal: boolean;
   existingCc: number;
   existingTl: number;
+  ccIntRate: number;
+  tlIntRate: number;
+  tenure: number;
 }
 
 export interface ProjectedYear {

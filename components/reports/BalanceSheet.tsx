@@ -1,154 +1,203 @@
 // components/reports/BalanceSheet.tsx
-import { ProjectedYear } from"../../lib/engine";
-import { fmt } from"../../lib/format";
+import { ProjectedYear } from "../../lib/engine";
+import { fmt } from "../../lib/format";
+import s from "./BalanceSheet.module.css";
 
-export default function BalanceSheet({ data, years, loanAmount }: { data: ProjectedYear[], years: string[], loanAmount: number }) {
- return (
- <div className="border border-black rounded-none overflow-hidden font-sans">
- <div className="border-b border-black px-6 py-5 flex justify-between items-center border-b border-black">
- <div>
- <h3 className="text-[11px] font-bold font-semibold uppercase">Detailed Projected Balance Sheet</h3>
- <p className="text-[11px] mt-1 font-mono">Comprehensive Sources & Applications of Funds</p>
- </div>
- <div className="flex flex-col items-end">
- <span className="text-[11px] font-semibold px-3 py-1 rounded-none uppercase">Audit Grade</span>
- <span className="text-[10px] mt-1 uppercase font-mono text-right">Tandon/RBI Compliant</span>
- </div>
- </div>
+export default function BalanceSheet({ data, years }: { data: ProjectedYear[]; years: string[]; loanAmount: number }) {
+  const ncols = years.length + 1;
 
- <div className="overflow-x-auto">
- <table className="min-w-full divide-black divide-black text-[11px] whitespace-nowrap">
- <thead className="border-b border-black">
- <tr className="uppercase font-bold text-[11px]">
- <th className="px-6 py-4 text-left min-w-[400px]">Capital & Liabilities (Sources)</th>
- {years.map(y => <th key={y} className="px-6 py-4 text-right">{y}</th>)}
- </tr>
- </thead>
- <tbody className="divide-black divide-black font-mono text-[13px]">
- 
- {/* 1. NET WORTH SECTION */}
- <tr className="border-y border-black font-bold text-[11px] uppercase">
- <td className="px-6 py-3 text-left font-sans" colSpan={years.length + 1}>I. NET WORTH & QUASI-EQUITY</td>
- </tr>
- <tr className="hover: transition-colors">
- <td className="px-6 py-3 text-left font-medium pl-10 font-sans">1. Proprietor's / Partners Capital</td>
- {data.map(d => <td key={d.year} className="px-6 py-3 text-right">{fmt(d.capital)}</td>)}
- </tr>
- <tr className="hover: border-y border-black border-y border-black/10">
- <td className="px-6 py-2.5 text-left pl-14 font-sans font-bold">2. Add: Quasi-Equity (Promoter Loans)</td>
- {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right font-bold">{fmt(d.quasiEquity)}</td>)}
- </tr>
- <tr className="font-bold border-y border-black">
- <td className="px-6 py-3 text-left pl-10 font-sans uppercase text-[11px]">TANGIBLE NET WORTH (1 + 2)</td>
- {data.map(d => <td key={d.year} className="px-6 py-3 text-right">{fmt(d.capital + d.quasiEquity)}</td>)}
- </tr>
+  const yearHeaders = years.map((y) => (
+    <th key={y} style={{ textAlign: "center" }}>
+      {y.includes("\n") ? y.split("\n").map((l, i) => <span key={i} style={{ display: "block" }}>{l}</span>) : y}
+    </th>
+  ));
 
- {/* 2. TERM LIABILITIES */}
- <tr className="border-y border-black font-bold text-[11px] uppercase">
- <td className="px-6 py-3 text-left font-sans" colSpan={years.length + 1}>II. TERM LIABILITIES</td>
- </tr>
- <tr className="hover:">
- <td className="px-6 py-2.5 text-left font-medium pl-10 font-sans">3. Term Loans (Bank/FIs)</td>
- {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right">{fmt(d.termLoan)}</td>)}
- </tr>
- <tr className="hover:">
- <td className="px-6 py-2.5 text-left font-medium pl-10 font-sans">4. Unsecured Loans (Market/External)</td>
- {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right">{fmt(d.unsecured)}</td>)}
- </tr>
+  return (
+    <div className="report-section-wrapper font-sans">
+      <div className="report-section-header">
+        <div>
+          <div className="report-section-num">Section 3</div>
+          <h3 className="report-section-title">Detailed Projected Balance Sheet</h3>
+          <p className="report-section-subtitle">Comprehensive Sources &amp; Applications of Funds</p>
+        </div>
+        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+          <span className="badge badge-emerald">Audit Grade</span>
+          <span className="badge badge-blue no-print">Tandon/RBI Compliant</span>
+        </div>
+      </div>
 
- {/* 3. CURRENT LIABILITIES */}
- <tr className="border-y border-black font-bold text-[11px] uppercase">
- <td className="px-6 py-3 text-left font-sans" colSpan={years.length + 1}>III. CURRENT LIABILITIES</td>
- </tr>
- <tr className="hover:">
- <td className="px-6 py-3 text-left font-bold pl-10 font-sans">5. Bank Borrowings (Proposed Limit CC/OD)</td>
- {data.map(d => <td key={d.year} className="px-6 py-3 text-right font-bold">{fmt(d.bankBorrowings)}</td>)}
- </tr>
- <tr className="hover:">
- <td className="px-6 py-2.5 text-left font-medium pl-10 font-sans">6. Current Maturities of Long Term Debt (CMLTD)</td>
- {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right">{fmt(d.cmltd)}</td>)}
- </tr>
- <tr className="hover:">
- <td className="px-6 py-2.5 text-left font-medium pl-10 font-sans">7. Sundry Creditors (Trade Payables)</td>
- {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right">{fmt(d.creditors)}</td>)}
- </tr>
- <tr className="hover:">
- <td className="px-6 py-2.5 text-left pl-14 font-sans font-bold">8. Statutory Liabilities (GST/PF/TDS)</td>
- {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right font-bold">{fmt(d.statutoryDues)}</td>)}
- </tr>
- <tr className="hover:">
- <td className="px-6 py-2.5 text-left font-medium pl-10 font-sans">9. Other Current Liabilities & Provisions</td>
- {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right">{fmt(d.otherCL)}</td>)}
- </tr>
+      <div style={{ overflowX: "auto" }}>
+        <table className={s.table}>
+          <colgroup>
+            <col style={{ width: "32%", minWidth: "280px" }} />
+            {years.map((y) => <col key={y} />)}
+          </colgroup>
 
- <tr className="border-b border-black font-bold text-[11px] border-t-2 border-black">
- <td className="px-6 py-5 text-left font-sans uppercase">TOTAL SOURCES OF FUNDS</td>
- {data.map(d => <td key={d.year} className="px-6 py-5 text-right font-bold">{fmt(d.totalLiab)}</td>)}
- </tr>
+          {/* ── LIABILITIES HEADER ─────────────────────────────────── */}
+          <thead>
+            <tr>
+              <th className={s.colParticulars}>Particulars</th>
+              {yearHeaders}
+            </tr>
+          </thead>
 
- <tr className="h-8"><td colSpan={years.length + 1}></td></tr>
+          <tbody>
+            {/* 1) NET WORTH */}
+            <tr className={s.sectionRow}>
+              <td colSpan={ncols} style={{ textAlign: 'left', fontWeight: 800 }}>1) NET WORTH &amp; QUASI-EQUITY</td>
+            </tr>
+            <tr>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>A) Proprietor's / Partners Capital</span>
+              </td>
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.capital)}</td>)}
+            </tr>
+            <tr>
+              <td className={s.tdParticulars}>
+                <span style={{ fontWeight: "700", marginLeft: '40px', display: 'inline-block' }}>B) Add: Quasi-Equity (Promoter Loans)</span>
+              </td>
+              {data.map((d) => <td key={d.year} className={s.tdValue} style={{ fontWeight: "700" }}>{fmt(d.quasiEquity)}</td>)}
+            </tr>
+            <tr className={s.subtotalRow}>
+              <td className={s.tdParticulars}>
+                <span style={{ fontWeight: 800, marginLeft: '20px', display: 'inline-block' }}>TANGIBLE NET WORTH (A + B)</span>
+              </td>
+              {data.map((d) => <td key={d.year} className={s.tdValue} style={{ fontWeight: 800 }}>{fmt(d.capital + d.quasiEquity)}</td>)}
+            </tr>
 
- {/* FIXED ALIGNMENT: ASSETS SECTION HEADER */}
- <tr className="border-b border-black border-y-4 border-black uppercase font-bold text-[11px]">
- <td className="px-6 py-4 text-left font-sans">Fixed & Current Assets (Applications)</td>
- {years.map(y => <td key={y} className="px-6 py-4 text-right font-sans">{y}</td>)}
- </tr>
+            {/* 2) TERM LIABILITIES */}
+            <tr className={s.sectionRow}>
+              <td colSpan={ncols} style={{ textAlign: 'left', fontWeight: 800 }}>2) TERM LIABILITIES (LONG TERM)</td>
+            </tr>
+            <tr>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>A) Term Loans (Bank/FIs)</span>
+              </td>
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.termLoan)}</td>)}
+            </tr>
+            <tr>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>B) Unsecured Loans (Market/External)</span>
+              </td>
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.unsecured)}</td>)}
+            </tr>
 
- {/* 4. FIXED ASSETS */}
- <tr className="border-y border-black font-bold text-[11px] uppercase">
- <td className="px-6 py-3 text-left font-sans" colSpan={years.length + 1}>IV. FIXED ASSETS</td>
- </tr>
- <tr className="hover:">
- <td className="px-6 py-2.5 text-left font-medium pl-10 font-sans">10. Gross Block (At Cost)</td>
- {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right">{fmt(d.grossFA)}</td>)}
- </tr>
- <tr className="hover:">
- <td className="px-6 py-2.5 text-left pl-14 font-sans font-bold">11. Less: Accumulated Depreciation</td>
- {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right font-bold">({fmt(d.accDepn)})</td>)}
- </tr>
- <tr className="font-bold border-y border-black">
- <td className="px-6 py-3 text-left pl-10 font-sans uppercase text-[11px]">NET FIXED ASSETS (10 - 11)</td>
- {data.map(d => <td key={d.year} className="px-6 py-3 text-right">{fmt(d.netFA)}</td>)}
- </tr>
+            {/* 3) CURRENT LIABILITIES */}
+            <tr className={s.sectionRow}>
+              <td colSpan={ncols} style={{ textAlign: 'left', fontWeight: 800 }}>3) CURRENT LIABILITIES &amp; PROVISIONS</td>
+            </tr>
+            <tr>
+              <td className={s.tdParticulars}>
+                <span style={{ fontWeight: "700", marginLeft: '40px', display: 'inline-block' }}>A) Bank Borrowings (Proposed Limit CC/OD)</span>
+              </td>
+              {data.map((d) => <td key={d.year} className={s.tdValue} style={{ fontWeight: "700" }}>{fmt(d.bankBorrowings)}</td>)}
+            </tr>
+            <tr>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>B) Current Maturities of Long Term Debt (CMLTD)</span>
+              </td>
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.cmltd)}</td>)}
+            </tr>
+            <tr>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>C) Sundry Creditors (Trade Payables)</span>
+              </td>
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.creditors)}</td>)}
+            </tr>
+            <tr>
+              <td className={s.tdParticulars}>
+                <span style={{ fontWeight: "700", marginLeft: '40px', display: 'inline-block' }}>D) Statutory Liabilities (GST/PF/TDS)</span>
+              </td>
+              {data.map((d) => <td key={d.year} className={s.tdValue} style={{ fontWeight: "700" }}>{fmt(d.statutoryDues)}</td>)}
+            </tr>
+            <tr>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>E) Other Current Liabilities &amp; Provisions</span>
+              </td>
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.otherCL)}</td>)}
+            </tr>
 
- {/* 5. CURRENT ASSETS */}
- <tr className="border-y border-black font-bold text-[11px] uppercase">
- <td className="px-6 py-3 text-left font-sans" colSpan={years.length + 1}>V. CURRENT ASSETS, LOANS & ADVANCES</td>
- </tr>
- <tr className="hover:">
- <td className="px-6 py-3 text-left font-medium pl-10 font-sans">12. Closing Stock (Inventory)</td>
- {data.map(d => <td key={d.year} className="px-6 py-3 text-right font-bold">{fmt(d.inventory)}</td>)}
- </tr>
- <tr className="hover:">
- <td className="px-6 py-2.5 text-left font-bold pl-10 font-sans">13. Sundry Debtors (Receivables) &lt; 6 Months</td>
- {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right font-bold">{fmt(d.debtorsUnder6M)}</td>)}
- </tr>
- <tr className="hover:">
- <td className="px-6 py-2 text-left pl-14 font-sans font-bold">14. Sundry Debtors (Receivables) &gt; 6 Months</td>
- {data.map(d => <td key={d.year} className="px-6 py-2 text-right font-bold">{fmt(d.debtorsOver6M)}</td>)}
- </tr>
- <tr className="hover:">
- <td className="px-6 py-2.5 text-left font-medium pl-10 font-sans">15. Cash and Bank Balances</td>
- {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right">{fmt(d.cashBank)}</td>)}
- </tr>
- <tr className="hover:">
- <td className="px-6 py-2.5 text-left font-medium pl-10 font-sans">16. Loans & Advances (Suppliers/Deposits)</td>
- {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right">{fmt(d.loansAdv)}</td>)}
- </tr>
- {data.some(d => d.reconAdj > 0) && (
- <tr className="hover:">
- <td className="px-6 py-2 text-left pl-14 font-sans text-[11px]">17. Other Deposits / Adjustments</td>
- {data.map(d => <td key={d.year} className="px-6 py-2 text-right text-[11px]">{fmt(d.reconAdj)}</td>)}
- </tr>
- )}
+            <tr className={s.totalRow} style={{ borderTop: '3px solid #000', borderBottom: '3px double #000' }}>
+              <td className={s.tdParticulars} style={{ fontWeight: 900, fontSize: '12pt' }}>TOTAL LIABILITIES &amp; CAPITAL</td>
+              {data.map((d) => <td key={d.year} className={s.tdValue} style={{ fontWeight: 900 }}>{fmt(d.totalLiab)}</td>)}
+            </tr>
 
- <tr className="border-b border-black font-bold text-[11px] border-t-2 border-black">
- <td className="px-6 py-5 text-left font-sans uppercase">TOTAL APPLICATION OF FUNDS</td>
- {data.map(d => <td key={d.year} className="px-6 py-5 text-right font-bold">{fmt(d.totalAssets)}</td>)}
- </tr>
- </tbody>
- </table>
- </div>
- </div>
- );
+            {/* Spacer */}
+            <tr className={s.spacerRow} style={{ height: '24px' }}><td colSpan={ncols} /></tr>
+
+            {/* 4) FIXED ASSETS */}
+            <tr className={s.sectionRow}>
+              <td colSpan={ncols} style={{ textAlign: 'left', fontWeight: 800 }}>4) FIXED ASSETS</td>
+            </tr>
+            <tr>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>A) Gross Block (At Cost)</span>
+              </td>
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.grossFA)}</td>)}
+            </tr>
+            <tr>
+              <td className={s.tdParticulars}>
+                <span style={{ fontWeight: "700", marginLeft: '40px', display: 'inline-block' }}>B) Less: Accumulated Depreciation</span>
+              </td>
+              {data.map((d) => <td key={d.year} className={s.tdValue} style={{ fontWeight: "700" }}>({fmt(d.accDepn)})</td>)}
+            </tr>
+            <tr className={s.subtotalRow}>
+              <td className={s.tdParticulars}>
+                <span style={{ fontWeight: 800, marginLeft: '20px', display: 'inline-block' }}>NET FIXED ASSETS (A - B)</span>
+              </td>
+              {data.map((d) => <td key={d.year} className={s.tdValue} style={{ fontWeight: 800 }}>{fmt(d.netFA)}</td>)}
+            </tr>
+
+            {/* 5) CURRENT ASSETS */}
+            <tr className={s.sectionRow}>
+              <td colSpan={ncols} style={{ textAlign: 'left', fontWeight: 800 }}>5) CURRENT ASSETS, LOANS &amp; ADVANCES</td>
+            </tr>
+            <tr>
+              <td className={s.tdParticulars}>
+                <span style={{ fontWeight: "700", marginLeft: '40px', display: 'inline-block' }}>A) Closing Stock (Inventory)</span>
+              </td>
+              {data.map((d) => <td key={d.year} className={s.tdValue} style={{ fontWeight: "700" }}>{fmt(d.inventory)}</td>)}
+            </tr>
+            <tr>
+              <td className={s.tdParticulars}>
+                <span style={{ fontWeight: "700", marginLeft: '40px', display: 'inline-block' }}>B) Sundry Debtors &lt; 6 Months</span>
+              </td>
+              {data.map((d) => <td key={d.year} className={s.tdValue} style={{ fontWeight: "700" }}>{fmt(d.debtorsUnder6M)}</td>)}
+            </tr>
+            <tr>
+              <td className={s.tdParticulars}>
+                <span style={{ fontWeight: "700", marginLeft: '40px', display: 'inline-block' }}>C) Sundry Debtors &gt; 6 Months</span>
+              </td>
+              {data.map((d) => <td key={d.year} className={s.tdValue} style={{ fontWeight: "700" }}>{fmt(d.debtorsOver6M)}</td>)}
+            </tr>
+            <tr>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>D) Cash and Bank Balances</span>
+              </td>
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.cashBank)}</td>)}
+            </tr>
+            <tr>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>E) Loans &amp; Advances (Suppliers/Deposits)</span>
+              </td>
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.loansAdv)}</td>)}
+            </tr>
+            {data.some((d) => d.reconAdj > 0) && (
+              <tr>
+                <td className={s.tdParticulars}>
+                  <span style={{ marginLeft: '40px', display: 'inline-block' }}>F) Other Deposits / Adjustments</span>
+                </td>
+                {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.reconAdj)}</td>)}
+              </tr>
+            )}
+
+            <tr className={s.totalRow} style={{ borderTop: '3px solid #000', borderBottom: '3px double #000' }}>
+              <td className={s.tdParticulars} style={{ fontWeight: 900, fontSize: '12pt' }}>TOTAL APPLICATION OF FUNDS</td>
+              {data.map((d) => <td key={d.year} className={s.tdValue} style={{ fontWeight: 900 }}>{fmt(d.totalAssets)}</td>)}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
 }

@@ -1,166 +1,155 @@
 // components/reports/forms/Form1.tsx
-import { fmt } from"../../../lib/format";
+import { fmt } from "../../../lib/format";
+import s from "../shared.module.css";
 
 interface Form1Props {
- bizName: string;
- propName: string;
- proposedCc: number;
- proposedTl: number;
- existingCc: number;
- existingTl: number;
+  bizName: string; propName: string;
+  proposedCc: number; proposedTl: number;
+  existingCc: number; existingTl: number;
 }
 
 export default function Form1({ bizName, propName, proposedCc, proposedTl, existingCc, existingTl }: Form1Props) {
- const totalExisting = existingCc + existingTl;
- const totalProposed = proposedCc + proposedTl;
- return (
- <div className="border border-black rounded-none overflow-hidden font-sans">
- {/* 1. Header with Banking Metadata */}
- <div className="border-b border-black px-6 py-4 flex justify-between items-center border-b border-black">
- <div>
- <h3 className="font-bold uppercase text-[11px]">CMA Form I</h3>
- <p className="text-[10px] mt-0.5 font-mono">Particulars of Existing & Proposed Limits</p>
- </div>
- <div className="flex flex-col items-end">
- <span className="text-[10px] font-bold px-2 py-1 rounded uppercase">Form I</span>
- <span className="text-[8px] mt-1 uppercase font-mono">RBI Compliance v2.0</span>
- </div>
- </div>
+  const totalExisting = existingCc + existingTl;
+  const totalProposed = proposedCc + proposedTl;
 
- {/* PART A: LIMITS TABLE (Fund & Non-Fund Based) */}
- <div className="overflow-x-auto">
- <table className="min-w-full divide-black divide-black text-[11px] whitespace-nowrap font-mono">
- <thead className="border-b border-black">
- <tr className="uppercase">
- <th className="px-6 py-3 text-left font-bold min-w-[350px]">Nature of Facility</th>
- <th className="px-6 py-3 text-right font-bold">Existing Limits</th>
- <th className="px-6 py-3 text-right font-bold">Proposed Limits</th>
- </tr>
- </thead>
- <tbody className="divide-black divide-black">
- <tr className="border-y border-black font-bold text-[10px] uppercase">
- <td className="px-6 py-2 text-left" colSpan={3}>A. FUND BASED LIMITS</td>
- </tr>
- <tr>
- <td className="px-6 py-2 text-left pl-10 font-sans">1. Cash Credit / Overdraft</td>
- <td className={`px-6 py-2 text-right ${existingCc > 0 ? 'font-bold' : ' '}`}>
- {existingCc > 0 ? `₹${fmt(existingCc)}` : 'NIL'}
- </td>
- <td className={`px-6 py-2 text-right ${proposedCc > 0 ? 'font-bold' : ' '}`}>
- {proposedCc > 0 ? `₹${fmt(proposedCc)}` : 'NIL'}
- </td>
- </tr>
- <tr>
- <td className="px-6 py-2 text-left pl-10 font-sans">2. Term Loan</td>
- <td className={`px-6 py-2 text-right ${existingTl > 0 ? 'font-bold' : ' '}`}>
- {existingTl > 0 ? `₹${fmt(existingTl)}` : 'NIL'}
- </td>
- <td className={`px-6 py-2 text-right ${proposedTl > 0 ? 'font-bold' : ' '}`}>
- {proposedTl > 0 ? `₹${fmt(proposedTl)}` : 'NIL'}
- </td>
- </tr>
- <tr>
- <td className="px-6 py-2 text-left pl-10 font-sans">3. Bills Purchased / Discounted</td>
- <td className="px-6 py-2 text-right">NIL</td>
- <td className="px-6 py-2 text-right">NIL</td>
- </tr>
- <tr className="font-bold border-y border-[#ccc8be]">
- <td className="px-6 py-2.5 text-left pl-6 font-sans">Total Fund Based Limits (A)</td>
- <td className={`px-6 py-2.5 text-right ${totalExisting > 0 ? 'font-bold' : ' '}`}>
- {totalExisting > 0 ? `₹${fmt(totalExisting)}` : 'NIL'}
- </td>
- <td className={`px-6 py-2.5 text-right ${totalProposed > 0 ? 'font-bold' : ' '}`}>
- {totalProposed > 0 ? `₹${fmt(totalProposed)}` : 'NIL'}
- </td>
- </tr>
+  const fmtV = (v: number) => (v > 0 ? `₹${fmt(v)}` : "0");
 
- <tr className="border-y border-black font-bold text-[10px] uppercase">
- <td className="px-6 py-2 text-left" colSpan={3}>B. NON-FUND BASED LIMITS</td>
- </tr>
- <tr>
- <td className="px-6 py-2 text-left pl-10 font-sans">1. Letter of Credit (LC)</td>
- <td className="px-6 py-2 text-right">NIL</td>
- <td className="px-6 py-2 text-right">NIL</td>
- </tr>
- <tr>
- <td className="px-6 py-2 text-left pl-10 font-sans">2. Bank Guarantee (BG)</td>
- <td className="px-6 py-2 text-right">NIL</td>
- <td className="px-6 py-2 text-right">NIL</td>
- </tr>
- <tr className="font-bold border-y border-[#ccc8be]">
- <td className="px-6 py-2.5 text-left pl-6 font-sans">Total Non-Fund Based Limits (B)</td>
- <td className="px-6 py-2.5 text-right">NIL</td>
- <td className="px-6 py-2.5 text-right">NIL</td>
- </tr>
+  return (
+    <div className="report-section-wrapper font-sans">
+      <div className="report-section-header">
+        <div>
+          <div className="report-section-num">Form I</div>
+          <h3 className="report-section-title">Particulars of Existing &amp; Proposed Limits</h3>
+          <p className="report-section-subtitle">CMA Form I</p>
+        </div>
+        <span className="badge badge-emerald">RBI Compliance v2.0</span>
+      </div>
 
- <tr className="border-b border-black font-bold text-[11px]">
- <td className="px-6 py-4 text-left font-sans">TOTAL LIMITS (A + B)</td>
- <td className={`px-6 py-4 text-right text-[11px] ${totalExisting > 0 ? '' : ' '}`}>
- {totalExisting > 0 ? `₹${fmt(totalExisting)}` : 'NIL'}
- </td>
- <td className="px-6 py-4 text-right font-bold">
- {totalProposed > 0 ? `₹${fmt(totalProposed)}` : 'NIL'}
- </td>
- </tr>
- </tbody>
- </table>
- </div>
+      {/* PART A: LIMITS TABLE */}
+      <div style={{ overflowX: "auto" }}>
+        <table className={s.table}>
+          <colgroup>
+            <col style={{ width: "32%", minWidth: "280px" }} />
+            <col /><col />
+          </colgroup>
+          <thead>
+            <tr>
+              <th className={s.colParticulars}>Nature of Facility</th>
+              <th style={{ textAlign: "center" }}>Existing Limits</th>
+              <th style={{ textAlign: "center" }}>Proposed Limits</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr className={s.sectionRow}><td colSpan={3} style={{ textAlign: 'left', fontWeight: 800 }}>A. FUND BASED LIMITS</td></tr>
+            <tr>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>1) Cash Credit / Overdraft</span>
+              </td>
+              <td className={s.tdValue} style={existingCc > 0 ? { fontWeight: "700" } : {}}>{fmtV(existingCc)}</td>
+              <td className={s.tdValue} style={proposedCc > 0 ? { fontWeight: "800" } : {}}>{fmtV(proposedCc)}</td>
+            </tr>
+            <tr>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>2) Term Loan</span>
+              </td>
+              <td className={s.tdValue} style={existingTl > 0 ? { fontWeight: "700" } : {}}>{fmtV(existingTl)}</td>
+              <td className={s.tdValue} style={proposedTl > 0 ? { fontWeight: "800" } : {}}>{fmtV(proposedTl)}</td>
+            </tr>
+            <tr>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>3) Bills Purchased / Discounted</span>
+              </td>
+              <td className={s.tdValue}>0</td>
+              <td className={s.tdValue}>0</td>
+            </tr>
+            <tr className={s.subtotalRow} style={{ borderTop: '2px solid #000' }}>
+              <td className={s.tdParticulars}>
+                <span style={{ fontWeight: 800, marginLeft: '20px', display: 'inline-block' }}>Total Fund Based Limits (A)</span>
+              </td>
+              <td className={s.tdValue} style={{ fontWeight: 800 }}>{fmtV(totalExisting)}</td>
+              <td className={s.tdValue} style={{ fontWeight: 800 }}>{fmtV(totalProposed)}</td>
+            </tr>
 
- {/* PART B: SECURITY DETAILS (Legal & Physical) */}
- <div className="border-t-2 border-black">
- <div className="px-6 py-2 border-y border-black font-bold text-[10px] uppercase border-b border-black">
- PART B: SECURITY PARTICULARS
- </div>
- <table className="min-w-full divide-black divide-black text-[11px]">
- <tbody className="divide-black divide-black font-sans">
- <tr>
- <td className="px-6 py-3 font-bold border-r border-black w-48">Primary Security</td>
- <td className="px-6 py-3">Hypothecation of all Stocks and Book Debts of {bizName || 'the business'} (Present & Future).</td>
- </tr>
- <tr>
- <td className="px-6 py-3 font-bold border-r border-black">Collateral Security</td>
- <td className="px-6 py-3">Personal Guarantee of Promoter(s) / Third Party Property (if applicable).</td>
- </tr>
- <tr>
- <td className="px-6 py-3 font-bold border-r border-black">Personal Guarantees</td>
- <td className="px-6 py-3">Personal Guarantee of {propName || 'the proprietor'} / Managing Partners.</td>
- </tr>
- </tbody>
- </table>
- </div>
+            <tr className={s.sectionRow}><td colSpan={3} style={{ textAlign: 'left', fontWeight: 800 }}>B. NON-FUND BASED LIMITS</td></tr>
+            <tr>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>1) Letter of Credit (LC)</span>
+              </td>
+              <td className={s.tdValue}>0</td><td className={s.tdValue}>0</td>
+            </tr>
+            <tr>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>2) Bank Guarantee (BG)</span>
+              </td>
+              <td className={s.tdValue}>0</td><td className={s.tdValue}>0</td>
+            </tr>
+            <tr className={s.subtotalRow} style={{ borderTop: '2px solid #000' }}>
+              <td className={s.tdParticulars}>
+                <span style={{ fontWeight: 800, marginLeft: '20px', display: 'inline-block' }}>Total Non-Fund Based Limits (B)</span>
+              </td>
+              <td className={s.tdValue}>0</td><td className={s.tdValue}>0</td>
+            </tr>
 
- {/* PART C: ASSOCIATE / GROUP CONCERNS (Mandatory Disclosure for Anti-Siphoning) */}
- <div className="border-t-2 border-black">
- <div className="px-6 py-2 border-y border-black font-bold text-[10px] uppercase border-b border-black">
- PART C: PARTICULARS OF ASSOCIATE / GROUP CONCERNS
- </div>
- <div className="overflow-x-auto">
- <table className="min-w-full divide-black divide-black text-[10px] font-mono">
- <thead className="">
- <tr className="uppercase">
- <th className="px-6 py-2 text-left border-r border-black">Name of Concern</th>
- <th className="px-6 py-2 text-left border-r border-black">Activity</th>
- <th className="px-6 py-2 text-left border-r border-black">Name of Banker</th>
- <th className="px-6 py-2 text-right">Limit / Outstanding</th>
- </tr>
- </thead>
- <tbody className="divide-black divide-black">
- <tr className="hover:">
- <td className="px-6 py-3 text-center" colSpan={4}>
- No other bank facilities enjoyed by associate concerns as per available records.
- </td>
- </tr>
- </tbody>
- </table>
- </div>
- </div>
- 
- <div className="p-4 border-t border-black">
- <p className="text-[8px]">
- * Note: This statement is prepared as per standard Credit Monitoring Arrangement (CMA) guidelines. 
- The data presented is projected and subject to bank's internal appraisal norms.
- </p>
- </div>
- </div>
- );
+            <tr className={s.totalRow} style={{ borderTop: '3px solid #000', borderBottom: '3px double #000' }}>
+              <td className={s.tdParticulars} style={{ fontWeight: 900, textTransform: 'uppercase' }}>TOTAL LIMITS (A + B)</td>
+              <td className={s.tdValue} style={{ fontWeight: 900 }}>{fmtV(totalExisting)}</td>
+              <td className={s.tdValue} style={{ fontWeight: 900 }}>{fmtV(totalProposed)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      {/* PART B: SECURITY */}
+      <div style={{ borderTop: "2px solid #000" }}>
+        <div style={{ padding: "6px 16px", borderBottom: "1px solid #000", fontWeight: "bold", fontSize: "10px", textTransform: "uppercase", fontFamily: '"Times New Roman", Times, serif' }}>
+          PART B: SECURITY PARTICULARS
+        </div>
+        <table className={s.table} style={{ border: "none", borderTop: "none" }}>
+          <tbody>
+            <tr className="security-row">
+              <td className={s.tdParticulars} style={{ fontWeight: "bold", width: "200px" }}>Primary Security</td>
+              <td className={s.tdParticulars}>Hypothecation of all Stocks and Book Debts of the business</td>
+            </tr>
+            <tr className="security-row">
+              <td className={s.tdParticulars} style={{ fontWeight: "bold" }}>Collateral Security</td>
+              <td className={s.tdParticulars}>Property (if applicable) / CGFMU / CGTMSE</td>
+            </tr>
+            <tr className="security-row">
+              <td className={s.tdParticulars} style={{ fontWeight: "bold" }}>Personal Guarantees</td>
+              <td className={s.tdParticulars}>Personal Guarantee of the proprietor / Managing Partners</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      {/* PART C: ASSOCIATE CONCERNS */}
+      <div style={{ borderTop: "2px solid #000" }}>
+        <div style={{ padding: "6px 16px", borderBottom: "1px solid #000", fontWeight: "bold", fontSize: "10px", textTransform: "uppercase", fontFamily: '"Times New Roman", Times, serif' }}>
+          PART C: PARTICULARS OF ASSOCIATE / GROUP CONCERNS
+        </div>
+        <table className={s.table} style={{ border: "none" }}>
+          <thead>
+            <tr>
+              <th className={s.colParticulars}>Name of Concern</th>
+              <th style={{ textAlign: "left" }}>Activity</th>
+              <th style={{ textAlign: "left" }}>Name of Banker</th>
+              <th style={{ textAlign: "center" }}>Limit / Outstanding</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td colSpan={4} className={`${s.tdParticulars} force-center`} style={{ color: "#555", fontSize: "11px" }}>
+                No other bank facilities enjoyed by associate concerns as per available records.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div className="no-print" style={{ padding: "12px 16px", borderTop: "1px solid #000", fontFamily: '"Times New Roman", Times, serif', fontSize: "8px" }}>
+        * Note: This statement is prepared as per standard Credit Monitoring Arrangement (CMA) guidelines.
+        The data presented is projected and subject to bank's internal appraisal norms.
+      </div>
+    </div>
+  );
 }

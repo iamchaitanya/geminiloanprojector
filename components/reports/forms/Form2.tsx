@@ -1,134 +1,161 @@
 // components/reports/forms/Form2.tsx
-import { ProjectedYear } from"../../../lib/engine";
-import { fmt, fmtR } from"../../../lib/format";
+import { ProjectedYear } from "../../../lib/engine";
+import { fmt, fmtR } from "../../../lib/format";
+import s from "../shared.module.css";
 
-export default function Form2({ data, years }: { data: ProjectedYear[], years: string[] }) {
- return (
- <div className="border border-black rounded-none overflow-hidden font-sans">
- {/* 1. Header consistent with Form I */}
- <div className="border-b border-black px-6 py-4 flex justify-between items-center border-b border-black">
- <div>
- <h3 className="font-bold uppercase text-[11px]">CMA Form II</h3>
- <p className="text-[10px] mt-0.5 font-mono">Operating Statement (Projected Performance)</p>
- </div>
- <div className="flex flex-col items-end">
- <span className="text-[10px] font-bold px-2 py-1 rounded uppercase">Form II</span>
- </div>
- </div>
+export default function Form2({ data, years }: { data: ProjectedYear[]; years: string[] }) {
+  const ncols = years.length + 1;
 
- <div className="overflow-x-auto">
- <table className="min-w-full divide-black divide-black text-[11px] whitespace-nowrap font-mono">
- <thead className="border-b border-black">
- <tr className="uppercase font-bold">
- <th className="px-6 py-3 text-left min-w-[380px]">Sr. Particulars</th>
- {years.map(y => <th key={y} className="px-6 py-3 text-right">{y}</th>)}
- </tr>
- </thead>
- <tbody className="divide-black divide-black">
- 
- {/* I. REVENUE SECTION */}
- <tr className="border-y border-black font-bold text-[10px] uppercase">
- <td className="px-6 py-2 text-left" colSpan={years.length + 1}>I. REVENUE FROM OPERATIONS</td>
- </tr>
- <tr>
- <td className="px-6 py-2.5 text-left font-sans pl-10">1. Gross Sales / Turnover</td>
- {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right font-bold">{fmt(d.sales)}</td>)}
- </tr>
- <tr className="text-[10px]">
- <td className="px-6 py-1.5 text-left font-sans pl-16">% Growth in Sales (YoY)</td>
- {data.map((d, i) => {
- const growth = i === 0 ? 0 : ((d.sales / data[i - 1].sales) - 1) * 100;
- return <td key={d.year} className="px-6 py-1.5 text-right font-bold">{i === 0 ?"—" : fmtR(growth) +"%"}</td>;
- })}
- </tr>
+  return (
+    <div className="report-section-wrapper font-sans">
+      <div className="report-section-header">
+        <div>
+          <div className="report-section-num">Form II</div>
+          <h3 className="report-section-title">Operating Statement (Projected Performance)</h3>
+          <p className="report-section-subtitle">CMA Form II</p>
+        </div>
+      </div>
 
- {/* II. COST OF SALES */}
- <tr className="border-y border-black font-bold text-[10px] uppercase">
- <td className="px-6 py-2 text-left" colSpan={years.length + 1}>II. COST OF SALES / DIRECT COSTS</td>
- </tr>
- <tr>
- <td className="px-6 py-2 text-left font-sans pl-10">a) Raw Materials / Purchases</td>
- {data.map(d => <td key={d.year} className="px-6 py-2 text-right">{fmt(d.purchases)}</td>)}
- </tr>
- <tr>
- <td className="px-6 py-2 text-left font-sans pl-10">b) Add: Opening Stock</td>
- {data.map(d => <td key={d.year} className="px-6 py-2 text-right">{fmt(d.openStock)}</td>)}
- </tr>
- <tr>
- <td className="px-6 py-2 text-left font-sans pl-10">c) Less: Closing Stock</td>
- {data.map(d => <td key={d.year} className="px-6 py-2 text-right">({fmt(d.closingStock)})</td>)}
- </tr>
- <tr className="font-bold border-y border-black">
- <td className="px-6 py-2.5 text-left pl-6 font-sans">2. Total Cost of Goods Sold (COGS)</td>
- {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right">{fmt(d.purchases + d.openStock - d.closingStock)}</td>)}
- </tr>
- <tr className="border-y border-black font-bold">
- <td className="px-6 py-3 text-left font-sans">3. GROSS PROFIT (1 - 2)</td>
- {data.map(d => <td key={d.year} className="px-6 py-3 text-right font-bold">{fmt(d.sales - (d.purchases + d.openStock - d.closingStock))}</td>)}
- </tr>
+      <div style={{ overflowX: "auto" }}>
+        <table className={s.table}>
+          <colgroup>
+            <col style={{ width: "32%", minWidth: "280px" }} />
+            {years.map((y) => <col key={y} />)}
+          </colgroup>
+          <thead>
+            <tr>
+              <th className={s.colParticulars}>Particulars</th>
+              {years.map((y) => (
+                <th key={y} style={{ textAlign: "center" }}>
+                  {y.includes("\n") ? y.split("\n").map((l, i) => <span key={i} style={{ display: "block" }}>{l}</span>) : y}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {/* I. REVENUE */}
+            <tr className={s.sectionRow}><td colSpan={ncols} style={{ textAlign: 'left', fontWeight: 800 }}>I. REVENUE FROM OPERATIONS</td></tr>
+            <tr>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>A) Gross Sales / Turnover</span>
+              </td>
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.sales)}</td>)}
+            </tr>
+            <tr className={s.infoRow}>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>B) % Growth in Sales (YoY)</span>
+              </td>
+              {data.map((d, i) => {
+                const g = i === 0 ? 0 : ((d.sales / data[i - 1].sales) - 1) * 100;
+                return <td key={d.year} className={s.tdValue}>{i === 0 ? "—" : `${fmtR(g)}%`}</td>;
+              })}
+            </tr>
 
- {/* III. OPERATING EXPENSES (GRANULAR) */}
- <tr className="border-y border-black font-bold text-[10px] uppercase">
- <td className="px-6 py-2 text-left" colSpan={years.length + 1}>III. SELLING, GENERAL & ADMINISTRATIVE EXPENSES</td>
- </tr>
- {/* Dynamic rendering of specific expense heads from engine.ts */}
- {data[0].indirectExpenses.map((exp, idx) => (
- <tr key={exp.label} className="hover:">
- <td className="px-6 py-2 text-left font-sans pl-14">{exp.label}</td>
- {data.map(d => <td key={d.year} className="px-6 py-2 text-right">{fmt(d.indirectExpenses[idx].value)}</td>)}
- </tr>
- ))}
- <tr className="font-bold border-y border-black">
- <td className="px-6 py-2.5 text-left pl-6 font-sans">4. Total Indirect Expenses</td>
- {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right">{fmt(d.totalIndExp)}</td>)}
- </tr>
+            {/* II. COST OF SALES */}
+            <tr className={s.sectionRow}><td colSpan={ncols} style={{ textAlign: 'left', fontWeight: 800 }}>II. COST OF SALES / DIRECT COSTS</td></tr>
+            <tr className={s.subRow}>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>A) Raw Materials / Purchases</span>
+              </td>
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.purchases)}</td>)}
+            </tr>
+            <tr className={s.subRow}>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>B) Add: Opening Stock</span>
+              </td>
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.openStock)}</td>)}
+            </tr>
+            <tr className={s.subRow}>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>C) Less: Closing Stock</span>
+              </td>
+              {data.map((d) => <td key={d.year} className={s.tdValue}>({fmt(d.closingStock)})</td>)}
+            </tr>
+            <tr className={s.subtotalRow} style={{ borderTop: '2px solid #000' }}>
+              <td className={s.tdParticulars}>
+                <span style={{ fontWeight: 800, marginLeft: '20px', display: 'inline-block' }}>TOTAL COST OF GOODS SOLD (COGS)</span>
+              </td>
+              {data.map((d) => <td key={d.year} className={s.tdValue} style={{ fontWeight: 800 }}>{fmt(d.purchases + d.openStock - d.closingStock)}</td>)}
+            </tr>
+            <tr className={s.totalRow} style={{ borderTop: '2px solid #000', borderBottom: '2.5px solid #000' }}>
+              <td className={s.tdParticulars} style={{ fontWeight: 900 }}>GROSS PROFIT (I - II)</td>
+              {data.map((d) => <td key={d.year} className={s.tdValue} style={{ fontWeight: 900 }}>{fmt(d.sales - (d.purchases + d.openStock - d.closingStock))}</td>)}
+            </tr>
 
- {/* IV. OPERATING PROFIT & FINAL BOTTOM LINE */}
- <tr className="border-y-2 border-black font-bold">
- <td className="px-6 py-4 text-left font-sans uppercase">5. EBITDA (Operating Profit)</td>
- {data.map(d => <td key={d.year} className="px-6 py-4 text-right text-[11px]">{fmt(d.ebitda)}</td>)}
- </tr>
- <tr className="hover:">
- <td className="px-6 py-2.5 text-left font-sans pl-10">6. Less: Depreciation</td>
- {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right">{fmt(d.depnYr)}</td>)}
- </tr>
- <tr className="hover:">
- <td className="px-6 py-2.5 text-left font-sans pl-10">7. Less: Interest on Borrowings</td>
- {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right">{fmt(d.interest)}</td>)}
- </tr>
- <tr className="hover: font-bold border-t border-black">
- <td className="px-6 py-3 text-left font-sans pl-6 uppercase">8. PROFIT BEFORE TAX (PBT)</td>
- {data.map(d => <td key={d.year} className="px-6 py-3 text-right">{fmt(d.profitBeforeTax)}</td>)}
- </tr>
- <tr className="hover:">
- <td className="px-6 py-2.5 text-left font-sans pl-10">9. Less: Provision for Taxation</td>
- {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right">({fmt(d.tax)})</td>)}
- </tr>
- <tr className="border-y-2 border-black font-bold border-t-2 border-black">
- <td className="px-6 py-4 text-left font-sans uppercase">10. NET PROFIT AFTER TAX (PAT)</td>
- {data.map(d => <td key={d.year} className="px-6 py-4 text-right text-[11px] font-bold">{fmt(d.netProfit)}</td>)}
- </tr>
- <tr className="text-[10px] font-bold">
- <td className="px-6 py-2 text-left font-sans pl-16">Net Profit Margin (%)</td>
- {data.map(d => <td key={d.year} className="px-6 py-2 text-right">{fmtR(d.npRatio)}%</td>)}
- </tr>
+            {/* III. OPERATING EXPENSES */}
+            <tr className={s.sectionRow}><td colSpan={ncols} style={{ textAlign: 'left', fontWeight: 800 }}>III. SELLING, GENERAL &amp; ADMINISTRATIVE EXPENSES</td></tr>
+            {data[0].indirectExpenses.map((exp, idx) => {
+              const charCode = 97 + idx; // starting from 'a'
+              const label = String.fromCharCode(charCode) + ') ' + exp.label;
+              return (
+                <tr key={exp.label} className={s.subRow}>
+                  <td className={s.tdParticulars}>
+                    <span style={{ marginLeft: '64px', display: 'inline-block' }}>{label}</span>
+                  </td>
+                  {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.indirectExpenses[idx].value)}</td>)}
+                </tr>
+              );
+            })}
+            <tr className={s.subtotalRow} style={{ borderTop: '2px solid #000' }}>
+              <td className={s.tdParticulars}>
+                <span style={{ fontWeight: 800, marginLeft: '20px', display: 'inline-block' }}>TOTAL INDIRECT EXPENSES</span>
+              </td>
+              {data.map((d) => <td key={d.year} className={s.tdValue} style={{ fontWeight: 800 }}>{fmt(d.totalIndExp)}</td>)}
+            </tr>
 
- </tbody>
- </table>
- </div>
+            {/* IV. BOTTOM LINE */}
+            <tr className={s.totalRow} style={{ borderTop: '3px solid #000', borderBottom: '3px double #000' }}>
+              <td className={s.tdParticulars} style={{ fontWeight: 900 }}>IV. EBITDA (OPERATING PROFIT)</td>
+              {data.map((d) => <td key={d.year} className={s.tdValue} style={{ fontWeight: 900 }}>{fmt(d.ebitda)}</td>)}
+            </tr>
+            <tr>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>5) Less: Depreciation</span>
+              </td>
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.depnYr)}</td>)}
+            </tr>
+            <tr>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>6) Less: Interest on Borrowings</span>
+              </td>
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.interest)}</td>)}
+            </tr>
+            <tr className={s.subtotalRow} style={{ borderTop: '2px solid #000' }}>
+              <td className={s.tdParticulars}>
+                <span style={{ fontWeight: 800, marginLeft: '20px', display: 'inline-block' }}>PROFIT BEFORE TAX (PBT)</span>
+              </td>
+              {data.map((d) => <td key={d.year} className={s.tdValue} style={{ fontWeight: 800 }}>{fmt(d.profitBeforeTax)}</td>)}
+            </tr>
+            <tr>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>7) Less: Provision for Taxation</span>
+              </td>
+              {data.map((d) => <td key={d.year} className={s.tdValue}>({fmt(d.tax)})</td>)}
+            </tr>
+            <tr className={s.totalRow} style={{ borderTop: '3px solid #000', borderBottom: '3px double #000' }}>
+              <td className={s.tdParticulars} style={{ fontWeight: 900 }}>NET PROFIT AFTER TAX (PAT)</td>
+              {data.map((d) => <td key={d.year} className={s.tdValue} style={{ fontWeight: 900 }}>{fmt(d.netProfit)}</td>)}
+            </tr>
+            <tr className={s.infoRow} style={{ background: '#f9f9f9' }}>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>Net Profit Margin (%)</span>
+              </td>
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmtR(d.npRatio)}%</td>)}
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
- <div className="p-6 border-t border-black flex justify-between items-start">
- <div className="max-w-2xl">
- <p className="text-[10px] leading-relaxed">
- * Note: EBITDA (Earnings Before Interest, Tax, Depreciation, and Amortization) is a key proxy for cash flow generated from operations. 
- Banks typically look for a minimum EBITDA margin of 8-10% in trading and 12-15% in manufacturing sectors.
- </p>
- </div>
- <div className="text-right">
- <p className="text-[10px] font-bold uppercase">Internal Audit Check</p>
- <p className="text-[8px] font-mono">Interest Coverage Target: &gt; 2.5x</p>
- </div>
- </div>
- </div>
- );
+      <div className="no-print" style={{ padding: "16px 24px", borderTop: "1px solid #000", display: "flex", justifyContent: "space-between", alignItems: "flex-start", fontFamily: '"Times New Roman", Times, serif' }}>
+        <p style={{ fontSize: "10px", lineHeight: 1.6, maxWidth: "600px" }}>
+          * Note: EBITDA (Earnings Before Interest, Tax, Depreciation, and Amortization) is a key proxy for cash flow generated from operations.
+          Banks typically look for a minimum EBITDA margin of 8-10% in trading and 12-15% in manufacturing sectors.
+        </p>
+        <div style={{ textAlign: "center", fontSize: "10px" }}>
+          <p style={{ fontWeight: "bold", textTransform: "uppercase" }}>Internal Audit Check</p>
+          <p style={{ fontFamily: "monospace" }}>Interest Coverage Target: &gt; 2.5x</p>
+        </div>
+      </div>
+    </div>
+  );
 }

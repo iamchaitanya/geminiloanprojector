@@ -1,96 +1,737 @@
 @import "tailwindcss";
 
+/* ═══════════════════════════════════════════════
+   EXECUTIVE FINTECH DESIGN SYSTEM
+   LoanProj — Bank-Grade CMA Report Engine
+   ═══════════════════════════════════════════════ */
+
 :root {
+  /* Core Palette (Now Light Mode) */
+  --navy-950: #f8fafc;
+  --navy-900: #ffffff;
+  --navy-800: #f1f5f9;
+  --navy-700: #e2e8f0;
+  --navy-600: #cbd5e1;
+
+  /* Accent: Electric Blue */
+  --accent-400: #2563eb;
+  --accent-500: #1d4ed8;
+  --accent-600: #1e40af;
+  --accent-glow: rgba(37, 99, 235, 0.15);
+
+  /* Accent: Emerald for positive metrics */
+  --emerald-400: #10b981;
+  --emerald-500: #059669;
+  --emerald-glow: rgba(16, 185, 129, 0.1);
+
+  /* Accent: Amber for warnings */
+  --amber-400: #f59e0b;
+  --amber-500: #d97706;
+
+  /* Accent: Rose for negative */
+  --rose-400: #f43f5e;
+  --rose-500: #e11d48;
+  --rose-glow: rgba(244, 63, 94, 0.1);
+
+  /* Surfaces */
+  --surface-00: #ffffff;
+  --surface-01: #ffffff;
+  --surface-02: #f8fafc;
+  --surface-03: #f1f5f9;
+  --surface-glass: rgba(0, 0, 0, 0.04);
+  --surface-glass-hover: rgba(0, 0, 0, 0.08);
+
+  /* Text */
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  --text-accent: #2563eb;
+
+  /* Borders */
+  --border-subtle: rgba(0, 0, 0, 0.08);
+  --border-default: rgba(0, 0, 0, 0.12);
+  --border-strong: rgba(0, 0, 0, 0.2);
+  --border-accent: rgba(37, 99, 235, 0.4);
+
+  /* Gradients */
+  --grad-brand: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  --grad-header: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  --grad-card: linear-gradient(145deg, #ffffff 0%, #f1f5f9 100%);
+  --grad-emerald: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  --grad-amber: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  --grad-rose: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --shadow-glow: 0 0 20px rgba(59, 130, 246, 0.3);
+  --shadow-glow-emerald: 0 0 16px rgba(16, 185, 129, 0.25);
+
+  /* Report (print-safe) vars */
   --background: #ffffff;
-  --foreground: #1e293b; /* slate-800 for better professional contrast than pure black */
+  --foreground: #1e293b;
 }
 
+/* Theme tokens */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter);
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0f172a; /* slate-900 */
-    --foreground: #f8fafc; /* slate-50 */
+/* ═══════════════════════════ BASE ═══════════════════════════ */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+@media print {
+  html, body {
+    overflow: visible !important;
+    max-width: none !important;
   }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-inter), Arial, sans-serif;
+  background: var(--navy-950);
+  color: var(--text-primary);
+  font-family: 'Inter', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
 }
 
-/* Explicit tabular numbers for all tables */
-table {
+/* Tabular numbers for all numeric content */
+table, .font-mono, [class*="font-mono"] {
   font-variant-numeric: tabular-nums;
-  -moz-font-feature-settings: "tnum";
-  -webkit-font-feature-settings: "tnum";
   font-feature-settings: "tnum";
 }
 
-/* -------------------------------------------------------------
- * BANKING/CMA REPORT FORMAL PRINT STYLES
- * ------------------------------------------------------------- */
+/* ═══════════════════════════ SCROLLBAR ═══════════════════════════ */
 
-/* Force standard banking document serif typography for body and tables */
-.cma-formal-report table,
-.cma-formal-report td,
-.cma-formal-report th,
-.cma-formal-report .font-sans,
-.cma-formal-report .font-mono {
-  font-family: "Times New Roman", Times, serif !important;
-  font-size: 13px !important; /* Dense, professional 10pt print equivalent */
-  line-height: 1.3 !important;
-  color: #000 !important; /* Force true black ink for printing */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--surface-01); }
+::-webkit-scrollbar-thumb { background: var(--surface-03); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-600); }
+
+/* ═══════════════════════════ KEYFRAMES ═══════════════════════════ */
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: none; }
 }
 
-/* Major Headers usually use strict sans-serif (Arial) in banking forms */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+  50%       { box-shadow: 0 0 0 8px rgba(59, 130, 246, 0); }
+}
+
+@keyframes borderPulse {
+  0%, 100% { border-color: rgba(59, 130, 246, 0.3); }
+  50%       { border-color: rgba(59, 130, 246, 0.7); }
+}
+
+@keyframes countUp {
+  from { transform: translateY(10px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-4px); }
+  40%, 80% { transform: translateX(4px); }
+}
+
+@keyframes pulseError {
+  0%, 100% { box-shadow: 0 0 0 1px var(--rose-400), 0 0 0 0 var(--rose-glow); border-color: var(--rose-400); }
+  50% { box-shadow: 0 0 0 2px var(--rose-400), 0 0 0 6px var(--rose-glow); border-color: var(--rose-400); }
+}
+
+/* ═══════════════════════════ UTILITY CLASSES ═══════════════════════════ */
+
+.animate-fade-in-up { animation: fadeInUp 0.5s ease-out both; }
+.animate-fade-in    { animation: fadeIn 0.4s ease-out both; }
+.animate-count-up   { animation: countUp 0.4s ease-out both; }
+
+.stagger-1 { animation-delay: 0.05s; }
+.stagger-2 { animation-delay: 0.1s; }
+.stagger-3 { animation-delay: 0.15s; }
+.stagger-4 { animation-delay: 0.2s; }
+.stagger-5 { animation-delay: 0.25s; }
+.stagger-6 { animation-delay: 0.3s; }
+
+/* Glass card */
+.glass-card {
+  background: var(--grad-card);
+  border: 1.5px solid var(--border-subtle);
+  border-radius: 12px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.glass-card-animated {
+  animation: fadeInUp 0.4s ease-out 0.1s both;
+}
+
+.header-glass {
+  background: var(--grad-header);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Modern Validation State */
+.form-shake {
+  animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+.field-error-pulse {
+  animation: pulseError 1.5s ease-in-out infinite;
+  border-color: var(--rose-400) !important;
+  border-radius: 8px;
+}
+
+.fintech-banner {
+  background: rgba(244, 63, 94, 0.1);
+  border: 1px solid rgba(244, 63, 94, 0.3);
+  border-radius: 8px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  animation: fadeInUp 0.3s ease-out;
+}
+
+/* 🚨 ULTIMATE STABILIZER FOR MOBILE / SIMULATORS 
+   Prevents misaligned dropdowns by stripping all stacking-context shifting properties 
+   below a generous breakpoint (1024px). */
+@media (max-width: 1024px) {
+  .glass-card, .header-glass, .glass-card-animated, header, section, main {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    transform: none !important;
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+.glass-card-hover:hover {
+  background: var(--surface-glass-hover);
+  border-color: var(--border-default);
+  transform: translateY(-1px);
+  transition: all 0.2s ease;
+}
+
+/* Gradient text */
+.gradient-text {
+  background: var(--grad-brand);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Shimmer button */
+.shimmer-btn {
+  background: linear-gradient(90deg, var(--accent-600), #8b5cf6, var(--accent-500), #8b5cf6, var(--accent-600));
+  background-size: 200% auto;
+  transition: background-position 0.5s ease, transform 0.15s, box-shadow 0.15s;
+}
+.shimmer-btn:hover {
+  background-position: right center;
+  box-shadow: 0 0 24px rgba(59, 130, 246, 0.5), 0 4px 16px rgba(0,0,0,0.3);
+  transform: translateY(-1px);
+}
+.shimmer-btn:active { transform: scale(0.98); }
+
+/* Input styles */
+.fintech-input {
+  background: white;
+  border: 1.5px solid rgba(59, 130, 246, 0.3);
+  border-radius: 8px;
+  padding: 0.7rem 0.85rem;
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  width: 100%;
+  outline: none;
+  transition: all 0.2s ease;
+  position: relative;
+  z-index: 10;
+}
+.fintech-input option {
+  font-size: 0.95rem;
+  background: var(--navy-900);
+  color: var(--text-primary);
+  padding: 12px;
+}
+.fintech-input::placeholder { color: var(--text-muted); }
+.fintech-input:focus {
+  border-color: var(--border-accent);
+  background: rgba(59, 130, 246, 0.06);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+.fintech-input:hover:not(:focus) { border-color: var(--border-default); }
+
+/* Label style - Force Electric Blue */
+label.fintech-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: #2563eb !important;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Segmented control */
+.seg-control {
+  display: flex;
+  flex-wrap: wrap;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.seg-btn {
+  flex: 1;
+  padding: 0.4rem 0.75rem;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: capitalize;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text-secondary);
+}
+.seg-btn:hover:not(.seg-active) { background: rgba(255,255,255,0.06); color: var(--text-primary); }
+.seg-btn.seg-active {
+  background: var(--accent-600);
+  color: #fff;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), 0 0 10px var(--accent-glow);
+}
+
+/* Checkbox pill */
+.chk-pill {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  background: rgba(255,255,255,0.03);
+  border: 1.5px solid var(--border-subtle);
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.chk-pill:hover { border-color: var(--border-accent); color: var(--text-primary); background: rgba(59,130,246,0.06); }
+.chk-pill input { width: 16px; height: 16px; accent-color: var(--accent-500); }
+
+/* Status badge */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.badge-blue   { background: rgba(59,130,246,0.15); color: #93c5fd; border: 1px solid rgba(59,130,246,0.3); }
+.badge-emerald{ background: rgba(16,185,129,0.15); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.3); }
+.badge-amber  { background: rgba(245,158,11,0.15); color: #fcd34d; border: 1px solid rgba(245,158,11,0.3); }
+.badge-purple { background: rgba(139,92,246,0.15); color: #c4b5fd; border: 1px solid rgba(139,92,246,0.3); }
+
+/* Section divider */
+.section-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-default), transparent);
+  margin: 0;
+}
+
+/* KPI card */
+.kpi-card {
+  background: var(--surface-glass);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 14px 16px;
+  transition: all 0.2s ease;
+}
+.kpi-card:hover {
+  border-color: var(--border-default);
+  background: var(--surface-glass-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Accent bar */
+.accent-bar-blue   { border-left: 3px solid var(--accent-500); }
+.accent-bar-emerald{ border-left: 3px solid var(--emerald-500); }
+.accent-bar-amber  { border-left: 3px solid var(--amber-500); }
+.accent-bar-purple { border-left: 3px solid #8b5cf6; }
+
+/* ═══════════════════════════════════════════════════════════════
+   REPORT VIEW — ON-SCREEN SECTION CHROME
+   (Non-print decorative chrome for report sections)
+   ═══════════════════════════════════════════════════════════════ */
+
+.report-section-header {
+  background: linear-gradient(135deg, var(--surface-02) 0%, var(--surface-01) 100%);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px 12px 0 0;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.report-section-num {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-400);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.report-section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.report-section-subtitle {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.report-section-wrapper {
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   REPORT BASE — STRICT TABULAR SPECIFICATIONS
+   ───────────────────────────────────────────────────────────────
+   Applied via !important to ensure 100% adherence across all components.
+   ═══════════════════════════════════════════════════════════════ */
+
+.cma-formal-report {
+  color: #000;
+  background: #fff;
+}
+
 .cma-formal-report h1,
 .cma-formal-report h2,
 .cma-formal-report h3,
 .cma-formal-report h4,
-.cma-formal-report h5,
-.cma-formal-report th.uppercase,
-.cma-formal-report .uppercase {
-  font-family: Arial, Helvetica, sans-serif !important;
-  letter-spacing: 0.02em !important;
+.cma-formal-report h5 {
+  font-family: "Times New Roman", Times, serif !important;
+  font-weight: bold !important;
+  color: #000 !important;
 }
 
-/* Strictly enforce black borders to match exported Excel reports */
-.cma-formal-report table {
+.cma-formal-report p,
+.cma-formal-report span,
+.cma-formal-report div {
+  font-family: "Times New Roman", Times, serif !important;
+}
+
+/* Enforce uniform table gaps globally (matching the Depreciation Schedule) */
+.cma-formal-report .report-section-header {
+  margin-bottom: 24px !important;
+}
+.cma-formal-report .report-section-wrapper > div:not(.report-section-header) {
+  margin-left: 24px !important;
+  margin-right: 24px !important;
+  margin-bottom: 24px !important;
+}
+/* Base table reset */
+.cma-formal-report table,
+.cma-formal-report [class*="_table_"] {
+  width: 100% !important;
   border-collapse: collapse !important;
   border: 1px solid #000 !important;
-}
-
-.cma-formal-report tr.border-t-2 {
-  border-top-width: 2px !important;
-}
-
-.cma-formal-report tr.border-b-2 {
-  border-bottom-width: 2px !important;
-}
-
-.cma-formal-report .border-black,
-.cma-formal-report .divide-black > * {
-  border-color: #000 !important;
-}
-
-.cma-formal-report th, 
-.cma-formal-report td {
-  /* Overwrite Tailwind generous padding with strict document spacing */
-  padding-top: 4px !important;
-  padding-bottom: 4px !important;
-}
-
-/* Strip out rounded corners from standard SaaS tables */
-.cma-formal-report .rounded,
-.cma-formal-report .rounded-lg,
-.cma-formal-report .rounded-xl {
   border-radius: 0 !important;
+  background: #fff !important;
+  box-shadow: none !important;
 }
+
+/* Remove hover effects and forcing pure background */
+.cma-formal-report table *,
+.cma-formal-report table *:hover,
+.cma-formal-report [class*="_table_"] *,
+.cma-formal-report [class*="_table_"] *:hover {
+  background-color: transparent !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Enforcing white backgrounds explicitly down to TR and TD */
+.cma-formal-report table tr,
+.cma-formal-report [class*="_table_"] tr,
+.cma-formal-report table th,
+.cma-formal-report table td,
+.cma-formal-report [class*="_table_"] th,
+.cma-formal-report [class*="_table_"] td {
+  background: #fff !important;
+  background-color: #fff !important;
+}
+
+/* Cell padding, border, alignment, and height */
+.cma-formal-report table th,
+.cma-formal-report table td,
+.cma-formal-report [class*="_table_"] th,
+.cma-formal-report [class*="_table_"] td {
+  font-family: "Times New Roman", Times, serif !important;
+  font-size: 9.5pt !important;
+  line-height: 1.2 !important;
+  padding: 2px 6px !important;
+  border-left: 1px solid #000 !important;
+  border-right: 1px solid #000 !important;
+  border-top: none !important;
+  border-bottom: none !important;
+  color: #000 !important;
+  text-transform: none !important;
+  vertical-align: middle !important;
+  font-weight: normal !important;
+}
+
+/* Default number columns right aligned */
+.cma-formal-report table td,
+.cma-formal-report [class*="_table_"] td {
+  text-align: right !important;
+  white-space: nowrap !important;
+}
+
+/* Particulars / Description Column Left aligned globally */
+.cma-formal-report table thead th:first-child,
+.cma-formal-report table tbody td:first-child {
+  text-align: left !important;
+}
+
+/* Force Center utility to break left-aligned constraints */
+.cma-formal-report table tbody td.force-center,
+.cma-formal-report table thead th.force-center,
+.cma-formal-report [class*="_table_"] td.force-center {
+  text-align: center !important;
+}
+.cma-formal-report table thead th:first-child,
+.cma-formal-report table tbody td:first-child {
+  white-space: normal !important;
+  width: auto !important;
+}
+
+/* Header Row: Center Aligned, Bold */
+.cma-formal-report table thead th,
+.cma-formal-report [class*="_table_"] thead th {
+  text-align: center !important;
+  font-weight: bold !important;
+  white-space: nowrap !important;
+  width: 1% !important; /* Forces columns to exact width of content */
+  border-top: 1px solid #000 !important;
+  border-bottom: 2px solid #000 !important;
+}
+
+/* The date part (first line) */
+.cma-formal-report table thead th span:first-child {
+  font-size: 9.5pt !important;
+  font-weight: bold !important;
+}
+
+/* The Actuals/estimations part (second line) reduces size */
+.cma-formal-report table thead th span:nth-child(2) {
+  font-size: 8.5pt !important;
+  font-weight: normal !important;
+  display: block;
+}
+
+/* Section/SubTotal/Total/Group Rows Bold styling */
+.cma-formal-report table tr[class*="sectionRow"] td,
+.cma-formal-report [class*="_table_"] tr[class*="sectionRow"] td,
+.cma-formal-report table tr[class*="subtotalRow"] td,
+.cma-formal-report [class*="_table_"] tr[class*="subtotalRow"] td,
+.cma-formal-report table tr[class*="totalRow"] td,
+.cma-formal-report [class*="_table_"] tr[class*="totalRow"] td,
+.cma-formal-report table td[class*="sectionRow"],
+.cma-formal-report [class*="_table_"] td[class*="sectionRow"],
+.cma-formal-report table td[class*="subtotalRow"],
+.cma-formal-report [class*="_table_"] td[class*="subtotalRow"],
+.cma-formal-report table td[class*="totalRow"],
+.cma-formal-report [class*="_table_"] td[class*="totalRow"],
+.cma-formal-report table tr[class*="groupRow"] td,
+.cma-formal-report [class*="_table_"] tr[class*="groupRow"] td,
+.cma-formal-report table td[class*="groupRow"],
+.cma-formal-report [class*="_table_"] td[class*="groupRow"],
+.cma-formal-report table td[colspan],
+.cma-formal-report [class*="_table_"] td[colspan] {
+  font-weight: bold !important;
+}
+
+/* Main Section headings explicitly left aligned */
+.cma-formal-report tr[class*="sectionRow"] td,
+.cma-formal-report td[class*="sectionRow"],
+.cma-formal-report tr[class*="groupRow"] td,
+.cma-formal-report td[class*="groupRow"],
+.cma-formal-report td[colspan] {
+  text-align: left !important;
+  border-top: 1px solid #000 !important;
+  border-bottom: 1px solid #000 !important;
+}
+
+/* Special Rule to restore horizontal lines for Security Blocks and Headers */
+.cma-formal-report table tr.security-row td,
+.cma-formal-report [class*="_table_"] tr.security-row td,
+.cma-formal-report table tr.header-split-row td {
+  border-bottom: 1px solid #000 !important;
+  border-top: 1px solid #000 !important;
+}
+
+/* SubTotal and Total Rows thicker top border */
+.cma-formal-report tr[class*="subtotalRow"] td,
+.cma-formal-report tr[class*="totalRow"] td {
+  border-top: 2px solid #000 !important;
+}
+.cma-formal-report tr[class*="totalRow"] td {
+  border-bottom: 1px solid #000 !important;
+}
+
+/* Remove internal extra styling on specifics */
+.cma-formal-report tr[class*="ratioRow"] td {
+  font-weight: normal !important;
+  color: #000 !important;
+}
+
+/* ══ PRINT: Strict Clean Baseline ══ */
+@media print {
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  .report-toc,
+  .report-cover-badge,
+  .no-print { 
+    display: none !important; 
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    overflow: hidden !important;
+  }
+
+  .report-section-wrapper {
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+
+  .cma-formal-report .report-section-header,
+  .report-section-wrapper > .report-section-header {
+    display: none !important;
+    height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  /* Force fresh pages for each section, but skip the first visible one */
+  .cma-formal-report section:not(.no-print) ~ section:not(.no-print) {
+    page-break-before: always;
+    break-before: page;
+  }
+
+  /* Overflow visible so columns don't clip */
+  .overflow-x-auto,
+  [style*="overflow-x: auto"],
+  [style*="overflowX: auto"] {
+    overflow: visible !important;
+  }
+
+  /* Backgrounds & Typography */
+  .cma-formal-report {
+    background: transparent !important;
+    color: #001 !important;
+    font-family: "Times New Roman", Times, serif !important;
+    font-size: 10.5pt !important;
+    line-height: 1.5 !important;
+  }
+
+  .cma-formal-report table {
+    border-collapse: collapse !important;
+    border: 2px solid #000 !important;
+    width: 100% !important;
+  }
+
+  .cma-formal-report th,
+  .cma-formal-report td {
+    border: 1px solid #000 !important; /* Full Grid */
+    padding-top: 6px !important;
+    padding-bottom: 6px !important;
+    padding-right: 12px !important;
+    padding-left: 12px; /* NO !important here so components can override it for indentation */
+    color: #000 !important;
+    font-family: "Times New Roman", Times, serif !important;
+  }
+
+  .cma-formal-report div, .cma-formal-report span {
+    background: transparent !important;
+    color: #000 !important;
+  }
+}
+
+@page { margin: 15mm; }
+
+/* ── MOBILE CTA BOTTOM CLAMP ── */
+@media (max-width: 640px) {
+  .mobile-bottom-cta {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    z-index: 9999 !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    border: none !important;
+    border-top: 1px solid var(--border-accent) !important;
+    background: rgba(255, 255, 255, 0.9) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 16px 20px !important;
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.12) !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+

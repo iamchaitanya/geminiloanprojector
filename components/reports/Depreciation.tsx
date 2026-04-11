@@ -1,108 +1,209 @@
 // components/reports/Depreciation.tsx
-import { ProjectedYear } from"../../lib/engine";
-import { fmt } from"../../lib/format";
+import { ProjectedYear } from "../../lib/engine";
+import { fmt } from "../../lib/format";
+import s from "./shared.module.css";
 
-export default function Depreciation({ data, years }: { data: ProjectedYear[], years: string[] }) {
- // Logic: We map our single-block engine data to"Plant & Machinery" for now.
- // In the next step, we can update engine.ts to support multiple multipliers for Building/Furniture.
- 
- return (
- <div className="space-y-10">
- <div className="flex items-center gap-3 mb-2">
- <div className="h-8 w-1 rounded-none"></div>
- <h2 className="text-xl font-bold">Depreciation Schedule (WDV Method)</h2>
- </div>
+const ASSET_SPLITS: Record<string, { building: number; plant: number; furniture: number; computer: number }> = {
+  trading:       { building: 0.00, plant: 0.55, furniture: 0.30, computer: 0.15 },
+  service:       { building: 0.00, plant: 0.35, furniture: 0.40, computer: 0.25 },
+  manufacturing: { building: 0.25, plant: 0.55, furniture: 0.10, computer: 0.10 },
+  construction:  { building: 0.15, plant: 0.60, furniture: 0.15, computer: 0.10 },
+};
 
- {data.map((yearData, idx) => (
- <div key={idx} className="border border-black rounded-none overflow-hidden font-sans">
- <div className="border-b border-black px-6 py-3 flex justify-between items-center border-b border-black">
- <h3 className="font-bold uppercase text-[10px]">
- Schedule for Financial Year: {years[idx]}
- </h3>
- <span className="text-[9px] font-bold px-2 py-0.5 rounded uppercase">Income Tax Act Rates</span>
- </div>
- 
- <div className="overflow-x-auto">
- <table className="min-w-full divide-black divide-black text-[11px] whitespace-nowrap font-mono">
- <thead className="border-b border-black">
- <tr className="uppercase font-bold text-center">
- <th className="px-4 py-3 text-left w-48 border-r border-[#ccc8be]">Particulars of Assets</th>
- <th className="px-4 py-3 border-r border-[#ccc8be]">Rate (%)</th>
- <th className="px-4 py-3 border-r border-[#ccc8be]">Opening WDV</th>
- <th className="px-4 py-3 border-r border-[#ccc8be]">Additions</th>
- <th className="px-4 py-3 border-r border-[#ccc8be]">Total</th>
- <th className="px-4 py-3 border-r border-[#ccc8be]">Depreciation</th>
- <th className="px-4 py-3">Closing WDV</th>
- </tr>
- </thead>
- <tbody className="divide-black divide-black text-right">
- 
- {/* 1. Building */}
- <tr>
- <td className="px-4 py-2.5 text-left font-sans border-r border-[#f0ede6]">Building / Civil Works</td>
- <td className="px-4 py-2.5 text-center border-r border-[#f0ede6]">10%</td>
- <td className="px-4 py-2.5 border-r border-[#f0ede6]">0</td>
- <td className="px-4 py-2.5 border-r border-[#f0ede6]">0</td>
- <td className="px-4 py-2.5 border-r border-[#f0ede6]">0</td>
- <td className="px-4 py-2.5 border-r border-[#f0ede6]">0</td>
- <td className="px-4 py-2.5">0</td>
- </tr>
+const RATES = { building: 0.10, plant: 0.15, furniture: 0.10, computer: 0.40 };
 
- {/* 2. Plant & Machinery (Mapped to Engine Totals) */}
- <tr className="">
- <td className="px-4 py-2.5 text-left font-sans font-bold border-r border-[#f0ede6]">Plant & Machinery</td>
- <td className="px-4 py-2.5 text-center border-r border-[#f0ede6]">15%</td>
- <td className="px-4 py-2.5 border-r border-[#f0ede6]">{fmt(yearData.netFA + yearData.depnYr)}</td>
- <td className="px-4 py-2.5 border-r border-[#f0ede6]">0</td>
- <td className="px-4 py-2.5 border-r border-[#f0ede6]">{fmt(yearData.netFA + yearData.depnYr)}</td>
- <td className="px-4 py-2.5 border-r border-[#f0ede6] font-bold">{fmt(yearData.depnYr)}</td>
- <td className="px-4 py-2.5 font-bold">{fmt(yearData.netFA)}</td>
- </tr>
+interface AssetRow {
+  label: string; rate: number; openWDV: number; additions: number;
+  total: number; depn: number; closeWDV: number;
+}
 
- {/* 3. Furniture */}
- <tr>
- <td className="px-4 py-2.5 text-left font-sans border-r border-[#f0ede6]">Furniture & Fixtures</td>
- <td className="px-4 py-2.5 text-center border-r border-[#f0ede6]">10%</td>
- <td className="px-4 py-2.5 border-r border-[#f0ede6]">0</td>
- <td className="px-4 py-2.5 border-r border-[#f0ede6]">0</td>
- <td className="px-4 py-2.5 border-r border-[#f0ede6]">0</td>
- <td className="px-4 py-2.5 border-r border-[#f0ede6]">0</td>
- <td className="px-4 py-2.5">0</td>
- </tr>
+function buildSchedule(data: ProjectedYear[]): AssetRow[][] {
+  const firstYear = data[0];
+  let segment = "trading";
+  if (firstYear.rawMaterials > 0 && firstYear.stockInProcess > 0) segment = "manufacturing";
+  else if (firstYear.rawMaterials > 0) segment = "construction";
+  else if (firstYear.inventory > 0 && firstYear.finishedGoods === firstYear.inventory) {
+    if (firstYear.grossFA / firstYear.sales < 0.12) segment = "service";
+  }
 
- {/* 4. Computers */}
- <tr className="">
- <td className="px-4 py-2.5 text-left font-sans border-r border-[#f0ede6]">Computers / Software</td>
- <td className="px-4 py-2.5 text-center border-r border-[#f0ede6]">40%</td>
- <td className="px-4 py-2.5 border-r border-[#f0ede6]">0</td>
- <td className="px-4 py-2.5 border-r border-[#f0ede6]">0</td>
- <td className="px-4 py-2.5 border-r border-[#f0ede6]">0</td>
- <td className="px-4 py-2.5 border-r border-[#f0ede6]">0</td>
- <td className="px-4 py-2.5">0</td>
- </tr>
+  const splits = ASSET_SPLITS[segment] || ASSET_SPLITS.trading;
+  const allYears: AssetRow[][] = [];
+  let bldgWDV = 0, plantWDV = 0, furnWDV = 0, compWDV = 0;
 
- {/* Total Row */}
- <tr className="border-b border-black font-bold">
- <td className="px-4 py-3 text-left font-sans uppercase border-r border-black">Total Assets</td>
- <td className="px-4 py-3 text-center border-r border-black">—</td>
- <td className="px-4 py-3 border-r border-black">{fmt(yearData.netFA + yearData.depnYr)}</td>
- <td className="px-4 py-3 border-r border-black">0</td>
- <td className="px-4 py-3 border-r border-black">{fmt(yearData.netFA + yearData.depnYr)}</td>
- <td className="px-4 py-3 border-r border-black">{fmt(yearData.depnYr)}</td>
- <td className="px-4 py-3">{fmt(yearData.netFA)}</td>
- </tr>
- </tbody>
- </table>
- </div>
- </div>
- ))}
- 
- <div className="border border-black p-4 rounded-none">
- <p className="text-[10px] leading-relaxed">
- * Note: Depreciation is calculated on the Written Down Value (WDV) method at the beginning of each financial year. 
- The rates used are based on the standard Income Tax Act guidelines for business assets in India.
- </p>
- </div>
- </div>
- );
+  for (let i = 0; i < data.length; i++) {
+    const d = data[i];
+    const openingWDV = d.netFA + d.depnYr;
+
+    if (i === 0) {
+      bldgWDV  = Math.round(openingWDV * splits.building);
+      plantWDV = Math.round(openingWDV * splits.plant);
+      furnWDV  = Math.round(openingWDV * splits.furniture);
+      compWDV  = openingWDV - bldgWDV - plantWDV - furnWDV;
+    }
+
+    const bldgDepn  = Math.round(bldgWDV  * RATES.building);
+    const plantDepn = Math.round(plantWDV * RATES.plant);
+    const furnDepn  = Math.round(furnWDV  * RATES.furniture);
+    const compDepn  = Math.round(compWDV  * RATES.computer);
+    const rawTotalDepn = bldgDepn + plantDepn + furnDepn + compDepn;
+
+    const scale = rawTotalDepn > 0 ? d.depnYr / rawTotalDepn : 1;
+    const adjBldgDepn  = Math.round(bldgDepn  * scale);
+    const adjPlantDepn = Math.round(plantDepn * scale);
+    const adjFurnDepn  = Math.round(furnDepn  * scale);
+    const adjCompDepn  = d.depnYr - adjBldgDepn - adjPlantDepn - adjFurnDepn;
+
+    let additions = { building: 0, plant: 0, furniture: 0, computer: 0 };
+    if (i > 0) {
+      const addnTotal = Math.max(d.grossFA - data[i - 1].grossFA, 0);
+      if (addnTotal > 0) {
+        additions.building  = Math.round(addnTotal * splits.building);
+        additions.plant     = Math.round(addnTotal * splits.plant);
+        additions.furniture = Math.round(addnTotal * splits.furniture);
+        additions.computer  = addnTotal - additions.building - additions.plant - additions.furniture;
+      }
+    }
+
+    const rows: AssetRow[] = [
+      { label: "Building / Civil Works",  rate: RATES.building  * 100, openWDV: bldgWDV,  additions: additions.building,  total: bldgWDV  + additions.building,  depn: adjBldgDepn,  closeWDV: bldgWDV  + additions.building  - adjBldgDepn  },
+      { label: "Plant & Machinery",        rate: RATES.plant     * 100, openWDV: plantWDV, additions: additions.plant,     total: plantWDV + additions.plant,     depn: adjPlantDepn, closeWDV: plantWDV + additions.plant     - adjPlantDepn },
+      { label: "Furniture & Fixtures",     rate: RATES.furniture * 100, openWDV: furnWDV,  additions: additions.furniture, total: furnWDV  + additions.furniture, depn: adjFurnDepn,  closeWDV: furnWDV  + additions.furniture - adjFurnDepn  },
+      { label: "Computers / Software",     rate: RATES.computer  * 100, openWDV: compWDV,  additions: additions.computer,  total: compWDV  + additions.computer,  depn: adjCompDepn,  closeWDV: compWDV  + additions.computer  - adjCompDepn  },
+    ];
+    allYears.push(rows);
+
+    bldgWDV  = rows[0].closeWDV;
+    plantWDV = rows[1].closeWDV;
+    furnWDV  = rows[2].closeWDV;
+    compWDV  = rows[3].closeWDV;
+  }
+
+  return allYears;
+}
+
+export default function Depreciation({ data, years }: { data: ProjectedYear[]; years: string[] }) {
+  const schedule = buildSchedule(data);
+
+  return (
+    <div className="report-section-wrapper bg-white">
+      <div className="report-section-header">
+        <div>
+          <div className="report-section-num">Section 11</div>
+          <h3 className="report-section-title">Depreciation Schedule (WDV Method)</h3>
+        </div>
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
+        {data.map((yearData, idx) => {
+          const rows = schedule[idx];
+          const totals = {
+            openWDV:   rows.reduce((s, r) => s + r.openWDV, 0),
+            additions: rows.reduce((s, r) => s + r.additions, 0),
+            total:     rows.reduce((s, r) => s + r.total, 0),
+            depn:      rows.reduce((s, r) => s + r.depn, 0),
+            closeWDV:  rows.reduce((s, r) => s + r.closeWDV, 0),
+          };
+
+          return (
+            <div key={idx} style={{ border: "1px solid #000" }}>
+              <div style={{
+                borderBottom: "1px solid #000", padding: "8px 6px",
+                display: "flex", justifyContent: "space-between", alignItems: "center",
+                fontFamily: '"Times New Roman", Times, serif', fontSize: "11px",
+              }}>
+                <strong style={{ textTransform: "uppercase" }}>Schedule for Financial Year: {years[idx]}</strong>
+                <span style={{ fontSize: "9px", fontWeight: "bold", textTransform: "uppercase" }}>Income Tax Act Rates</span>
+              </div>
+
+              <div style={{ overflowX: "auto" }}>
+                <table className={s.table} style={{ border: "none", minWidth: "900px" }}>
+                  <colgroup>
+                    <col style={{ width: "28%" }} />
+                    <col style={{ width: "12%" }} />
+                    <col style={{ width: "12%" }} />
+                    <col style={{ width: "12%" }} />
+                    <col style={{ width: "12%" }} />
+                    <col style={{ width: "12%" }} />
+                    <col style={{ width: "12%" }} />
+                  </colgroup>
+                  <thead>
+                    <tr>
+                      <th className={s.colParticulars} style={{ width: "auto", minWidth: "auto", textAlign: "left" }}>Particulars of Assets</th>
+                      <th style={{ textAlign: "center" }}>Rate (%)</th>
+                      <th style={{ textAlign: "center" }}>Opening WDV</th>
+                      <th style={{ textAlign: "center" }}>Additions</th>
+                      <th style={{ textAlign: "center" }}>Total</th>
+                      <th style={{ textAlign: "center" }}>Depreciation</th>
+                      <th style={{ textAlign: "center" }}>Closing WDV</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {/* Helper to center the right-aligned figures perfectly */}
+                    {(() => {
+                      const fmtC = (val: string) => {
+                        if (val === "—") return <div style={{ textAlign: "center" }}>—</div>;
+                        return (
+                          <div style={{ display: "flex", justifyContent: "center" }}>
+                            <div style={{ width: "44px", display: "flex", justifyContent: "flex-end" }}>
+                              <span style={{ whiteSpace: "nowrap" }}>{val}</span>
+                            </div>
+                          </div>
+                        );
+                      };
+
+                      const fmtR = (val: string) => {
+                        if (val === "—") return <div style={{ textAlign: "center" }}>—</div>;
+                        return (
+                          <div style={{ display: "flex", justifyContent: "center" }}>
+                            <div style={{ width: "24px", display: "flex", justifyContent: "flex-end" }}>
+                              <span style={{ whiteSpace: "nowrap" }}>{val}</span>
+                            </div>
+                          </div>
+                        );
+                      };
+
+                      return (
+                        <>
+                          {rows.map((row, ri) => (
+                            <tr key={ri}>
+                              <td className={s.tdParticulars}>
+                                <span style={{ marginLeft: '40px', display: 'inline-block' }}>{row.label}</span>
+                              </td>
+                              <td className={s.tdValue}>{fmtR(row.rate + "%")}</td>
+                              <td className={s.tdValue}>{fmtC(fmt(row.openWDV))}</td>
+                              <td className={s.tdValue}>{fmtC(row.additions > 0 ? fmt(row.additions) : "—")}</td>
+                              <td className={s.tdValue}>{fmtC(fmt(row.total))}</td>
+                              <td className={s.tdValue} style={{ fontWeight: "700" }}>{fmtC(fmt(row.depn))}</td>
+                              <td className={s.tdValue}>{fmtC(fmt(row.closeWDV))}</td>
+                            </tr>
+                          ))}
+                          <tr className={s.totalRow} style={{ borderTop: '2px solid #000', borderBottom: '3px double #000' }}>
+                            <td className={s.tdParticulars} style={{ fontWeight: 800 }}>TOTAL ASSETS DEP. SCHEDULE</td>
+                            <td className={s.tdValue}>{fmtR("—")}</td>
+                            <td className={s.tdValue} style={{ fontWeight: 800 }}>{fmtC(fmt(totals.openWDV))}</td>
+                            <td className={s.tdValue} style={{ fontWeight: 800 }}>{fmtC(totals.additions > 0 ? fmt(totals.additions) : "—")}</td>
+                            <td className={s.tdValue} style={{ fontWeight: 800 }}>{fmtC(fmt(totals.total))}</td>
+                            <td className={s.tdValue} style={{ fontWeight: 800 }}>{fmtC(fmt(totals.depn))}</td>
+                            <td className={s.tdValue} style={{ fontWeight: 800 }}>{fmtC(fmt(totals.closeWDV))}</td>
+                          </tr>
+                        </>
+                      );
+                    })()}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          );
+        })}
+
+        <div className="no-print" style={{
+          border: "1px solid #000", padding: "12px",
+          fontFamily: '"Times New Roman", Times, serif', fontSize: "10px", lineHeight: 1.6,
+        }}>
+          * Note: Depreciation is calculated on the Written Down Value (WDV) method at the beginning of each financial year.
+          Rates are based on Income Tax Act guidelines. Asset categories are allocated based on the nature of business operations.
+        </div>
+      </div>
+    </div>
+  );
 }

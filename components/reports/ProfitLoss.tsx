@@ -1,111 +1,199 @@
 // components/reports/ProfitLoss.tsx
-import { ProjectedYear } from"../../lib/engine";
-import { fmt, fmtR } from"../../lib/format";
+import { ProjectedYear } from "../../lib/engine";
+import { fmt, fmtR } from "../../lib/format";
+import s from "./ProfitLoss.module.css";
 
-export default function ProfitLoss({ data, years }: { data: ProjectedYear[], years: string[] }) {
- return (
- <div className="border border-black rounded-none overflow-hidden">
- <div className="border-b border-black px-6 py-5 flex justify-between items-center border-b border-black">
- <h3 className="text-[11px] font-bold font-semibold">Profit & Loss Account</h3>
- <span className="text-[11px] font-semibold border border-black px-2.5 py-1 rounded-none">P & L</span>
- </div>
- <div className="overflow-x-auto">
- <table className="min-w-full divide-black divide-black text-[11px] whitespace-nowrap">
- <thead className="border-b border-black">
- <tr>
- <th className="px-6 py-4 text-left font-semibold uppercase text-[11px] min-w-[300px]">Particulars</th>
- {years.map(y => <th key={y} className="px-6 py-4 text-right font-semibold uppercase text-[11px]">{y}</th>)}
- </tr>
- </thead>
- <tbody className="divide-black divide-black">
- <tr className="border-y border-black font-bold text-[0.68rem] uppercase">
- <td className="px-6 py-3 text-left font-sans" colSpan={years.length + 1}>I. INCOME</td>
- </tr>
- <tr className="hover:">
- <td className="px-6 py-2.5 text-left font-medium pl-10">Sales / Turnover</td>
- {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right font-mono">{fmt(d.sales)}</td>)}
- </tr>
- <tr className="hover:">
- <td className="px-6 py-2.5 text-left font-medium pl-10">Other Income</td>
- {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right font-mono">{fmt(d.otherInc)}</td>)}
- </tr>
- <tr className="font-bold border-y-2 border-[#ccc8be]">
- <td className="px-6 py-3 text-left text-[#0f0e0b]">Total Revenue (A)</td>
- {data.map(d => <td key={d.year} className="px-6 py-3 text-right font-mono text-[#0f0e0b]">{fmt(d.totalRev)}</td>)}
- </tr>
- <tr className="h-3"><td colSpan={years.length + 1}></td></tr>
- <tr className="border-y border-black font-bold text-[0.68rem] uppercase">
- <td className="px-6 py-3 text-left font-sans" colSpan={years.length + 1}>II. EXPENDITURE</td>
- </tr>
- <tr className="hover:">
- <td className="px-6 py-2.5 text-left font-medium pl-10">Opening Stock</td>
- {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right font-mono">{fmt(d.openStock)}</td>)}
- </tr>
- <tr className="hover:">
- <td className="px-6 py-2.5 text-left font-medium pl-10">Purchases / Direct Costs</td>
- {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right font-mono">{fmt(d.purchases)}</td>)}
- </tr>
- <tr>
- <td className="px-6 py-2.5 text-left font-semibold text-[11px] uppercase pl-10" colSpan={years.length + 1}>Indirect / Operating Expenses</td>
- </tr>
- {data[0].indirectExpenses.map((exp, idx) => (
- <tr key={exp.label} className="hover:">
- <td className="px-6 py-2 text-left pl-14 text-[11px]">{exp.label}</td>
- {data.map(d => <td key={d.year} className="px-6 py-2 text-right font-mono text-[11px]">{fmt(d.indirectExpenses[idx].value)}</td>)}
- </tr>
- ))}
- <tr className="hover:">
- <td className="px-6 py-2.5 text-left font-medium pl-10">Total Indirect Expenses</td>
- {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right font-mono">{fmt(d.totalIndExp)}</td>)}
- </tr>
- <tr className="hover:">
- <td className="px-6 py-2.5 text-left font-medium pl-10">Less: Closing Stock</td>
- {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right font-mono">{fmt(d.closingStock)}</td>)}
- </tr>
- <tr className="font-bold border-y-2 border-[#ccc8be]">
- <td className="px-6 py-3 text-left text-[#0f0e0b]">Total Expenditure (B)</td>
- {data.map(d => <td key={d.year} className="px-6 py-3 text-right font-mono text-[#0f0e0b]">{fmt(d.totalCosts)}</td>)}
- </tr>
- <tr className="h-3"><td colSpan={years.length + 1}></td></tr>
- <tr className="border-y border-black font-semibold border-t-2 border-black">
- <td className="px-6 py-3 text-left">Gross Profit (A−B)</td>
- {data.map(d => <td key={d.year} className="px-6 py-3 text-right font-mono">{fmt(d.grossProfit)}</td>)}
- </tr>
- <tr className="hover:">
- <td className="px-6 py-2.5 text-left pl-10">Gross Profit Ratio (%)</td>
- {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right font-mono">{fmtR(d.gpRatio)}</td>)}
- </tr>
- <tr className="hover:">
- <td className="px-6 py-2.5 text-left pl-10">Less: Depreciation</td>
- {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right font-mono">{fmt(d.depnYr)}</td>)}
- </tr>
- <tr className="font-semibold border-y border-black">
- <td className="px-6 py-3 text-left">Profit before Interest & Tax</td>
- {data.map(d => <td key={d.year} className="px-6 py-3 text-right font-mono">{fmt(d.profitBeforeInt)}</td>)}
- </tr>
- <tr className="hover:">
- <td className="px-6 py-2.5 text-left pl-10">Less: Interest on Borrowings</td>
- {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right font-mono">{fmt(d.interest)}</td>)}
- </tr>
- <tr className="border-y border-black/50 font-semibold border-t border-black">
- <td className="px-6 py-3 text-left">Net Profit before Tax</td>
- {data.map(d => <td key={d.year} className="px-6 py-3 text-right font-mono">{fmt(d.profitBeforeTax)}</td>)}
- </tr>
- <tr className="hover:">
- <td className="px-6 py-2.5 text-left pl-10">Net Profit Ratio (%)</td>
- {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right font-mono">{fmtR(d.npRatio)}</td>)}
- </tr>
- <tr className="hover:">
- <td className="px-6 py-2.5 text-left pl-10">Less: Income Tax Provision</td>
- {data.map(d => <td key={d.year} className="px-6 py-2.5 text-right font-mono">{fmt(d.tax)}</td>)}
- </tr>
- <tr className="border-y-2 border-black font-bold border-t-2 border-black">
- <td className="px-6 py-4 text-left">Net Profit after Tax (PAT)</td>
- {data.map(d => <td key={d.year} className="px-6 py-4 text-right font-mono text-[11px] font-bold">{fmt(d.netProfit)}</td>)}
- </tr>
- </tbody>
- </table>
- </div>
- </div>
- );
+export default function ProfitLoss({ data, years }: { data: ProjectedYear[]; years: string[] }) {
+  const ncols = years.length + 1; // Particulars + year columns
+
+  const yearHeaders = years.map((y) => (
+    <th key={y} className={s.table}>
+      {y.includes("\n")
+        ? y.split("\n").map((l, i) => <span key={i} style={{ display: "block" }}>{l}</span>)
+        : y}
+    </th>
+  ));
+
+  return (
+    <div className="report-section-wrapper">
+      <div className="report-section-header">
+        <div>
+          <div className="report-section-num">Section 2</div>
+          <h3 className="report-section-title">Profit &amp; Loss Account</h3>
+        </div>
+        <span className="badge badge-emerald">P &amp; L</span>
+      </div>
+
+      <div style={{ overflowX: "auto" }}>
+        <table className={s.table}>
+          <colgroup>
+            <col style={{ width: "32%", minWidth: "280px" }} />
+            {years.map((y) => <col key={y} />)}
+          </colgroup>
+
+          <thead>
+            <tr>
+              <th className={s.colParticulars}>Particulars</th>
+              {years.map((y) => (
+                <th key={y} style={{ textAlign: "center" }}>
+                  {y.includes("\n")
+                    ? y.split("\n").map((l, i) => <span key={i} style={{ display: "block" }}>{l}</span>)
+                    : y}
+                </th>
+              ))}
+            </tr>
+          </thead>
+
+          <tbody>
+            {/* ── 1) INCOME ─────────────────────────────────────────── */}
+            <tr className={s.sectionRow}>
+              <td colSpan={ncols} style={{ textAlign: 'left', fontWeight: 800 }}>1) INCOME / REVENUE</td>
+            </tr>
+
+            <tr>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>A) Sales / Turnover</span>
+              </td>
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.sales)}</td>)}
+            </tr>
+
+            <tr>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>B) Other Income</span>
+              </td>
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.otherInc)}</td>)}
+            </tr>
+
+            <tr className={s.subtotalRow}>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '20px', fontWeight: 700, display: 'inline-block' }}>Total Revenue (A)</span>
+              </td>
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.totalRev)}</td>)}
+            </tr>
+
+            {/* ── 2) EXPENDITURE ───────────────────────────────────── */}
+            <tr className={s.sectionRow}>
+              <td colSpan={ncols} style={{ textAlign: 'left', fontWeight: 800 }}>2) EXPENDITURE</td>
+            </tr>
+
+            <tr>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>A) Opening Stock</span>
+              </td>
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.openStock)}</td>)}
+            </tr>
+
+            <tr>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>B) Purchases / Direct Costs</span>
+              </td>
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.purchases)}</td>)}
+            </tr>
+
+            {/* Indirect expenses heading */}
+            <tr>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '40px', fontWeight: 700, display: 'inline-block' }}>C) Indirect / Operating Expenses:</span>
+              </td>
+              {years.map((y) => <td key={y} />)}
+            </tr>
+
+            {/* Indirect expense line items */}
+            {data[0].indirectExpenses.map((exp, idx) => {
+              const charCode = 97 + idx; // starting from 'a'
+              const label = String.fromCharCode(charCode) + ') ' + exp.label;
+              return (
+                <tr key={exp.label} className={s.subRow}>
+                  <td className={s.tdParticulars}>
+                    <span style={{ marginLeft: '64px', fontStyle: 'italic', display: 'inline-block' }}>{label}</span>
+                  </td>
+                  {data.map((d) => (
+                    <td key={d.year} className={s.tdValue}>{fmt(d.indirectExpenses[idx].value)}</td>
+                  ))}
+                </tr>
+              );
+            })}
+
+            <tr>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '48px', fontWeight: 600, display: 'inline-block' }}>Total Indirect Expenses</span>
+              </td>
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.totalIndExp)}</td>)}
+            </tr>
+
+            <tr>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>D) Less: Closing Stock</span>
+              </td>
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.closingStock)}</td>)}
+            </tr>
+
+            <tr className={s.subtotalRow}>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '20px', fontWeight: 700, display: 'inline-block' }}>Total Expenditure (B)</span>
+              </td>
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.totalCosts)}</td>)}
+            </tr>
+
+            {/* ── GROSS PROFIT ──────────────────────────────────────── */}
+            <tr className={s.subtotalRow}>
+              <td className={s.tdParticulars} style={{ fontWeight: 800 }}>3) Gross Profit (A − B)</td>
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.grossProfit)}</td>)}
+            </tr>
+
+            <tr className={s.ratioRow}>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>Gross Profit Ratio (%)</span>
+              </td>
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmtR(d.gpRatio)}%</td>)}
+            </tr>
+
+            <tr>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>4) Less: Depreciation</span>
+              </td>
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.depnYr)}</td>)}
+            </tr>
+
+            <tr className={s.subtotalRow}>
+              <td className={s.tdParticulars} style={{ fontWeight: 800 }}>5) Profit before Interest & Tax (PBIT)</td>
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.profitBeforeInt)}</td>)}
+            </tr>
+
+            <tr>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>6) Less: Interest on Borrowings</span>
+              </td>
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.interest)}</td>)}
+            </tr>
+
+            <tr className={s.subtotalRow}>
+              <td className={s.tdParticulars} style={{ fontWeight: 800 }}>7) Net Profit before Tax (PBT)</td>
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.profitBeforeTax)}</td>)}
+            </tr>
+
+            <tr className={s.ratioRow}>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>Net Profit Ratio (%)</span>
+              </td>
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmtR(d.npRatio)}%</td>)}
+            </tr>
+
+            <tr>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>8) Less: Income Tax Provision</span>
+              </td>
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.tax)}</td>)}
+            </tr>
+
+            {/* ── NET PROFIT AFTER TAX ──────────────────────────────── */}
+            <tr className={s.totalRow} style={{ borderTop: '3px solid #000', borderBottom: '3px double #000' }}>
+              <td className={s.tdParticulars} style={{ fontWeight: 900, fontSize: '12pt' }}>9) NET PROFIT AFTER TAX (PAT)</td>
+              {data.map((d) => <td key={d.year} className={s.tdValue} style={{ fontWeight: 900 }}>{fmt(d.netProfit)}</td>)}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
 }

@@ -1,0 +1,107 @@
+/* ProfitLoss.module.css
+   Scoped table styles for the Profit & Loss report.
+   Traditional CA / bank-grade format.
+   ─────────────────────────────────────────────────────── */
+
+.table {
+  width: 100%;
+  min-width: 900px;
+  border-collapse: collapse;
+  border: 2px solid #000;
+  font-family: "Times New Roman", Times, serif;
+  font-size: 12px;
+  background: #fff;
+  color: #000;
+}
+
+/* ── All cells: NO horizontal lines by default ───────────── */
+.table th,
+.table td {
+  padding: 5px 12px;
+  vertical-align: middle;
+  border-top: none;
+  border-bottom: none;
+  border-left: 1px solid #000;   /* vertical column dividers */
+  border-right: 1px solid #000;
+  background: #fff;
+  color: #000;
+  font-family: "Times New Roman", Times, serif;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* ── Column header row ───────────────────────────────────── */
+.table thead th {
+  font-weight: bold;
+  text-align: center;
+  border-top: none;             /* outer table border handles it */
+  border-bottom: 2px solid #000;
+  white-space: nowrap;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.table thead th.colParticulars {
+  text-align: left;
+  width: 32%;
+  min-width: 280px;
+}
+
+/* ── Data cells ──────────────────────────────────────────── */
+.table tbody td {
+  font-weight: normal;
+}
+
+.table tbody td.tdParticulars {
+  text-align: left;
+  white-space: normal;
+}
+
+.tdValue {
+  text-align: center;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+/* ── Section header rows (I. INCOME, II. EXPENDITURE) ───── */
+.sectionRow td {
+  background: #f0f0f0 !important;
+  font-weight: bold;
+  font-size: 11px;
+  text-transform: uppercase;
+  border-top: 1.5px solid #000 !important;
+  border-bottom: 1.5px solid #000 !important;
+  border-left: none !important;
+  border-right: none !important;
+  padding: 6px 12px;
+  letter-spacing: 0.04em;
+}
+
+/* ── Subtotal rows (bold, thin top rule) ─────────────────── */
+.subtotalRow td {
+  font-weight: bold;
+  border-top: 1px solid #000 !important;
+  border-bottom: 1px solid #000 !important;
+}
+
+/* ── Total rows (bold, thick double-rule) ────────────────── */
+.totalRow td {
+  font-weight: bold;
+  border-top: 2px solid #000 !important;
+  border-bottom: 2px solid #000 !important;
+}
+
+/* ── Ratio / info rows (slightly muted) ──────────────────── */
+.ratioRow td {
+  font-weight: normal;
+  color: #555;
+  font-size: 11px;
+}
+
+/* ── Sub-item rows (indented items) ──────────────────────── */
+.subRow td.tdParticulars {
+  padding-left: 28px;
+  font-size: 11px;
+}

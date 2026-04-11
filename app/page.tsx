@@ -1,14 +1,14 @@
 // app/page.tsx
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { generateProjections, ProjectedYear } from '../lib/engine';
 import ReportView from '../components/ReportView';
 
 const PROFILES: any = {
-  trading: { label: 'Trading', salesMult: 5.0, purchaseRatio: .81, stockMonths: 1.5, debtorDays: 30, creditorDays: 42, indExpRatio: .11, depnRate: .15, revGrowth: .15, purGrowth: .12, expGrowth: .08, capitalMult: 1.10, grossFAMult: .40, drawingsMult: .38, wcMargin: 25, cashPct: .020, loansAdvPct: .015, otherCLPct: .040, exp: { salary: .40, rent: .20, power: .04, freight: .08, travel: .06, telephone: .04, sadar: .06, office: .07, welfare: .02, misc: .03 } },
-  service: { label: 'Services', salesMult: 5.5, purchaseRatio: .15, stockMonths: .5, debtorDays: 35, creditorDays: 22, indExpRatio: .65, depnRate: .15, revGrowth: .18, purGrowth: .12, expGrowth: .09, capitalMult: 1.00, grossFAMult: .40, drawingsMult: .42, wcMargin: 25, cashPct: .025, loansAdvPct: .012, otherCLPct: .045, exp: { salary: .55, rent: .15, power: .03, freight: .01, travel: .08, telephone: .04, sadar: .04, office: .05, welfare: .02, misc: .03 } },
-  manufacturing: { label: 'Manufacturing', salesMult: 5.0, purchaseRatio: .74, stockMonths: 2.0, debtorDays: 40, creditorDays: 42, indExpRatio: .14, depnRate: .15, revGrowth: .15, purGrowth: .12, expGrowth: .08, capitalMult: 1.20, grossFAMult: 1.00, drawingsMult: .35, wcMargin: 25, cashPct: .015, loansAdvPct: .022, otherCLPct: .038, exp: { salary: .35, rent: .10, power: .18, freight: .10, travel: .04, telephone: .03, sadar: .05, office: .05, welfare: .05, misc: .05 } },
+  trading:      { label: 'Trading',      salesMult: 5.0, purchaseRatio: .81, stockMonths: 1.5, debtorDays: 30, creditorDays: 42, indExpRatio: .11, depnRate: .15, revGrowth: .15, purGrowth: .12, expGrowth: .08, capitalMult: 1.10, grossFAMult: .40, drawingsMult: .38, wcMargin: 25, cashPct: .020, loansAdvPct: .015, otherCLPct: .040, exp: { salary: .40, rent: .20, power: .04, freight: .08, travel: .06, telephone: .04, sadar: .06, office: .07, welfare: .02, misc: .03 } },
+  service:      { label: 'Services',     salesMult: 5.5, purchaseRatio: .15, stockMonths: .5,  debtorDays: 35, creditorDays: 22, indExpRatio: .65, depnRate: .15, revGrowth: .18, purGrowth: .12, expGrowth: .09, capitalMult: 1.00, grossFAMult: .40, drawingsMult: .42, wcMargin: 25, cashPct: .025, loansAdvPct: .012, otherCLPct: .045, exp: { salary: .55, rent: .15, power: .03, freight: .01, travel: .08, telephone: .04, sadar: .04, office: .05, welfare: .02, misc: .03 } },
+  manufacturing:{ label: 'Manufacturing',salesMult: 5.0, purchaseRatio: .74, stockMonths: 2.0, debtorDays: 40, creditorDays: 42, indExpRatio: .14, depnRate: .15, revGrowth: .15, purGrowth: .12, expGrowth: .08, capitalMult: 1.20, grossFAMult: 1.00, drawingsMult: .35, wcMargin: 25, cashPct: .015, loansAdvPct: .022, otherCLPct: .038, exp: { salary: .35, rent: .10, power: .18, freight: .10, travel: .04, telephone: .03, sadar: .05, office: .05, welfare: .05, misc: .05 } },
   construction: { label: 'Construction', salesMult: 5.2, purchaseRatio: .70, stockMonths: 1.0, debtorDays: 42, creditorDays: 42, indExpRatio: .16, depnRate: .15, revGrowth: .15, purGrowth: .12, expGrowth: .08, capitalMult: 1.10, grossFAMult: .80, drawingsMult: .36, wcMargin: 25, cashPct: .018, loansAdvPct: .025, otherCLPct: .038, exp: { salary: .40, rent: .07, power: .10, freight: .15, travel: .05, telephone: .03, sadar: .08, office: .04, welfare: .04, misc: .04 } }
 };
 
@@ -18,60 +18,56 @@ const EXPENSE_HEADS = [
   { k: 'sadar', l: 'Sadar / Local Expenses' }, { k: 'office', l: 'Office / Shop Expenses' }, { k: 'welfare', l: 'Staff Welfare' }, { k: 'misc', l: 'Miscellaneous Expenses' }
 ];
 
+const BIZ_ICONS: Record<string, string> = {
+  trading: '', service: '', manufacturing: '', construction: ''
+};
+
 export default function CMAApp() {
   const [isGenerated, setIsGenerated] = useState(false);
-  const [inputMode, setInputMode] = useState('simple');
-  const [detTab, setDetTab] = useState(1);
   const [bizType, setBizType] = useState('trading');
-  const [wcMethod, setWcMethod] = useState('turnover');
 
-  // --- COMPREHENSIVE STATE ---
   const [f, setF] = useState({
     bizName: '', propName: '', pan: '', preparedBy: '', address: '', entityType: 'proprietorship',
     ccLimit: 500000, termLoan: 0, isRenewal: false, existingCc: 0, existingTl: 0,
-    intRate: 11.5, baseYear: new Date().getFullYear(), projYears: 3, tenure: 5,
+    ccIntRate: 11.5, tlIntRate: 11.0, baseYear: new Date().getFullYear(), projYears: 5, tenure: 5,
     sales0: 2500000, otherInc: 0, openSt: 0, closeSt: 200000, purch0: 2000000,
     revG: 15, purG: 12, expG: 8, depnRate: 15,
     capital: 800000, unsecured: 0, creditors: 200000, otherCL: 50000,
     grossFA: 300000, accDepn: 0, debtors: 250000, inventory: 200000, cash: 100000, loansAdv: 0, deposits: 0, capex: 0,
     debtorDays: 30, credDays: 45, stockMo: 2, margin: 25, drawings: 120000,
-    // Granular Audit Fields
     instCap: 0, quasiEq: 60, debtorAge: 5, statDues: 40,
     expBase: { salary: 0, rent: 0, power: 0, freight: 0, travel: 0, telephone: 0, sadar: 0, office: 0, welfare: 0, misc: 0 },
     optSens: false, optDepn: true, optCF: true, sealFirm: 'Srinivasa Tax Consultants',
-    // Business structure inputs
-    numEmployees: 1 as number | '',   // 0 = owner-operated, no staff on payroll
-    ownPremises: false,               // true = own building, rent = ₹0
+    numEmployees: 1 as number | '',
+    ownPremises: false,
   });
 
+  const [showError, setShowError] = useState(false);
   const [isOverride, setIsOverride] = useState(false);
+  const bizNameRef = useRef<HTMLInputElement>(null);
 
-  // ════════ AUTO-FILL ENGINE ════════
   useEffect(() => {
-    if (inputMode === 'simple') {
-      const p = PROFILES[bizType];
-      const totalLoanForMath = f.ccLimit + f.termLoan || 500000;
-      const sales = isOverride ? f.sales0 : Math.round(totalLoanForMath * p.salesMult);
-      const purch = Math.round(sales * p.purchaseRatio);
-      const indExp = Math.round(sales * p.indExpRatio);
-      const newExps = { ...f.expBase };
-      EXPENSE_HEADS.forEach(h => { (newExps as any)[h.k] = Math.round(indExp * p.exp[h.k]); });
+    const p = PROFILES[bizType];
+    const totalLoanForMath = f.ccLimit + f.termLoan || 500000;
+    const sales = isOverride ? f.sales0 : Math.round(totalLoanForMath * p.salesMult);
+    const purch = Math.round(sales * p.purchaseRatio);
+    const indExp = Math.round(sales * p.indExpRatio);
+    const newExps = { ...f.expBase };
+    EXPENSE_HEADS.forEach(h => { (newExps as any)[h.k] = Math.round(indExp * p.exp[h.k]); });
 
-      setF(prev => ({
-        ...prev,
-        sales0: sales, purch0: purch, revG: p.revGrowth * 100, purG: p.purGrowth * 100, expG: p.expGrowth * 100,
-        capital: Math.round(totalLoanForMath * p.capitalMult), drawings: Math.round(totalLoanForMath * p.drawingsMult),
-        grossFA: Math.round(totalLoanForMath * p.grossFAMult), closeSt: Math.round((purch / 12) * p.stockMonths),
-        debtors: Math.round((sales / 365) * p.debtorDays), creditors: Math.round((purch / 365) * p.creditorDays),
-        inventory: Math.round((purch / 12) * p.stockMonths), cash: Math.round(sales * p.cashPct), 
-        loansAdv: Math.round(sales * p.loansAdvPct), otherCL: Math.round(sales * p.otherCLPct),
-        debtorDays: p.debtorDays, credDays: p.creditorDays, stockMo: p.stockMonths, margin: p.wcMargin,
-        expBase: newExps
-      }));
-    }
-  }, [f.ccLimit, f.termLoan, bizType, inputMode, isOverride]);
+    setF(prev => ({
+      ...prev,
+      sales0: sales, purch0: purch, revG: p.revGrowth * 100, purG: p.purGrowth * 100, expG: p.expGrowth * 100,
+      capital: Math.round(totalLoanForMath * p.capitalMult), drawings: Math.round(totalLoanForMath * p.drawingsMult),
+      grossFA: Math.round(totalLoanForMath * p.grossFAMult), closeSt: Math.round((purch / 12) * p.stockMonths),
+      debtors: Math.round((sales / 365) * p.debtorDays), creditors: Math.round((purch / 365) * p.creditorDays),
+      inventory: Math.round((purch / 12) * p.stockMonths), cash: Math.round(sales * p.cashPct),
+      loansAdv: Math.round(sales * p.loansAdvPct), otherCL: Math.round(sales * p.otherCLPct),
+      debtorDays: p.debtorDays, credDays: p.creditorDays, stockMo: p.stockMonths, margin: p.wcMargin,
+      expBase: newExps
+    }));
+  }, [f.ccLimit, f.termLoan, bizType, isOverride]);
 
-  // ════════ LIVE PREVIEW ════════
   const pv = useMemo(() => {
     const s = f.sales0;
     const de = (f.ccLimit + f.termLoan) / Math.max(f.capital, 1);
@@ -79,23 +75,31 @@ export default function CMAApp() {
     return { sales: s, np: (s * 0.082), de, turnLmt: (s * 0.20), cr };
   }, [f]);
 
-  const update = (k: string, v: any) => setF(p => ({ ...p, [k]: v }));
+  const update = (k: string, v: any) => {
+    if (k === 'bizName' && v.trim()) setShowError(false);
+    setF(p => ({ ...p, [k]: v }));
+  };
   const fmtVal = (n: number) => new Intl.NumberFormat('en-IN').format(Math.round(n));
+  const fmtCr = (n: number) => {
+    if (n >= 10000000) return `₹${(n / 10000000).toFixed(2)} Cr`;
+    if (n >= 100000)   return `₹${(n / 100000).toFixed(2)} L`;
+    return `₹${fmtVal(n)}`;
+  };
 
   const [projections, setProjections] = useState<ProjectedYear[]>([]);
 
   const handleGenerate = () => {
+    if (!f.bizName.trim()) {
+      setShowError(true);
+      bizNameRef.current?.focus();
+      return;
+    }
     const totalExpBase = Object.values(f.expBase).reduce((a: number, b: any) => a + Number(b), 0);
     const indExpRatioImplied = f.sales0 > 0 ? (totalExpBase / f.sales0) : 0.12;
-
     const normalizedExpRatios = Object.fromEntries(
       Object.entries(f.expBase).map(([k, v]) => [k, totalExpBase > 0 ? Number(v) / totalExpBase : 0])
     );
-
-    const limits = {
-      ccLimit: f.ccLimit, termLoan: f.termLoan,
-      isRenewal: f.isRenewal, existingCc: f.existingCc, existingTl: f.existingTl
-    };
+    const limits = { ccLimit: f.ccLimit, termLoan: f.termLoan, isRenewal: f.isRenewal, existingCc: f.existingCc, existingTl: f.existingTl, ccIntRate: f.ccIntRate, tlIntRate: f.tlIntRate, tenure: f.tenure };
     const totalCurrentLoan = f.ccLimit + f.termLoan || 1;
 
     const results = generateProjections(limits, {
@@ -104,26 +108,17 @@ export default function CMAApp() {
       capitalMult: f.capital / totalCurrentLoan,
       drawingsMult: f.drawings / totalCurrentLoan,
       grossFAMult: f.grossFA / totalCurrentLoan,
-      revGrowth: f.revG / 100,
-      purGrowth: f.purG / 100,
-      expGrowth: f.expG / 100,
+      revGrowth: f.revG / 100, purGrowth: f.purG / 100, expGrowth: f.expG / 100,
       purchaseRatio: f.purch0 / f.sales0,
       indExpRatio: indExpRatioImplied,
       depnRate: f.depnRate / 100,
-      stockMonths: f.stockMo,
-      creditorDays: f.credDays,
-      debtorDays: f.debtorDays,
-      cashPct: f.cash / f.sales0,
-      loansAdvPct: f.loansAdv / f.sales0,
+      stockMonths: f.stockMo, creditorDays: f.credDays, debtorDays: f.debtorDays,
+      cashPct: f.cash / f.sales0, loansAdvPct: f.loansAdv / f.sales0,
       otherCLPct: (f.creditors + f.otherCL) / f.sales0,
       wcMargin: f.margin,
-      // Granular audit fields mapping
-      installedCap: f.instCap,
-      quasiEquityPct: f.quasiEq / 100,
-      debtorAgingPct: f.debtorAge / 100,
-      statutoryDuesPct: f.statDues / 100,
+      installedCap: f.instCap, quasiEquityPct: f.quasiEq / 100,
+      debtorAgingPct: f.debtorAge / 100, statutoryDuesPct: f.statDues / 100,
       exp: normalizedExpRatios as any,
-      // Business structure
       numEmployees: typeof f.numEmployees === 'number' ? f.numEmployees : undefined,
       ownPremises: f.ownPremises,
     }, f.projYears, f.baseYear);
@@ -132,302 +127,334 @@ export default function CMAApp() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // ═══════ GENERATED REPORT VIEW ═══════
   if (isGenerated) {
     return (
-      <div className="min-h-screen bg-[#f5f2eb] p-8">
-        <ReportView 
-          data={projections} 
-          bizName={f.bizName} 
-          propName={f.propName} 
-          loanAmount={f.ccLimit + f.termLoan} 
-          proposedCc={f.ccLimit}
-          proposedTl={f.termLoan}
-          existingCc={f.isRenewal ? f.existingCc : 0}
-          existingTl={f.isRenewal ? f.existingTl : 0}
-        />
-        <button onClick={() => setIsGenerated(false)} className="fixed bottom-8 right-8 bg-[#c8401a] text-white px-8 py-2.5 rounded-full shadow-2xl font-bold uppercase tracking-widest text-xs">↺ Edit Inputs</button>
+      <div className="min-h-screen" style={{ background: 'var(--navy-950)' }}>
+        <style>{`
+          @media print {
+            @page {
+              size: ${f.projYears > 5 ? 'landscape' : 'portrait'};
+              margin: 10mm;
+            }
+            .cma-formal-report {
+              /* Scale down the entire report wrapper so wide tables fit */
+              zoom: ${f.projYears > 5 ? '0.8' : '0.7'};
+            }
+          }
+        `}</style>
+        {/* Report Top Bar */}
+        <div className="sticky top-0 z-50 border-b border-[var(--border-subtle)] px-4 sm:px-6 py-3 flex items-center gap-4 flex-wrap no-print" style={{
+          background: 'linear-gradient(180deg, var(--navy-900) 0%, var(--navy-950) 100%)',
+        }}>
+          <div className="flex items-center gap-3">
+            <div style={{
+              width: 32, height: 32, borderRadius: 8,
+              background: 'var(--grad-brand)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 14, fontWeight: 800, color: '#fff'
+            }}>L</div>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
+                {f.bizName || 'CMA Report'}
+              </div>
+              <div style={{ fontSize: 10, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+                {f.projYears}-Year Projection · {f.ccLimit + f.termLoan > 0 ? fmtCr(f.ccLimit + f.termLoan) : ''} Loan
+              </div>
+            </div>
+          </div>
+          <div className="ml-auto flex items-center gap-2 sm:gap-3 flex-wrap justify-end">
+            <span className="badge badge-blue no-print hidden sm:inline-flex">RBI / CMA</span>
+            <span className="badge badge-emerald no-print hidden sm:inline-flex">Tandon Format</span>
+            <button
+              onClick={() => { window.print(); }}
+              style={{
+                background: 'var(--surface-glass)', border: '1px solid var(--border-default)',
+                color: 'var(--text-secondary)', padding: '6px 14px', borderRadius: 6,
+                fontSize: 11, fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s',
+              }}
+              className="no-print"
+              onMouseOver={e => (e.currentTarget.style.color = 'var(--text-primary)')}
+              onMouseOut={e => (e.currentTarget.style.color = 'var(--text-secondary)')}
+            >
+              🖨 Print
+            </button>
+            <button
+              onClick={() => setIsGenerated(false)}
+              style={{
+                background: 'var(--accent-600)', color: '#fff',
+                padding: '6px 18px', borderRadius: 6, fontSize: 11, fontWeight: 700,
+                cursor: 'pointer', transition: 'all 0.15s', border: 'none',
+              }}
+              className="no-print"
+            >
+              ← Edit Inputs
+            </button>
+          </div>
+        </div>
+
+        <div className="px-3 sm:px-6 py-6 pb-20 max-w-[1300px] mx-auto">
+          <ReportView
+            data={projections}
+            bizName={f.bizName}
+            propName={f.propName}
+            pan={f.pan}
+            address={f.address}
+            loanAmount={f.ccLimit + f.termLoan}
+            proposedCc={f.ccLimit}
+            proposedTl={f.termLoan}
+            existingCc={f.isRenewal ? f.existingCc : 0}
+            existingTl={f.isRenewal ? f.existingTl : 0}
+            entityType={f.entityType}
+          />
+        </div>
       </div>
     );
   }
 
+  // ═══════ INPUT FORM ═══════
   return (
-    <div className="min-h-screen bg-[#f5f2eb] text-[#0f0e0b] font-sans pb-20">
-      {/* ════════ HEADER ════════ */}
-      <header className="bg-[#0f0e0b] text-[#f5f2eb] px-6 py-4 flex items-center gap-3 border-b-[3px] border-[#c8401a]">
-        <h1 className="font-serif text-xl font-bold italic tracking-tight">LoanProj</h1>
-        <div className="ml-auto font-mono text-[10px] text-[#8a8680] uppercase tracking-widest">RBI / CMA / Tandon Format</div>
+    <div className="min-h-screen" style={{ background: 'var(--navy-950)', color: 'var(--text-primary)' }}>
+
+      {/* ════ HEADER ════ */}
+      <header className="sticky top-0 z-50 border-b border-[var(--border-subtle)] px-4 sm:px-6 py-3 header-glass">
+        <div className="max-w-[1380px] mx-auto flex items-center justify-between sm:justify-start gap-4 flex-wrap">
+          {/* Logo */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: 10,
+              background: 'var(--grad-brand)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 16, fontWeight: 900, color: '#fff',
+              boxShadow: 'var(--shadow-glow)',
+            }}>L</div>
+            <div>
+              <div style={{ fontSize: 16, fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1 }}>
+                <span style={{ color: 'var(--text-primary)' }}>Loan</span>
+                <span className="gradient-text">Proj</span>
+              </div>
+              <div style={{ fontSize: 9, color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>
+                CMA Engine
+              </div>
+            </div>
+          </div>
+
+          {/* Center nav pills */}
+          <div className="hidden sm:flex" style={{ marginLeft: 'auto', gap: 4 }}>
+            {['Dashboard', 'Reports', 'Settings'].map((item, i) => (
+              <button key={item} style={{
+                padding: '5px 14px', borderRadius: 6, fontSize: 12, fontWeight: 500,
+                background: i === 0 ? 'rgba(59,130,246,0.12)' : 'transparent',
+                color: i === 0 ? 'var(--accent-400)' : 'var(--text-muted)',
+                border: i === 0 ? '1px solid rgba(59,130,246,0.2)' : '1px solid transparent',
+                cursor: 'pointer', transition: 'all 0.15s',
+              }}>{item}</button>
+            ))}
+          </div>
+
+          <div className="hidden md:flex items-center gap-6 lg:gap-12 ml-auto">
+            <span className="badge badge-blue">RBI Compliant</span>
+            <span className="badge badge-purple">Tandon / CMA</span>
+            <div style={{
+              width: 32, height: 32, borderRadius: '50%',
+              background: 'var(--grad-brand)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 12, fontWeight: 700, color: '#fff',
+            }}>C</div>
+          </div>
+        </div>
       </header>
 
-      {/* ════════ TOPBAR TOGGLES ════════ */}
-      <div className="bg-[#ede9df] border-b border-[#ccc8be] px-6 py-2 flex flex-wrap gap-8 items-center">
-        <div className="flex items-center gap-2 text-[10px] font-bold text-[#7a7567] uppercase">
-          Business: <div className="flex bg-white border border-[#ccc8be] rounded overflow-hidden">
-            {['trading', 'service', 'manufacturing', 'construction'].map(t => <button key={t} onClick={() => setBizType(t)} className={`px-3 py-1 capitalize border-r last:border-0 ${bizType === t ? 'bg-[#0f0e0b] text-white' : 'hover:bg-slate-50'}`}>{t}</button>)}
-          </div>
-        </div>
-        <div className="flex items-center gap-2 text-[10px] font-bold text-[#7a7567] uppercase">
-          WC Method: <div className="flex bg-white border border-[#ccc8be] rounded overflow-hidden">
-            {['turnover', 'mpbf', 'opercycle'].map(w => <button key={w} onClick={() => setWcMethod(w)} className={`px-3 py-1 capitalize border-r last:border-0 ${wcMethod === w ? 'bg-[#0f0e0b] text-white' : 'hover:bg-slate-50'}`}>{w}</button>)}
-          </div>
-        </div>
-      </div>
 
-      <main className="max-w-[1380px] mx-auto p-6 space-y-6">
-        {/* SEAL & GENERATE BAR */}
-        <div className="bg-[#f8f6f0] p-4 border border-[#ccc8be] rounded-lg flex items-center gap-4 shadow-sm">
-          <label className="text-[10px] font-bold uppercase text-[#7a7567]">Firm Seal Name:</label>
-          <input value={f.sealFirm} onChange={e => update('sealFirm', e.target.value)} className="legacy-input max-w-sm" />
-          <button onClick={handleGenerate} className="ml-auto bg-[#c8401a] text-white px-8 py-2.5 rounded font-bold shadow-xl hover:bg-[#a5341a] transition-all active:scale-95">⚡ Generate CMA Report</button>
-        </div>
+      <main className="max-w-[1380px] mx-auto px-4 sm:px-6 py-6 pb-24">
 
-        {/* MODE NAVIGATION */}
-        <div className="flex border-b-2 border-[#ccc8be] gap-2">
-          <button onClick={() => setInputMode('simple')} className={`px-8 py-3 text-sm font-bold transition-all border-b-2 -mb-[2px] ${inputMode === 'simple' ? 'border-[#c8401a] text-[#c8401a]' : 'border-transparent text-[#7a7567]'}`}>Simple Mode</button>
-          <button onClick={() => setInputMode('detailed')} className={`px-8 py-3 text-sm font-bold transition-all border-b-2 -mb-[2px] ${inputMode === 'detailed' ? 'border-[#c8401a] text-[#c8401a]' : 'border-transparent text-[#7a7567]'}`}>Detailed Mode</button>
-        </div>
 
-        {/* INPUT PANEL */}
-        <div className="bg-white border border-[#ccc8be] rounded-lg p-8 shadow-sm space-y-10">
-          
-          {inputMode === 'detailed' && (
-            <div className="flex flex-wrap gap-3 border-b border-slate-100 pb-5">
-              {['1. Applicant & Loan Details', '2. P&L / Operating Inputs', '3. Balance Sheet Opening', '4. Audit & WC Granularities'].map((label, i) => (
-                <button key={i} onClick={() => setDetTab(i + 1)} className={`text-[10px] font-bold px-4 py-2 rounded-full uppercase tracking-widest transition-all ${detTab === i + 1 ? 'bg-[#1a5fa8] text-white shadow-md' : 'bg-[#f5f2eb] text-[#7a7567] hover:bg-slate-200'}`}>
-                  {label}
-                </button>
-              ))}
+
+
+        <div className={`glass-card glass-card-animated p-5 sm:p-7 mb-5 ${showError ? 'form-shake' : ''}`}>
+          {showError && (
+            <div className="fintech-banner animate-fade-in">
+              <div className="w-8 h-8 rounded-full bg-[var(--rose-400)] flex items-center justify-center text-white font-bold shrink-0">!</div>
+              <div>
+                <p className="text-[13px] font-bold text-[var(--text-primary)]">Business Name Required</p>
+                <p className="text-[11px] text-[var(--text-secondary)]">Please enter the entity name in the field below to generate your financial projections.</p>
+              </div>
             </div>
           )}
 
-          {/* TAB 1: APPLICANT & LOAN */}
-          <div className={`${(inputMode === 'detailed' && detTab !== 1) ? 'hidden' : ''} grid grid-cols-1 md:grid-cols-4 gap-x-8 gap-y-6`}>
-             <div className="md:col-span-2"><label className="l-label">Business / Firm Name</label><input value={f.bizName} onChange={e => update('bizName', e.target.value)} placeholder="e.g. Srinivas Enterprises" className="legacy-input" /></div>
-             <div><label className="l-label">Legal Constitution</label><select value={f.entityType} onChange={e => update('entityType', e.target.value)} className="legacy-input"><option value="proprietorship">Proprietorship</option><option value="partnership">Partnership Firm</option><option value="pvtltd">Pvt Ltd Company</option></select></div>
-             <div><label className="l-label">Proprietor / Managing Partner</label><input value={f.propName} onChange={e => update('propName', e.target.value)} className="legacy-input" /></div>
-             <div><label className="l-label">Permanent Account Number (PAN)</label><input value={f.pan} onChange={e => update('pan', e.target.value.toUpperCase())} placeholder="XXXXX0000X" className="legacy-input" /></div>
-             <div><label className="l-label">Prepared By (CA / Firm)</label><input value={f.preparedBy} onChange={e => update('preparedBy', e.target.value)} className="legacy-input" /></div>
-             
-             {/* NEW LOAN INPUTS */}
-             <div><label className="l-label text-blue-700">Application Type</label><select value={f.isRenewal ? 'renewal' : 'fresh'} onChange={e => update('isRenewal', e.target.value === 'renewal')} className="legacy-input font-bold"><option value="fresh">Fresh Proposal</option><option value="renewal">Renewal / Enhancement</option></select></div>
-             <div><label className="l-label text-blue-700">Proposed CC/OD Limit (₹)</label><input type="number" value={f.ccLimit} onChange={e => update('ccLimit', Number(e.target.value))} className="legacy-input font-bold border-blue-200" /></div>
-             <div><label className="l-label text-blue-700">Proposed Term Loan (₹)</label><input type="number" value={f.termLoan} onChange={e => update('termLoan', Number(e.target.value))} className="legacy-input font-bold border-blue-200" /></div>
-             <div><label className="l-label">Interest Rate (% Per Annum)</label><input type="number" value={f.intRate} onChange={e => update('intRate', Number(e.target.value))} className="legacy-input" step="0.25" /></div>
-             
-             {f.isRenewal && (
-                <div className="md:col-span-4 grid grid-cols-1 md:grid-cols-4 gap-x-8 bg-amber-50 p-4 border border-amber-200 rounded-md">
-                   <div><label className="l-label text-amber-800">Existing CC Limit (₹)</label><input type="number" value={f.existingCc} onChange={e => update('existingCc', Number(e.target.value))} className="legacy-input border-amber-300 bg-white" /></div>
-                   <div><label className="l-label text-amber-800">Existing Term Loan O/s (₹)</label><input type="number" value={f.existingTl} onChange={e => update('existingTl', Number(e.target.value))} className="legacy-input border-amber-300 bg-white" /></div>
-                </div>
-             )}
-
-             <div>
-               <label className="l-label">Base Financial Year (Actuals)</label>
-               <select value={f.baseYear} onChange={e => update('baseYear', Number(e.target.value))} className="legacy-input">
-                 {[-2, -1, 0, 1].map(offset => {
-                   const y = new Date().getFullYear() + offset;
-                   return <option key={y} value={y}>FY {y.toString().slice(-2)}-{(y+1).toString().slice(-2)}</option>;
-                 })}
-               </select>
-             </div>
-             <div><label className="l-label">Projection Period (Years)</label><select value={f.projYears} onChange={e => update('projYears', Number(e.target.value))} className="legacy-input">{[2,3,4,5,6,7,8,9].map(y => <option key={y} value={y}>{y} Years</option>)}</select></div>
-             {(f.termLoan > 0 || f.existingTl > 0) && <div><label className="l-label">Repayment Tenure (Years)</label><input type="number" value={f.tenure} onChange={e => update('tenure', Number(e.target.value))} className="legacy-input" /></div>}
-             <div className="md:col-span-4"><label className="l-label">Full Business / Factory Address</label><input value={f.address} onChange={e => update('address', e.target.value)} className="legacy-input" /></div>
+          {/* ════ SELECTOR ZONE (DROPDOWNS) ════ */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+            <div>
+              <label className="fintech-label">Business Type</label>
+              <select value={bizType} onChange={e => setBizType(e.target.value)} className="fintech-input">
+                {['trading', 'service', 'manufacturing', 'construction'].map(t => (
+                  <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="fintech-label">Legal Constitution</label>
+              <select value={f.entityType} onChange={e => update('entityType', e.target.value)} className="fintech-input">
+                <option value="individual">Individual</option>
+                <option value="proprietorship">Proprietorship</option>
+                <option value="partnership">Partnership Firm</option>
+                <option value="pvtltd">Pvt Ltd Company</option>
+              </select>
+            </div>
+            <div>
+              <label className="fintech-label">Application Type</label>
+              <select value={f.isRenewal ? 'renewal' : 'fresh'} onChange={e => update('isRenewal', e.target.value === 'renewal')} className="fintech-input">
+                <option value="fresh">Fresh Proposal</option>
+                <option value="renewal">Renewal / Enhancement</option>
+              </select>
+            </div>
+            <div>
+              <label className="fintech-label">Base Financial Year</label>
+              <select value={f.baseYear} onChange={e => update('baseYear', Number(e.target.value))} className="fintech-input">
+                {[-3, -2, -1, 0, 1, 2].map(offset => {
+                  const y = new Date().getFullYear() + offset;
+                  return <option key={y} value={y}>{y}-{(y + 1).toString().slice(-2)}</option>;
+                })}
+              </select>
+            </div>
+            <div>
+              <label className="fintech-label">Projection Period</label>
+              <select value={f.projYears} onChange={e => update('projYears', Number(e.target.value))} className="fintech-input">
+                {[2,3,4,5,6,7,8,9].map(y => <option key={y} value={y}>{y} Years</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="fintech-label">No. of Employees</label>
+              <select value={f.numEmployees} onChange={e => update('numEmployees', Number(e.target.value))} className="fintech-input">
+                {[...Array(101)].map((_, i) => <option key={i} value={i}>{i}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="fintech-label">Business Premises</label>
+              <select value={f.ownPremises ? 'own' : 'rented'} onChange={e => update('ownPremises', e.target.value === 'own')} className="fintech-input">
+                <option value="rented">Rented / Leased</option>
+                <option value="own">Own Building</option>
+              </select>
+            </div>
           </div>
 
-          {/* TAB 2: P&L INPUTS (Detailed Mode) */}
-          {inputMode === 'detailed' && detTab === 2 && (
-            <div className="space-y-10 animate-in fade-in duration-300">
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
-                <div><label className="l-label">Annual Sales / Turnover (₹)</label><input type="number" value={f.sales0} onChange={e => update('sales0', Number(e.target.value))} className="legacy-input" /></div>
-                <div><label className="l-label">Installed Capacity (Annual ₹)</label><input type="number" value={f.instCap} onChange={e => update('instCap', Number(e.target.value))} className="legacy-input border-emerald-200" placeholder="0 = Auto" /></div>
-                <div><label className="l-label">Other Non-Operating Income (₹)</label><input type="number" value={f.otherInc} onChange={e => update('otherInc', Number(e.target.value))} className="legacy-input" /></div>
-                <div><label className="l-label">Opening Stock (₹)</label><input type="number" value={f.openSt} onChange={e => update('openSt', Number(e.target.value))} className="legacy-input" /></div>
-                <div><label className="l-label">Closing Stock (₹)</label><input type="number" value={f.closeSt} onChange={e => update('closeSt', Number(e.target.value))} className="legacy-input" /></div>
-                <div><label className="l-label">Purchases / Direct Costs (₹)</label><input type="number" value={f.purch0} onChange={e => update('purch0', Number(e.target.value))} className="legacy-input" /></div>
-                <div><label className="l-label">Revenue Growth Rate (%)</label><input type="number" value={f.revG} onChange={e => update('revG', Number(e.target.value))} className="legacy-input" /></div>
-                <div><label className="l-label">Purchase Growth Rate (%)</label><input type="number" value={f.purG} onChange={e => update('purG', Number(e.target.value))} className="legacy-input" /></div>
-                <div><label className="l-label">Expense Growth Rate (%)</label><input type="number" value={f.expG} onChange={e => update('expG', Number(e.target.value))} className="legacy-input" /></div>
-                <div><label className="l-label">Depreciation Rate (% WDV)</label><input type="number" value={f.depnRate} onChange={e => update('depnRate', Number(e.target.value))} className="legacy-input" /></div>
+          {/* ════ INPUT ZONE (TEXT & NUMBERS) ════ */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+            <div className="col-span-1 sm:col-span-2">
+              <label className="fintech-label">Business / Firm Name <span className="text-[var(--rose-400)]">*</span></label>
+              <input 
+                ref={bizNameRef}
+                value={f.bizName} 
+                onChange={e => update('bizName', e.target.value)} 
+                placeholder="e.g. Srinivas Enterprises" 
+                className={`fintech-input ${showError && !f.bizName.trim() ? 'field-error-pulse' : (!f.bizName.trim() && isGenerated ? 'border-[var(--rose-400)] shadow-[0_0_0_1px_var(--rose-400)]' : '')}`} 
+              />
+            </div>
+
+            <div className="col-span-1 sm:col-span-2">
+              <label className="fintech-label">Business Address</label>
+              <input value={f.address} onChange={e => update('address', e.target.value)} placeholder="Full factory / office address" className="fintech-input" />
+            </div>
+            
+            {f.entityType !== 'individual' && (
+              <div>
+                <label className="fintech-label">Proprietor / Managing Partner / Director</label>
+                <input value={f.propName} onChange={e => update('propName', e.target.value)} placeholder="Full Name" className="fintech-input" />
               </div>
-              <div className="pt-6 border-t border-slate-100">
-                <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-6">Granular Indirect Expense Breakup (Base Year)</h4>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
-                  {EXPENSE_HEADS.map(h => (
-                    <div key={h.k}><label className="l-label">{h.l} (₹)</label><input type="number" value={(f.expBase as any)[h.k]} onChange={e => setF(prev => ({...prev, expBase: {...prev.expBase, [h.k]: Number(e.target.value)}}))} className="legacy-input" /></div>
-                  ))}
+            )}
+
+            <div className="sm:col-span-1">
+              <label className="fintech-label">PAN</label>
+              <input 
+                value={f.pan} 
+                onChange={e => update('pan', e.target.value.toUpperCase())} 
+                placeholder="XXXXX0000X" 
+                maxLength={10}
+                className={`fintech-input ${
+                  f.pan.length > 0
+                    ? (f.pan.length === 10
+                        ? (/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(f.pan) 
+                            ? 'border-[var(--emerald-400)] shadow-[0_0_0_1px_var(--emerald-400)]' 
+                            : 'border-[var(--rose-400)] shadow-[0_0_0_1px_var(--rose-400)]')
+                        : 'border-[var(--rose-400)] shadow-[0_0_0_1px_var(--rose-400)]')
+                    : ''
+                }`} 
+              />
+              {f.pan && f.pan.length === 10 && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(f.pan) && (
+                <p className="text-[9px] text-[var(--rose-500)] mt-1 font-semibold italic">Invalid PAN Format (Expects 5 Letters, 4 Digits, 1 Letter)</p>
+              )}
+              {f.pan && f.pan.length > 0 && f.pan.length < 10 && (
+                <p className="text-[9px] text-[var(--rose-500)] mt-1 italic">Enter 10 characters...</p>
+              )}
+            </div>
+
+            <div>
+              <label className="fintech-label">Proposed CC/OD Limit (₹)</label>
+              <input type="number" value={f.ccLimit} onChange={e => update('ccLimit', Number(e.target.value))} className="fintech-input" />
+            </div>
+            <div>
+              <label className="fintech-label">CC/OD Interest Rate (% p.a.)</label>
+              <input type="number" value={f.ccIntRate} onChange={e => update('ccIntRate', Number(e.target.value))} className="fintech-input" step="0.25" />
+            </div>
+            <div>
+              <label className="fintech-label">Proposed Term Loan (₹)</label>
+              <input type="number" value={f.termLoan} onChange={e => update('termLoan', Number(e.target.value))} className="fintech-input" />
+            </div>
+            
+            {(f.termLoan > 0 || f.existingTl > 0) && (
+              <>
+                <div>
+                  <label className="fintech-label">Term Loan Interest (% p.a.)</label>
+                  <input type="number" value={f.tlIntRate} onChange={e => update('tlIntRate', Number(e.target.value))} className="fintech-input" step="0.25" />
+                </div>
+                <div>
+                  <label className="fintech-label">Repayment Tenure (Years)</label>
+                  <input type="number" value={f.tenure} onChange={e => update('tenure', Number(e.target.value))} className="fintech-input" />
+                </div>
+              </>
+            )}
+
+            {f.isRenewal && (
+              <div className="col-span-1 sm:col-span-2 md:col-span-3 lg:col-span-4 bg-[rgba(245,158,11,0.06)] border border-[rgba(245,158,11,0.2)] rounded-lg p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-6">
+                <div className="col-span-1 sm:col-span-2 md:col-span-3">
+                  <span className="badge badge-amber">Renewal Details</span>
+                </div>
+                <div>
+                  <label className="fintech-label" style={{ color: 'var(--amber-400)' }}>Existing CC Limit (₹)</label>
+                  <input type="number" value={f.existingCc} onChange={e => update('existingCc', Number(e.target.value))} className="fintech-input" />
+                </div>
+                <div>
+                  <label className="fintech-label" style={{ color: 'var(--amber-400)' }}>Existing Term Loan O/s (₹)</label>
+                  <input type="number" value={f.existingTl} onChange={e => update('existingTl', Number(e.target.value))} className="fintech-input" />
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* TAB 3: BALANCE SHEET (Detailed Mode) */}
-          {inputMode === 'detailed' && detTab === 3 && (
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-x-8 gap-y-6 animate-in fade-in duration-300">
-               <div><label className="l-label">Proprietor Capital / Net Worth (₹)</label><input type="number" value={f.capital} onChange={e => update('capital', Number(e.target.value))} className="legacy-input" /></div>
-               <div><label className="l-label">Unsecured Loans (Market/Promoter) (₹)</label><input type="number" value={f.unsecured} onChange={e => update('unsecured', Number(e.target.value))} className="legacy-input" /></div>
-               <div><label className="l-label">Sundry Creditors (Trade Payables) (₹)</label><input type="number" value={f.creditors} onChange={e => update('creditors', Number(e.target.value))} className="legacy-input" /></div>
-               <div><label className="l-label">Other Current Liabilities & Prov. (₹)</label><input type="number" value={f.otherCL} onChange={e => update('otherCL', Number(e.target.value))} className="legacy-input" /></div>
-               <div><label className="l-label">Gross Fixed Assets (Block) (₹)</label><input type="number" value={f.grossFA} onChange={e => update('grossFA', Number(e.target.value))} className="legacy-input" /></div>
-               <div><label className="l-label">Accumulated Depreciation (₹)</label><input type="number" value={f.accDepn} onChange={e => update('accDepn', Number(e.target.value))} className="legacy-input" /></div>
-               <div><label className="l-label">Sundry Debtors (Receivables) (₹)</label><input type="number" value={f.debtors} onChange={e => update('debtors', Number(e.target.value))} className="legacy-input" /></div>
-               <div><label className="l-label">Inventory / Closing Stock (₹)</label><input type="number" value={f.inventory} onChange={e => update('inventory', Number(e.target.value))} className="legacy-input" /></div>
-               <div><label className="l-label">Cash & Bank Balances (₹)</label><input type="number" value={f.cash} onChange={e => update('cash', Number(e.target.value))} className="legacy-input" /></div>
-               <div><label className="l-label">Loans & Advances (Suppliers) (₹)</label><input type="number" value={f.loansAdv} onChange={e => update('loansAdv', Number(e.target.value))} className="legacy-input" /></div>
-               <div><label className="l-label">Security Deposits (Rent/Elect) (₹)</label><input type="number" value={f.deposits} onChange={e => update('deposits', Number(e.target.value))} className="legacy-input" /></div>
-               <div><label className="l-label">Annual Capital Expenditure (Capex) (₹)</label><input type="number" value={f.capex} onChange={e => update('capex', Number(e.target.value))} className="legacy-input" /></div>
-            </div>
-          )}
-
-          {/* TAB 4: AUDIT & WC GRANULARITIES (Detailed Mode) */}
-          {inputMode === 'detailed' && detTab === 4 && (
-            <div className="space-y-12 animate-in fade-in duration-300">
-              
-              {/* NEW SECTION: INSPECTOR'S AUDIT INPUTS */}
-              <div className="bg-slate-50 border border-slate-200 p-6 rounded-lg space-y-6">
-                <div className="flex items-center gap-2 mb-2">
-                   <div className="w-2 h-4 bg-emerald-600 rounded-full"></div>
-                   <h4 className="text-[11px] font-bold text-slate-700 uppercase tracking-widest">Inspector's Audit Granularities</h4>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                  <div>
-                    <label className="l-label">Quasi-Equity Allocation (%)</label>
-                    <input type="number" value={f.quasiEq} onChange={e => update('quasiEq', Number(e.target.value))} className="legacy-input border-emerald-200" />
-                    <p className="text-[8px] text-slate-500 mt-1 italic">% of unsecured loans treated as Promoter Equity (subordinated to bank)</p>
-                  </div>
-                  <div>
-                    <label className="l-label">Debtor Aging &gt; 6 Months (%)</label>
-                    <input type="number" value={f.debtorAge} onChange={e => update('debtorAge', Number(e.target.value))} className="legacy-input border-rose-200" />
-                    <p className="text-[8px] text-slate-500 mt-1 italic">% of receivables excluded from Drawing Power calculation</p>
-                  </div>
-                  <div>
-                    <label className="l-label">Statutory Dues Portion (%)</label>
-                    <input type="number" value={f.statDues} onChange={e => update('statDues', Number(e.target.value))} className="legacy-input border-amber-200" />
-                    <p className="text-[8px] text-slate-500 mt-1 italic">% of other CL related to GST/PF/TDS (red flag for auditor if high)</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
-                <div><label className="l-label">Debtor Collection Period (Days)</label><input type="number" value={f.debtorDays} onChange={e => update('debtorDays', Number(e.target.value))} className="legacy-input" /></div>
-                <div><label className="l-label">Creditor Payment Period (Days)</label><input type="number" value={f.credDays} onChange={e => update('credDays', Number(e.target.value))} className="legacy-input" /></div>
-                <div><label className="l-label">Stock Holding Period (Months)</label><input type="number" value={f.stockMo} onChange={e => update('stockMo', Number(e.target.value))} className="legacy-input" /></div>
-                <div><label className="l-label">Working Capital Margin (%)</label><input type="number" value={f.margin} onChange={e => update('margin', Number(e.target.value))} className="legacy-input" /></div>
-                <div><label className="l-label">Annual Personal Drawings (₹)</label><input type="number" value={f.drawings} onChange={e => update('drawings', Number(e.target.value))} className="legacy-input" /></div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-8 border-t border-slate-100">
-                <label className="chk-box"><input type="checkbox" checked={f.optSens} onChange={e => update('optSens', e.target.checked)} /> <div><p>Sensitivity Analysis</p><p className="text-[8px] font-normal opacity-60 uppercase">6-scenario stress test</p></div></label>
-                <label className="chk-box"><input type="checkbox" checked={f.optDepn} onChange={e => update('optDepn', e.target.checked)} /> <div><p>Depreciation Schedule</p><p className="text-[8px] font-normal opacity-60 uppercase">WDV Method Year-wise breakup</p></div></label>
-                <label className="chk-box"><input type="checkbox" checked={f.optCF} onChange={e => update('optCF', e.target.checked)} /> <div><p>Cash Flow Statement</p><p className="text-[8px] font-normal opacity-60 uppercase">Indirect method as per AS-3</p></div></label>
-              </div>
-            </div>
-          )}
-
-          {/* SIMPLE MODE AUTO-DERIVED SECTION */}
-          {inputMode === 'simple' && (
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 pt-8 border-t border-slate-100">
-               <div className="md:col-span-4 flex items-center justify-between">
-                  <h4 className="text-[10px] font-bold text-blue-700 uppercase tracking-widest">Auto-Derived Financials</h4>
-                  <span className="text-[9px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded font-mono italic">Calibrated to Loan Amount</span>
-               </div>
-               <div><label className="l-label text-blue-800">Yr 1 Sales / Turnover (₹)</label><input type="number" value={f.sales0} onChange={e => {update('sales0', Number(e.target.value)); setIsOverride(true);}} className="legacy-input border-blue-200" /></div>
-               <div><label className="l-label text-blue-800">Net Worth / Capital (₹)</label><input type="number" value={f.capital} onChange={e => update('capital', Number(e.target.value))} className="legacy-input" /></div>
-               <div><label className="l-label text-blue-800">Annual Personal Drawings (₹)</label><input type="number" value={f.drawings} onChange={e => update('drawings', Number(e.target.value))} className="legacy-input" /></div>
-               <div><label className="l-label text-blue-800">Gross Fixed Assets (Block) (₹)</label><input type="number" value={f.grossFA} onChange={e => update('grossFA', Number(e.target.value))} className="legacy-input" /></div>
-               
-               <div className="md:col-span-4 grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 pt-6 border-t border-slate-50">
-
-                  {/* ── Business Structure Inputs ── */}
-                  <div className="md:col-span-3 flex items-center gap-2 mb-1">
-                    <div className="w-2 h-4 bg-[#c8401a] rounded-full" />
-                    <h4 className="text-[10px] font-bold text-[#7a7567] uppercase tracking-widest">Business Structure</h4>
-                  </div>
-
-                  <div>
-                    <label className="l-label">No. of Employees on Payroll</label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="number" min="0" max="50"
-                        value={f.numEmployees}
-                        onChange={e => update('numEmployees', e.target.value === '' ? '' : Number(e.target.value))}
-                        className="legacy-input"
-                        placeholder="0 = owner-operated"
-                      />
-                    </div>
-                    <p className="text-[8px] text-[#9a8680] mt-1 italic">
-                      {f.numEmployees === 0 || f.numEmployees === '' ? '👤 Owner-operated — salary line will be minimal' : `👥 ${f.numEmployees} staff · ~₹${new Intl.NumberFormat('en-IN').format(Number(f.numEmployees) * 14000)}/mo projected`}
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="l-label">Business Premises</label>
-                    <div className="flex rounded overflow-hidden border border-[#ccc8be] w-full">
-                      <button
-                        type="button"
-                        onClick={() => update('ownPremises', false)}
-                        className={`flex-1 py-2 text-[11px] font-bold transition-all ${
-                          !f.ownPremises ? 'bg-[#0f0e0b] text-white' : 'bg-white text-[#7a7567] hover:bg-slate-50'
-                        }`}
-                      >
-                        🏪 Rented
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => update('ownPremises', true)}
-                        className={`flex-1 py-2 text-[11px] font-bold transition-all border-l border-[#ccc8be] ${
-                          f.ownPremises ? 'bg-[#0f0e0b] text-white' : 'bg-white text-[#7a7567] hover:bg-slate-50'
-                        }`}
-                      >
-                        🏠 Own Building
-                      </button>
-                    </div>
-                    <p className="text-[8px] text-[#9a8680] mt-1 italic">
-                      {f.ownPremises ? 'Rent = ₹0 — building appears as Fixed Asset' : 'Market rent will be projected based on business size'}
-                    </p>
-                  </div>
-
-                  <div className="md:col-span-3 grid grid-cols-3 gap-4 pt-4 border-t border-slate-100">
-                    <label className="chk-box"><input type="checkbox" checked={f.optSens} onChange={e => update('optSens', e.target.checked)} /> Sensitivity Analysis</label>
-                    <label className="chk-box"><input type="checkbox" checked={f.optDepn} onChange={e => update('optDepn', e.target.checked)} /> Depreciation Schedule</label>
-                    <label className="chk-box"><input type="checkbox" checked={f.optCF} onChange={e => update('optCF', e.target.checked)} /> Cash Flow Statement</label>
-                  </div>
-               </div>
-            </div>
-          )}
-
-          {/* ⚡ LIVE PREVIEW GRID (THE GOLD BOX) */}
-          <div className="bg-[#fff9ec] border border-[#e8d59a] p-6 rounded-lg shadow-sm">
-            <div className="flex items-center gap-2 mb-4">
-               <span className="animate-pulse">⚡</span>
-               <h4 className="text-[10px] font-bold text-[#b8922a] uppercase tracking-widest">Real-time CMA Preview (Year 1)</h4>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-               {[
-                 { l: 'Sales', v: `₹${fmtVal(pv.sales)}` },
-                 { l: 'Est. Net Profit', v: `₹${fmtVal(pv.np)}`, ok: true },
-                 { l: 'D:E Ratio', v: `${pv.de.toFixed(2)}x`, ok: pv.de <= 2 },
-                 { l: 'Current Ratio', v: `${pv.cr.toFixed(2)}x`, ok: pv.cr >= 1.33 },
-                 { l: 'Turnover Limit', v: `₹${fmtVal(pv.turnLmt)}` },
-                 { l: 'Est. DSCR', v: '4.50x', ok: true }
-               ].map((x, i) => (
-                 <div key={i} className="bg-white p-3 rounded border border-[#e8d59a] transition-all hover:shadow-md">
-                   <p className="text-[9px] font-bold text-[#9a8030] uppercase mb-1">{x.l}</p>
-                   <p className={`text-sm font-mono font-bold ${x.ok ? 'text-emerald-600' : 'text-amber-600'}`}>{x.v}</p>
-                 </div>
-               ))}
-            </div>
           </div>
+        </div>
+ 
+        {/* ── GENERATE CTA BAR ── */}
+        <div className="mobile-bottom-cta" style={{
+          background: 'linear-gradient(135deg, rgba(59,130,246,0.1) 0%, rgba(139,92,246,0.08) 100%)',
+          border: '1px solid var(--border-accent)',
+          borderRadius: 12, padding: '16px 20px',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16,
+          marginTop: 40,
+        }}>
+          <button
+            onClick={handleGenerate}
+            className="shimmer-btn"
+            style={{
+              color: '#fff', padding: '12px 32px', borderRadius: 8,
+              fontSize: 14, fontWeight: 700, border: 'none', cursor: 'pointer',
+              letterSpacing: '0.02em', whiteSpace: 'nowrap',
+              display: 'flex', alignItems: 'center', gap: 10,
+              boxShadow: 'var(--shadow-glow)',
+            }}
+          >
+            <span>⚡</span> Generate Projections
+          </button>
         </div>
       </main>
-
-      {/* EMBEDDED STYLES */}
-      <style jsx>{`
-        .legacy-input { background: #f5f2eb; border: 1.5px solid #ccc8be; border-radius: 4px; padding: 0.5rem 0.75rem; font-family: 'DM Mono', monospace; font-size: 0.85rem; width: 100%; outline: none; transition: all 0.15s; }
-        .legacy-input:focus { border-color: #1a5fa8; background: #fff; box-shadow: 0 0 0 3px rgba(26,95,168,0.1); }
-        .l-label { display: block; font-size: 10px; font-weight: 700; color: #7a7567; text-transform: uppercase; margin-bottom: 5px; letter-spacing: 0.5px; }
-        .chk-box { display: flex; gap: 10px; align-items: center; background: #f8f6f0; border: 1.5px solid #ccc8be; padding: 10px 15px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
-        .chk-box:hover { border-color: #1a5fa8; background: #fff; }
-        .chk-box input { width: 18px; height: 18px; accent-color: #1a5fa8; }
-      `}</style>
     </div>
   );
 }
