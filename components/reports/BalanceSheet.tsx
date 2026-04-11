@@ -1,7 +1,8 @@
 // components/reports/BalanceSheet.tsx
 import { ProjectedYear } from "../../lib/engine";
 import { fmt } from "../../lib/format";
-import s from "./BalanceSheet.module.css";
+import s from "./shared.module.css";
+import own from "./BalanceSheet.module.css";
 
 export default function BalanceSheet({ data, years }: { data: ProjectedYear[]; years: string[]; loanAmount: number }) {
   const ncols = years.length + 1;
@@ -27,13 +28,12 @@ export default function BalanceSheet({ data, years }: { data: ProjectedYear[]; y
       </div>
 
       <div style={{ overflowX: "auto" }}>
-        <table className={s.table}>
+        <table className={`${s.table} ${own.table}`}>
           <colgroup>
-            <col style={{ width: "32%", minWidth: "280px" }} />
+            <col className={own.colParticulars} />
             {years.map((y) => <col key={y} />)}
           </colgroup>
 
-          {/* ── LIABILITIES HEADER ─────────────────────────────────── */}
           <thead>
             <tr>
               <th className={s.colParticulars}>Particulars</th>
@@ -122,8 +122,7 @@ export default function BalanceSheet({ data, years }: { data: ProjectedYear[]; y
               {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.totalLiab)}</td>)}
             </tr>
 
-            {/* Spacer */}
-            <tr className={s.spacerRow} style={{ height: '24px' }}><td colSpan={ncols} /></tr>
+            <tr className={`${s.spacerRow} ${own.spacerRow}`}><td colSpan={ncols} /></tr>
 
             {/* 4) FIXED ASSETS */}
             <tr className={s.sectionHeader}>

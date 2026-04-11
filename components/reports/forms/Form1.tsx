@@ -1,6 +1,7 @@
 // components/reports/forms/Form1.tsx
 import { fmt } from "../../../lib/format";
 import s from "../shared.module.css";
+import own from "./Form1.module.css";
 
 interface Form1Props {
   bizName: string; propName: string;
@@ -12,7 +13,6 @@ export default function Form1({ proposedCc, proposedTl, existingCc, existingTl }
   const totalExisting = existingCc + existingTl;
   const totalProposed = proposedCc + proposedTl;
 
-  // No ₹ prefix — matches the rest of the report
   const fmtV = (v: number) => (v > 0 ? fmt(v) : "0");
 
   return (
@@ -28,9 +28,9 @@ export default function Form1({ proposedCc, proposedTl, existingCc, existingTl }
 
       {/* PART A: LIMITS TABLE */}
       <div style={{ overflowX: "auto" }}>
-        <table className={s.table}>
+        <table className={`${s.table} ${own.table}`}>
           <colgroup>
-            <col style={{ width: "32%", minWidth: "280px" }} />
+            <col className={own.colParticulars} />
             <col /><col />
           </colgroup>
           <thead>
@@ -102,20 +102,18 @@ export default function Form1({ proposedCc, proposedTl, existingCc, existingTl }
 
       {/* PART B: SECURITY */}
       <div style={{ borderTop: "2px solid #000" }}>
-        <div style={{ padding: "6px 16px", borderBottom: "1px solid #000", fontWeight: "bold", fontSize: "10px", textTransform: "uppercase", fontFamily: '"Times New Roman", Times, serif' }}>
-          PART B: SECURITY PARTICULARS
-        </div>
-        <table className={s.table} style={{ border: "none", borderTop: "none" }}>
+        <div className={own.partHeader}>PART B: SECURITY PARTICULARS</div>
+        <table className={`${s.table} ${own.table}`} style={{ border: "none", borderTop: "none" }}>
           <tbody>
-            <tr className="security-row">
+            <tr className={own.securityRow}>
               <td className={s.tdParticulars} style={{ fontWeight: "bold", width: "200px" }}>Primary Security</td>
               <td className={s.tdParticulars}>Hypothecation of all Stocks and Book Debts of the business</td>
             </tr>
-            <tr className="security-row">
+            <tr className={own.securityRow}>
               <td className={s.tdParticulars} style={{ fontWeight: "bold" }}>Collateral Security</td>
               <td className={s.tdParticulars}>Property (if applicable) / CGFMU / CGTMSE</td>
             </tr>
-            <tr className="security-row">
+            <tr className={own.securityRow}>
               <td className={s.tdParticulars} style={{ fontWeight: "bold" }}>Personal Guarantees</td>
               <td className={s.tdParticulars}>Personal Guarantee of the proprietor / Managing Partners</td>
             </tr>
@@ -125,10 +123,8 @@ export default function Form1({ proposedCc, proposedTl, existingCc, existingTl }
 
       {/* PART C: ASSOCIATE CONCERNS */}
       <div style={{ borderTop: "2px solid #000" }}>
-        <div style={{ padding: "6px 16px", borderBottom: "1px solid #000", fontWeight: "bold", fontSize: "10px", textTransform: "uppercase", fontFamily: '"Times New Roman", Times, serif' }}>
-          PART C: PARTICULARS OF ASSOCIATE / GROUP CONCERNS
-        </div>
-        <table className={s.table} style={{ border: "none" }}>
+        <div className={own.partHeader}>PART C: PARTICULARS OF ASSOCIATE / GROUP CONCERNS</div>
+        <table className={`${s.table} ${own.table}`} style={{ border: "none" }}>
           <thead>
             <tr>
               <th className={s.colParticulars}>Name of Concern</th>
@@ -139,7 +135,7 @@ export default function Form1({ proposedCc, proposedTl, existingCc, existingTl }
           </thead>
           <tbody>
             <tr>
-              <td colSpan={4} className={`${s.tdParticulars} force-center`} style={{ color: "#000", fontSize: "11px" }}>
+              <td colSpan={4} className={s.tdParticulars} style={{ color: "#000", fontSize: "11px", textAlign: "center" }}>
                 No other bank facilities enjoyed by associate concerns as per available records.
               </td>
             </tr>
@@ -147,7 +143,7 @@ export default function Form1({ proposedCc, proposedTl, existingCc, existingTl }
         </table>
       </div>
 
-      <div className="no-print" style={{ padding: "12px 16px", borderTop: "1px solid #000", fontFamily: '"Times New Roman", Times, serif', fontSize: "8px" }}>
+      <div className={`no-print ${own.footnote}`}>
         * Note: This statement is prepared as per standard Credit Monitoring Arrangement (CMA) guidelines.
         The data presented is projected and subject to bank&apos;s internal appraisal norms.
       </div>

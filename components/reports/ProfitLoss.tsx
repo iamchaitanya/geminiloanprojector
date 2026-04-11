@@ -1,7 +1,8 @@
 // components/reports/ProfitLoss.tsx
 import { ProjectedYear } from "../../lib/engine";
 import { fmt, fmtR } from "../../lib/format";
-import s from "./ProfitLoss.module.css";
+import s from "./shared.module.css";
+import own from "./ProfitLoss.module.css";
 
 export default function ProfitLoss({ data, years }: { data: ProjectedYear[]; years: string[] }) {
   const ncols = years.length + 1; // Particulars + year columns
@@ -17,9 +18,9 @@ export default function ProfitLoss({ data, years }: { data: ProjectedYear[]; yea
       </div>
 
       <div style={{ overflowX: "auto" }}>
-        <table className={s.table}>
+        <table className={`${s.table} ${own.table}`}>
           <colgroup>
-            <col style={{ width: "32%", minWidth: "280px" }} />
+            <col className={own.colParticulars} />
             {years.map((y) => <col key={y} />)}
           </colgroup>
 
@@ -37,8 +38,6 @@ export default function ProfitLoss({ data, years }: { data: ProjectedYear[]; yea
           </thead>
 
           <tbody>
-
-
             {/* ── 1) INCOME ─────────────────────────────────────────── */}
             <tr className={s.sectionHeader}>
               <td colSpan={ncols}>1) Income / Revenue</td>
@@ -84,7 +83,6 @@ export default function ProfitLoss({ data, years }: { data: ProjectedYear[]; yea
               {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.purchases)}</td>)}
             </tr>
 
-            {/* Indirect expenses sub-section heading — treated as section-header */}
             <tr className={s.sectionHeader}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>C) Indirect / Operating Expenses:</span>
@@ -92,9 +90,8 @@ export default function ProfitLoss({ data, years }: { data: ProjectedYear[]; yea
               {years.map((y) => <td key={y} />)}
             </tr>
 
-            {/* Indirect expense line items */}
             {data[0].indirectExpenses.map((exp, idx) => {
-              const charCode = 97 + idx; // starting from 'a'
+              const charCode = 97 + idx;
               const label = String.fromCharCode(charCode) + ') ' + exp.label;
               return (
                 <tr key={exp.label} className={s.detailRow}>
@@ -184,7 +181,6 @@ export default function ProfitLoss({ data, years }: { data: ProjectedYear[]; yea
               ))}
             </tr>
 
-            {/* ── NET PROFIT AFTER TAX ──────────────────────────────── */}
             <tr className={s.grandTotalRow}>
               <td className={s.tdParticulars}>9) Net Profit After Tax (PAT)</td>
               {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.netProfit)}</td>)}

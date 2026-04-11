@@ -2,6 +2,7 @@
 import { ProjectedYear } from "../../../lib/engine";
 import { fmt, fmtR } from "../../../lib/format";
 import s from "../shared.module.css";
+import own from "./Form2.module.css";
 
 export default function Form2({ data, years }: { data: ProjectedYear[]; years: string[] }) {
   const ncols = years.length + 1;
@@ -17,9 +18,9 @@ export default function Form2({ data, years }: { data: ProjectedYear[]; years: s
       </div>
 
       <div style={{ overflowX: "auto" }}>
-        <table className={s.table}>
+        <table className={`${s.table} ${own.table}`}>
           <colgroup>
-            <col style={{ width: "32%", minWidth: "280px" }} />
+            <col className={own.colParticulars} />
             {years.map((y) => <col key={y} />)}
           </colgroup>
           <thead>
@@ -33,7 +34,6 @@ export default function Form2({ data, years }: { data: ProjectedYear[]; years: s
             </tr>
           </thead>
           <tbody>
-            {/* I. REVENUE */}
             <tr className={s.sectionHeader}><td colSpan={ncols}>I. Revenue from Operations</td></tr>
             <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
@@ -51,7 +51,6 @@ export default function Form2({ data, years }: { data: ProjectedYear[]; years: s
               })}
             </tr>
 
-            {/* II. COST OF SALES */}
             <tr className={s.sectionHeader}><td colSpan={ncols}>II. Cost of Sales / Direct Costs</td></tr>
             <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
@@ -82,7 +81,6 @@ export default function Form2({ data, years }: { data: ProjectedYear[]; years: s
               {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.sales - (d.purchases + d.openStock - d.closingStock))}</td>)}
             </tr>
 
-            {/* III. OPERATING EXPENSES */}
             <tr className={s.sectionHeader}><td colSpan={ncols}>III. Selling, General &amp; Administrative Expenses</td></tr>
             {data[0].indirectExpenses.map((exp, idx) => {
               const charCode = 97 + idx;
@@ -103,7 +101,6 @@ export default function Form2({ data, years }: { data: ProjectedYear[]; years: s
               {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.totalIndExp)}</td>)}
             </tr>
 
-            {/* IV. BOTTOM LINE */}
             <tr className={s.grandTotalRow}>
               <td className={s.tdParticulars}>IV. EBITDA (Operating Profit)</td>
               {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.ebitda)}</td>)}
@@ -150,13 +147,13 @@ export default function Form2({ data, years }: { data: ProjectedYear[]; years: s
         </table>
       </div>
 
-      <div className="no-print" style={{ padding: "16px 24px", borderTop: "1px solid #000", display: "flex", justifyContent: "space-between", alignItems: "flex-start", fontFamily: '"Times New Roman", Times, serif' }}>
-        <p style={{ fontSize: "10px", lineHeight: 1.6, maxWidth: "600px" }}>
+      <div className={`no-print ${own.footnoteBlock}`}>
+        <p className={own.footnoteText}>
           * Note: EBITDA (Earnings Before Interest, Tax, Depreciation, and Amortization) is a key proxy for cash flow generated from operations.
           Banks typically look for a minimum EBITDA margin of 8-10% in trading and 12-15% in manufacturing sectors.
         </p>
-        <div style={{ textAlign: "center", fontSize: "10px" }}>
-          <p style={{ fontWeight: "bold", textTransform: "uppercase" }}>Internal Audit Check</p>
+        <div className={own.auditNote}>
+          <p className={own.auditNoteTitle}>Internal Audit Check</p>
           <p style={{ fontFamily: "monospace" }}>Interest Coverage Target: &gt; 2.5x</p>
         </div>
       </div>

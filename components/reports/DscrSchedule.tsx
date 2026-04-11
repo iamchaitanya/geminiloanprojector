@@ -1,7 +1,8 @@
 // components/reports/DscrSchedule.tsx
 import { ProjectedYear } from "../../lib/engine";
 import { fmt, fmtR } from "../../lib/format";
-import s from "./DscrSchedule.module.css";
+import s from "./shared.module.css";
+import own from "./DscrSchedule.module.css";
 
 export default function DscrSchedule({ data, years }: { data: ProjectedYear[]; years: string[] }) {
   const ncols = years.length + 1;
@@ -19,9 +20,9 @@ export default function DscrSchedule({ data, years }: { data: ProjectedYear[]; y
       </div>
 
       <div style={{ overflowX: "auto" }}>
-        <table className={s.table}>
+        <table className={`${s.table} ${own.table}`}>
           <colgroup>
-            <col style={{ width: "32%", minWidth: "280px" }} />
+            <col className={own.colParticulars} />
             {years.map((y) => <col key={y} />)}
           </colgroup>
 
@@ -37,7 +38,6 @@ export default function DscrSchedule({ data, years }: { data: ProjectedYear[]; y
           </thead>
 
           <tbody>
-            {/* A. CASH ACCRUALS */}
             <tr className={s.sectionHeader}>
               <td colSpan={ncols}>A. Cash Accruals (Sources of Funds)</td>
             </tr>
@@ -67,7 +67,6 @@ export default function DscrSchedule({ data, years }: { data: ProjectedYear[]; y
               {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.netProfit + d.depnYr + d.interest)}</td>)}
             </tr>
 
-            {/* B. DEBT OBLIGATIONS */}
             <tr className={s.sectionHeader}>
               <td colSpan={ncols}>B. Debt Obligations (Applications)</td>
             </tr>
@@ -91,7 +90,6 @@ export default function DscrSchedule({ data, years }: { data: ProjectedYear[]; y
               {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.interest + d.tlRepayment)}</td>)}
             </tr>
 
-            {/* DSCR RESULT */}
             <tr className={s.grandTotalRow}>
               <td className={s.tdParticulars}>Debt Service Coverage Ratio (DSCR)</td>
               {data.map((d) => (
@@ -99,7 +97,6 @@ export default function DscrSchedule({ data, years }: { data: ProjectedYear[]; y
               ))}
             </tr>
 
-            {/* Weighted Average DSCR — subtotal-row per spec */}
             <tr className={s.subtotalRow}>
               <td className={s.tdParticulars}>Weighted Average DSCR</td>
               <td colSpan={data.length} className={s.tdValue}>{fmtR(avgDscr)}</td>
@@ -108,7 +105,6 @@ export default function DscrSchedule({ data, years }: { data: ProjectedYear[]; y
         </table>
       </div>
 
-      {/* Average DSCR footer — benchmark display only */}
       <div style={{
         padding: "12px 24px",
         borderTop: "1px solid #000",

@@ -2,6 +2,7 @@
 import { ProjectedYear } from "../../lib/engine";
 import { fmt } from "../../lib/format";
 import s from "./shared.module.css";
+import own from "./Depreciation.module.css";
 
 const ASSET_SPLITS: Record<string, { building: number; plant: number; furniture: number; computer: number }> = {
   trading:       { building: 0.00, plant: 0.55, furniture: 0.30, computer: 0.15 },
@@ -97,11 +98,11 @@ export default function Depreciation({ data, years }: { data: ProjectedYear[]; y
         {data.map((yearData, idx) => {
           const rows = schedule[idx];
           const totals = {
-            openWDV:   rows.reduce((s, r) => s + r.openWDV, 0),
-            additions: rows.reduce((s, r) => s + r.additions, 0),
-            total:     rows.reduce((s, r) => s + r.total, 0),
-            depn:      rows.reduce((s, r) => s + r.depn, 0),
-            closeWDV:  rows.reduce((s, r) => s + r.closeWDV, 0),
+            openWDV:   rows.reduce((acc, r) => acc + r.openWDV, 0),
+            additions: rows.reduce((acc, r) => acc + r.additions, 0),
+            total:     rows.reduce((acc, r) => acc + r.total, 0),
+            depn:      rows.reduce((acc, r) => acc + r.depn, 0),
+            closeWDV:  rows.reduce((acc, r) => acc + r.closeWDV, 0),
           };
 
           return (
@@ -116,19 +117,15 @@ export default function Depreciation({ data, years }: { data: ProjectedYear[]; y
               </div>
 
               <div style={{ overflowX: "auto" }}>
-                <table className={s.table} style={{ border: "none", minWidth: "900px" }}>
+                <table className={`${s.table} ${own.table}`} style={{ border: "none" }}>
                   <colgroup>
-                    <col style={{ width: "28%" }} />
-                    <col style={{ width: "12%" }} />
-                    <col style={{ width: "12%" }} />
-                    <col style={{ width: "12%" }} />
-                    <col style={{ width: "12%" }} />
-                    <col style={{ width: "12%" }} />
-                    <col style={{ width: "12%" }} />
+                    <col className={own.colAsset} />
+                    <col className={own.colRate} />
+                    <col /><col /><col /><col /><col />
                   </colgroup>
                   <thead>
                     <tr>
-                      <th className={s.colParticulars} style={{ width: "auto", minWidth: "auto", textAlign: "left" }}>Particulars of Assets</th>
+                      <th className={s.colParticulars} style={{ textAlign: "left" }}>Particulars of Assets</th>
                       <th style={{ textAlign: "center" }}>Rate (%)</th>
                       <th style={{ textAlign: "center" }}>Opening WDV</th>
                       <th style={{ textAlign: "center" }}>Additions</th>
@@ -138,7 +135,6 @@ export default function Depreciation({ data, years }: { data: ProjectedYear[]; y
                     </tr>
                   </thead>
                   <tbody>
-                    {/* Helper to center the right-aligned figures perfectly */}
                     {(() => {
                       const fmtC = (val: string) => {
                         if (val === "—") return <div style={{ textAlign: "center" }}>—</div>;
@@ -151,7 +147,7 @@ export default function Depreciation({ data, years }: { data: ProjectedYear[]; y
                         );
                       };
 
-                      const fmtR = (val: string) => {
+                      const fmtRate = (val: string) => {
                         if (val === "—") return <div style={{ textAlign: "center" }}>—</div>;
                         return (
                           <div style={{ display: "flex", justifyContent: "center" }}>
@@ -169,7 +165,7 @@ export default function Depreciation({ data, years }: { data: ProjectedYear[]; y
                               <td className={s.tdParticulars}>
                                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>{row.label}</span>
                               </td>
-                              <td className={s.tdValue}>{fmtR(row.rate + "%")}</td>
+                              <td className={s.tdValue}>{fmtRate(row.rate + "%")}</td>
                               <td className={s.tdValue}>{fmtC(fmt(row.openWDV))}</td>
                               <td className={s.tdValue}>{fmtC(row.additions > 0 ? fmt(row.additions) : "—")}</td>
                               <td className={s.tdValue}>{fmtC(fmt(row.total))}</td>
@@ -179,7 +175,7 @@ export default function Depreciation({ data, years }: { data: ProjectedYear[]; y
                           ))}
                           <tr className={s.subtotalRow} style={{ borderTop: '2px solid #000', borderBottom: '3px double #000' }}>
                             <td className={s.tdParticulars} style={{ fontWeight: 800 }}>Total Assets — Depreciation Schedule</td>
-                            <td className={s.tdValue}>{fmtR("—")}</td>
+                            <td className={s.tdValue}>{fmtRate("—")}</td>
                             <td className={s.tdValue} style={{ fontWeight: 800 }}>{fmtC(fmt(totals.openWDV))}</td>
                             <td className={s.tdValue} style={{ fontWeight: 800 }}>{fmtC(totals.additions > 0 ? fmt(totals.additions) : "—")}</td>
                             <td className={s.tdValue} style={{ fontWeight: 800 }}>{fmtC(fmt(totals.total))}</td>

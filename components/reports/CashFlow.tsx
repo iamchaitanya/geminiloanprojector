@@ -1,7 +1,8 @@
 // components/reports/CashFlow.tsx
 import { ProjectedYear } from "../../lib/engine";
 import { fmt, fmtAcc } from "../../lib/format";
-import s from "./CashFlow.module.css";
+import s from "./shared.module.css";
+import own from "./CashFlow.module.css";
 
 export default function CashFlow({ data, years, loanAmount }: { data: ProjectedYear[]; years: string[]; loanAmount: number }) {
   const ncols = years.length + 1;
@@ -12,7 +13,6 @@ export default function CashFlow({ data, years, loanAmount }: { data: ProjectedY
     </th>
   ));
 
-  // Helpers to avoid repeating WC diff logic
   const wcDiff = (key: keyof ProjectedYear) =>
     data.map((d, i) => (i === 0 ? (d[key] as number) : (d[key] as number) - (data[i - 1][key] as number)));
 
@@ -51,9 +51,9 @@ export default function CashFlow({ data, years, loanAmount }: { data: ProjectedY
       </div>
 
       <div style={{ overflowX: "auto" }}>
-        <table className={s.table}>
+        <table className={`${s.table} ${own.table}`}>
           <colgroup>
-            <col style={{ width: "32%", minWidth: "280px" }} />
+            <col className={own.colParticulars} />
             {years.map((y) => <col key={y} />)}
           </colgroup>
 
@@ -89,7 +89,6 @@ export default function CashFlow({ data, years, loanAmount }: { data: ProjectedY
               {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.interest)}</td>)}
             </tr>
 
-            {/* Working capital adjustments */}
             <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>4) Working Capital Adjustments:</span>
@@ -128,7 +127,7 @@ export default function CashFlow({ data, years, loanAmount }: { data: ProjectedY
               {data.map((d, i) => <td key={d.year} className={s.tdValue}>{fmt(cfA[i])}</td>)}
             </tr>
 
-            <tr className={s.spacerRow} style={{ height: '24px' }}><td colSpan={ncols} /></tr>
+            <tr className={`${s.spacerRow} ${own.spacerRow}`}><td colSpan={ncols} /></tr>
 
             {/* B. INVESTING ACTIVITIES */}
             <tr className={s.sectionHeader}>
@@ -147,7 +146,7 @@ export default function CashFlow({ data, years, loanAmount }: { data: ProjectedY
               {data.map((d, i) => <td key={d.year} className={s.tdValue}>({fmt(capex[i])})</td>)}
             </tr>
 
-            <tr className={s.spacerRow} style={{ height: '24px' }}><td colSpan={ncols} /></tr>
+            <tr className={`${s.spacerRow} ${own.spacerRow}`}><td colSpan={ncols} /></tr>
 
             {/* C. FINANCING ACTIVITIES */}
             <tr className={s.sectionHeader}>
@@ -172,9 +171,8 @@ export default function CashFlow({ data, years, loanAmount }: { data: ProjectedY
               {data.map((d, i) => <td key={d.year} className={s.tdValue}>{fmtAcc(cfC[i])}</td>)}
             </tr>
 
-            <tr className={s.spacerRow} style={{ height: '32px' }}><td colSpan={ncols} /></tr>
+            <tr className={`${s.spacerRow} ${own.spacerRow}`}><td colSpan={ncols} /></tr>
 
-            {/* RECONCILIATION */}
             <tr className={s.grandTotalRow}>
               <td className={s.tdParticulars}>Net Increase / (Decrease) in Cash (A + B + C)</td>
               {data.map((d, i) => <td key={d.year} className={s.tdValue}>{fmtAcc(netCash[i])}</td>)}
