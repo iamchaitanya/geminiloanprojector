@@ -11,6 +11,9 @@ permissions:
   pull-requests: write
 
 jobs:
+  # ---------------------------------------------------------------------------
+  # JOB 1 — Ratio Benchmark
+  # ---------------------------------------------------------------------------
   test-ratios:
     name: Ratio Benchmark (benchmark-suite)
     runs-on: ubuntu-latest
@@ -30,21 +33,26 @@ jobs:
           set +e
           OUTPUT=$(npm run test:ratios 2>&1)
           EXIT=$?
-          echo "output<<EOF" >> $GITHUB_OUTPUT
-          echo "$OUTPUT" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-          echo "exit=$EXIT" >> $GITHUB_OUTPUT
-          echo "$OUTPUT"
+          printf '%s' "$OUTPUT"
+          {
+            echo 'output<<__EOF__'
+            printf '%s\n' "$OUTPUT"
+            echo '__EOF__'
+            echo "exit=$EXIT"
+          } >> "$GITHUB_OUTPUT"
           exit $EXIT
 
       - name: Write step summary
         if: always()
+        env:
+          STATUS: ${{ steps.ratios.outputs.exit == '0' && 'PASS' || 'FAIL' }}
+          OUT: ${{ steps.ratios.outputs.output }}
         run: |
-          STATUS="${{ steps.ratios.outputs.exit == '0' && '✅ PASS' || '❌ FAIL' }}"
-          echo "## Ratio Benchmark — $STATUS" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          echo "${{ steps.ratios.outputs.output }}" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          ICON="$( [ "$STATUS" = 'PASS' ] && echo '✅' || echo '❌' )"
+          echo "## Ratio Benchmark — $ICON $STATUS" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          printf '%s\n' "$OUT" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
 
       - name: Post PR comment
         if: always() && github.event_name == 'pull_request'
@@ -53,8 +61,7 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           body: |
             ### 📊 Ratio Benchmark — ${{ steps.ratios.outputs.exit == '0' && '✅ PASS' || '❌ FAIL' }}
-            <details>
-            <summary>Full output (click to expand)</summary>
+            <details><summary>Full output (click to expand)</summary>
 
             ```
             ${{ steps.ratios.outputs.output }}
@@ -62,6 +69,9 @@ jobs:
             </details>
           comment-tag: ci-ratios
 
+  # ---------------------------------------------------------------------------
+  # JOB 2 — Bank Red Flag Scan
+  # ---------------------------------------------------------------------------
   test-redflags:
     name: Bank Red Flag Scan (bank_red_flags)
     runs-on: ubuntu-latest
@@ -81,21 +91,26 @@ jobs:
           set +e
           OUTPUT=$(npm run test:redflags 2>&1)
           EXIT=$?
-          echo "output<<EOF" >> $GITHUB_OUTPUT
-          echo "$OUTPUT" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-          echo "exit=$EXIT" >> $GITHUB_OUTPUT
-          echo "$OUTPUT"
+          printf '%s' "$OUTPUT"
+          {
+            echo 'output<<__EOF__'
+            printf '%s\n' "$OUTPUT"
+            echo '__EOF__'
+            echo "exit=$EXIT"
+          } >> "$GITHUB_OUTPUT"
           exit $EXIT
 
       - name: Write step summary
         if: always()
+        env:
+          STATUS: ${{ steps.redflags.outputs.exit == '0' && 'PASS' || 'FAIL' }}
+          OUT: ${{ steps.redflags.outputs.output }}
         run: |
-          STATUS="${{ steps.redflags.outputs.exit == '0' && '✅ PASS' || '❌ FAIL' }}"
-          echo "## Bank Red Flag Scan — $STATUS" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          echo "${{ steps.redflags.outputs.output }}" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          ICON="$( [ "$STATUS" = 'PASS' ] && echo '✅' || echo '❌' )"
+          echo "## Bank Red Flag Scan — $ICON $STATUS" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          printf '%s\n' "$OUT" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
 
       - name: Post PR comment
         if: always() && github.event_name == 'pull_request'
@@ -104,8 +119,7 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           body: |
             ### 🚩 Bank Red Flag Scan — ${{ steps.redflags.outputs.exit == '0' && '✅ PASS' || '❌ FAIL' }}
-            <details>
-            <summary>Full output (click to expand)</summary>
+            <details><summary>Full output (click to expand)</summary>
 
             ```
             ${{ steps.redflags.outputs.output }}
@@ -113,6 +127,9 @@ jobs:
             </details>
           comment-tag: ci-redflags
 
+  # ---------------------------------------------------------------------------
+  # JOB 3 — Engine Audit
+  # ---------------------------------------------------------------------------
   test-audit:
     name: Engine Audit (engine_audit)
     runs-on: ubuntu-latest
@@ -132,21 +149,26 @@ jobs:
           set +e
           OUTPUT=$(npm run test:audit 2>&1)
           EXIT=$?
-          echo "output<<EOF" >> $GITHUB_OUTPUT
-          echo "$OUTPUT" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-          echo "exit=$EXIT" >> $GITHUB_OUTPUT
-          echo "$OUTPUT"
+          printf '%s' "$OUTPUT"
+          {
+            echo 'output<<__EOF__'
+            printf '%s\n' "$OUTPUT"
+            echo '__EOF__'
+            echo "exit=$EXIT"
+          } >> "$GITHUB_OUTPUT"
           exit $EXIT
 
       - name: Write step summary
         if: always()
+        env:
+          STATUS: ${{ steps.audit.outputs.exit == '0' && 'PASS' || 'FAIL' }}
+          OUT: ${{ steps.audit.outputs.output }}
         run: |
-          STATUS="${{ steps.audit.outputs.exit == '0' && '✅ PASS' || '❌ FAIL' }}"
-          echo "## Engine Audit — $STATUS" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          echo "${{ steps.audit.outputs.output }}" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          ICON="$( [ "$STATUS" = 'PASS' ] && echo '✅' || echo '❌' )"
+          echo "## Engine Audit — $ICON $STATUS" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          printf '%s\n' "$OUT" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
 
       - name: Post PR comment
         if: always() && github.event_name == 'pull_request'
@@ -155,8 +177,7 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           body: |
             ### 🔍 Engine Audit — ${{ steps.audit.outputs.exit == '0' && '✅ PASS' || '❌ FAIL' }}
-            <details>
-            <summary>Full output (click to expand)</summary>
+            <details><summary>Full output (click to expand)</summary>
 
             ```
             ${{ steps.audit.outputs.output }}
