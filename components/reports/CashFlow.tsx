@@ -21,21 +21,50 @@ export default function CashFlow({ data, years, loanAmount }: { data: ProjectedY
   const credDiffs   = wcDiff("creditors");
   const otherCLDiffs = wcDiff("otherCL");
 
+  // A. Operating Flows (Indirect Method)
   const cfA = data.map((d, i) =>
     d.netProfit + d.depnYr + d.interest
     - debtorDiffs[i] - inventDiffs[i]
     + credDiffs[i] + otherCLDiffs[i]
   );
 
+  // B. Investing Flows
   const capex = data.map((d, i) => (i === 0 ? d.grossFA : d.grossFA - data[i - 1].grossFA));
   const cfB = capex.map((c) => -c);
 
-  const drawings = data.map((d, i) =>
-    i === 0
-      ? d.netProfit - d.capital + loanAmount
-      : d.netProfit - (d.capital - data[i - 1].capital)
+  // C. Financing Flows
+  const ccDiffs = data.map((d, i) => (i === 0 ? d.bankBorrowings : d.bankBorrowings - data[i - 1].bankBorrowings));
+  const tlProceeds = data.map((d, i) => (i === 0 ? d.termLoan + d.cmltd : Math.max(0, (d.termLoan + d.cmltd) - (data[i - 1].termLoan + data[i - 1].cmltd) + d.tlRepayment)));
+  const tlRepayments = data.map(d => d.tlRepayment);
+  
+  const unsecDiffs = data.map((d, i) => (i === 0 ? d.unsecured : d.unsecured - data[i - 1].unsecured));
+  const quasiDiffs = data.map((d, i) => (i === 0 ? d.quasiEquity : d.quasiEquity - data[i - 1].quasiEquity));
+  
+  // Drawings = Profit - Change in Capital + (Initial Stake if Y1)
+  // Actually, Change in Capital = Profit - Drawings + Injection
+  // For Y1: Injection = d.capital + drawings - d.netProfit
+  const drawings = data.map((d, i) => {
+    const capDelta = i === 0 ? d.capital : d.capital - data[i - 1].capital;
+    if (i === 0) {
+      // In Y1, we assume drawings follow the engine's ratio (~70% of profit)
+      // And the remainder of the capital delta is the "Initial Stake"
+      const estDrawings = Math.round(d.netProfit * 0.75); 
+      return estDrawings;
+    }
+    // In Y2+, delta = profit - drawings
+    return Math.max(0, d.netProfit - capDelta);
+  });
+
+  const initialStake = data.map((d, i) => {
+    if (i !== 0) return 0;
+    // Initial Stake = Capital Y1 - Profit Y1 + Drawings Y1
+    return d.capital - d.netProfit + drawings[0];
+  });
+
+  const cfC = data.map((d, i) => 
+    ccDiffs[i] + tlProceeds[i] - tlRepayments[i] 
+    + unsecDiffs[i] + quasiDiffs[i] + initialStake[i] - drawings[i]
   );
-  const cfC = data.map((d, i) => (i === 0 ? loanAmount : 0) - Math.abs(drawings[i]));
 
   const netCash = data.map((_, i) => cfA[i] + cfB[i] + cfC[i]);
 
@@ -154,15 +183,45 @@ export default function CashFlow({ data, years, loanAmount }: { data: ProjectedY
             </tr>
             <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
-                <span style={{ marginLeft: '40px', display: 'inline-block' }}>1) CC Limit Availed / Loan Received</span>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>1) Cash Credit Limit Availed</span>
               </td>
-              {data.map((d, i) => <td key={d.year} className={s.tdValue}>{fmt(i === 0 ? loanAmount : 0)}</td>)}
+              {data.map((d, i) => <td key={d.year} className={s.tdValue}>{fmtAcc(ccDiffs[i])}</td>)}
             </tr>
             <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
-                <span style={{ marginLeft: '40px', display: 'inline-block' }}>2) Proprietor&apos;s Drawings / Withdrawals</span>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>2) Term Loan Proceeds</span>
               </td>
-              {data.map((d, i) => <td key={d.year} className={s.tdValue}>({fmt(Math.abs(drawings[i]))})</td>)}
+              {data.map((d, i) => <td key={d.year} className={s.tdValue}>{fmtAcc(tlProceeds[i])}</td>)}
+            </tr>
+            <tr className={s.detailRow}>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>3) Less: Term Loan Repayments</span>
+              </td>
+              {data.map((d, i) => <td key={d.year} className={s.tdValue}>({fmt(tlRepayments[i])})</td>)}
+            </tr>
+            <tr className={s.detailRow}>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>4) Increase / (Decrease) in Unsecured Loans</span>
+              </td>
+              {data.map((d, i) => <td key={d.year} className={s.tdValue}>{fmtAcc(unsecDiffs[i])}</td>)}
+            </tr>
+            <tr className={s.detailRow}>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>5) Increase / (Decrease) in Quasi-Equity</span>
+              </td>
+              {data.map((d, i) => <td key={d.year} className={s.tdValue}>{fmtAcc(quasiDiffs[i])}</td>)}
+            </tr>
+            <tr className={s.detailRow}>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>6) Proprietor&apos;s Initial Capital Stake</span>
+              </td>
+              {data.map((d, i) => <td key={d.year} className={s.tdValue}>{fmtAcc(initialStake[i])}</td>)}
+            </tr>
+            <tr className={s.detailRow}>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>7) Proprietor&apos;s Drawings / Withdrawals</span>
+              </td>
+              {data.map((d, i) => <td key={d.year} className={s.tdValue}>({fmt(drawings[i])})</td>)}
             </tr>
             <tr className={s.subtotalRow}>
               <td className={s.tdParticulars}>
@@ -183,7 +242,7 @@ export default function CashFlow({ data, years, loanAmount }: { data: ProjectedY
               </td>
               {data.map((d, i) => (
                 <td key={d.year} className={s.tdValue}>
-                  {fmt(i === 0 ? d.sales * 0.02 : data[i - 1].cashBank)}
+                  {fmt(i === 0 ? 0 : data[i - 1].cashBank)}
                 </td>
               ))}
             </tr>
