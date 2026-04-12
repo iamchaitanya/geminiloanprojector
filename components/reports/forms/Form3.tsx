@@ -121,7 +121,8 @@ export default function Form3({ data, years }: { data: ProjectedYear[]; years: s
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '20px', display: 'inline-block' }}>25) Total Net Worth (19 to 24)</span>
               </td>
-              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.capital)}</td>)}
+              {/* Bug 3 fix: was fmt(d.capital) — excluded current-year P&L surplus */}
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.capital + d.netProfit)}</td>)}
             </tr>
             <tr className={s.grandTotalRow} style={{ fontWeight: 700 }}>
               <td className={s.tdParticulars} style={{ fontWeight: 700, borderTop: '2px solid #000', borderBottom: '2px solid #000' }}>26) Total Liabilities (18 + 25)</td>
@@ -162,7 +163,9 @@ export default function Form3({ data, years }: { data: ProjectedYear[]; years: s
             <R num="39" label="Total Receivables (37 + 38)" vals={data.map((d) => fmt(d.debtors))} bold />
             <R num="40" label="Bills Purchased and Discounted" vals={data.map(() => "0")} zero />
             <R num="41" label="Cash and Bank Balances" vals={data.map((d) => fmt(d.cashBank))} />
-            <R num="42" label="Advances to Suppliers / Other Current Assets" vals={data.map((d) => fmt(d.loansAdv + d.reconAdj))} />
+            {/* Bug 2 fix: was fmt(d.loansAdv + d.reconAdj) — reconAdj is an internal engine
+                balancing item and must not inflate the printed Advances to Suppliers line */}
+            <R num="42" label="Advances to Suppliers / Other Current Assets" vals={data.map((d) => fmt(d.loansAdv))} />
             <tr className={s.subtotalRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '20px', display: 'inline-block' }}>43) Total Current Assets (33 to 42)</span>
