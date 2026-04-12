@@ -134,7 +134,16 @@ function getComfortNpMargin(label: string, year: number) {
   return { min, max };
 }
 
-function buildIndirectExpenses(indExpTotal: number, profile: BusinessProfile, rng: () => number, variability: number) {
+// FIX Bug 1 & 2: Added prevExpenses parameter so each expense line is guarded
+// against year-over-year drops (salary) and capped against excessive spikes
+// (office/welfare). prevExpenses is undefined for Year 1 (no prior year).
+function buildIndirectExpenses(
+  indExpTotal: number,
+  profile: BusinessProfile,
+  rng: () => number,
+  variability: number,
+  prevExpenses?: { label: string; value: number }[]
+) {
   let totalFixedCosts = 0;
   const weights = EXP_LABELS.map((expenseLabel) => {
     const expRatio = profile.exp[expenseLabel.k as keyof typeof profile.exp] as number;
@@ -164,16 +173,54 @@ function buildIndirectExpenses(indExpTotal: number, profile: BusinessProfile, rn
     const salaryItem = indirectExpenses.find(e => e.label === 'Salaries & Wages')!;
     const monthlyCTC = 12_000 + Math.floor(rng() * 4_000); // ₹12K–₹16K per person
     const targetSalary = organic(profile.numEmployees * monthlyCTC * 12, rng);
+    // FIX Bug 1: Only absorb from flex items when salary is INCREASING.
+    // When delta is negative (salary would drop), skip the drain entirely.
     const delta = targetSalary - salaryItem.value;
     salaryItem.value = targetSalary;
-    // Absorb delta from office / welfare (flex items) to keep total ~stable
-    // Never drain misc — every real business has petty cash / miscellaneous expenses
-    const officeItem = indirectExpenses.find(e => e.label === 'Office / Shop Expenses')!;
-    const welfareItem = indirectExpenses.find(e => e.label === 'Staff Welfare')!;
-    const flexItems = [officeItem, welfareItem];
-    const flexTotal = flexItems.reduce((s, e) => s + e.value, 0) || 1;
-    const absorbable = Math.min(delta, flexTotal * 0.6); // never drain more than 60% of flex items
-    flexItems.forEach(e => { e.value = Math.max(e.value - Math.round((e.value / flexTotal) * absorbable), 0); });
+    if (delta > 0) {
+      // Absorb delta from office / welfare (flex items) to keep total ~stable
+      const officeItem = indirectExpenses.find(e => e.label === 'Office / Shop Expenses')!;
+      const welfareItem = indirectExpenses.find(e => e.label === 'Staff Welfare')!;
+      const flexItems = [officeItem, welfareItem];
+      const flexTotal = flexItems.reduce((s, e) => s + e.value, 0) || 1;
+      const absorbable = Math.min(delta, flexTotal * 0.6); // never drain more than 60% of flex items
+      flexItems.forEach(e => { e.value = Math.max(e.value - Math.round((e.value / flexTotal) * absorbable), 0); });
+    }
+  }
+
+  // FIX Bug 1 (no-numEmployees path): Guard salary against dropping year-over-year.
+  // When numEmployees is not set, salary comes from proportional split of indExpTotal.
+  // If indExpTotal shrinks (opEfficiency), salary can fall. Enforce a floor from prior year.
+  if (prevExpenses) {
+    const salaryItem = indirectExpenses.find(e => e.label === 'Salaries & Wages')!;
+    const prevSalary = prevExpenses.find(e => e.label === 'Salaries & Wages')?.value ?? 0;
+    if (prevSalary > 0 && salaryItem.value < prevSalary) {
+      const shortfall = prevSalary - salaryItem.value;
+      salaryItem.value = prevSalary;
+      // Absorb shortfall from largest non-salary, non-rent flex item to keep total stable
+      const donor = indirectExpenses
+        .filter(e => e.label !== 'Salaries & Wages' && e.label !== 'Rent & Rates' && e.label !== 'Miscellaneous Expenses')
+        .sort((a, b) => b.value - a.value)[0];
+      if (donor) donor.value = Math.max(donor.value - shortfall, 0);
+    }
+  }
+
+  // FIX Bug 2: Cap office and welfare to max 20% YoY growth vs prior year.
+  // Prevents the multi-year absorption logic from creating a sudden spike
+  // in years where indExpTotal bounces back after a period of reduction.
+  if (prevExpenses) {
+    const MAX_YOY_GROWTH = 1.20;
+    ['Office / Shop Expenses', 'Staff Welfare'].forEach(label => {
+      const item = indirectExpenses.find(e => e.label === label)!;
+      const prev = prevExpenses.find(e => e.label === label)?.value ?? 0;
+      if (prev > 0 && item.value > prev * MAX_YOY_GROWTH) {
+        const excess = item.value - Math.ceil(prev * MAX_YOY_GROWTH);
+        item.value = Math.ceil(prev * MAX_YOY_GROWTH);
+        // Redistribute excess to salary (always safe to increase salary modestly)
+        const salaryItem = indirectExpenses.find(e => e.label === 'Salaries & Wages')!;
+        salaryItem.value += excess;
+      }
+    });
   }
 
   // 2. RENT: if own premises, zero out rent and redistribute to other items.
@@ -358,6 +405,10 @@ export function generateProjections(limits: LoanLimits, profile: BusinessProfile
   let curCreditorDays = Math.max(minCredDays, Math.round(profile.creditorDays * (1 + centeredRandom(rng, 0.04 * variability))));
   let curStockMonths = Math.max(0.5, profile.stockMonths * (1 + centeredRandom(rng, 0.05 * variability)));
 
+  // FIX Bug 1 & 2: Track prior year's indirect expenses to enforce monotonic
+  // salary and YoY cap on office/welfare across the projection loop.
+  let prevIndirectExpenses: { label: string; value: number }[] | undefined = undefined;
+
   for (let i = 1; i <= projectionYears; i++) {
     const projStartYear = baseYear + i;
     const fyLabel = `FY ${projStartYear.toString().slice(-2)}-${(projStartYear + 1).toString().slice(-2)}`;
@@ -441,7 +492,7 @@ export function generateProjections(limits: LoanLimits, profile: BusinessProfile
       indExpTotal = organic(Math.max(sales - cogs - targetEbitda, sales * 0.04), rng);
     }
 
-    let { indirectExpenses, totalFixedCosts } = buildIndirectExpenses(indExpTotal, profile, rng, variability);
+    let { indirectExpenses, totalFixedCosts } = buildIndirectExpenses(indExpTotal, profile, rng, variability, prevIndirectExpenses);
     let grossProfit = sales - cogs;
     const depnYr = organic(wdv * profile.depnRate, rng);
     wdv = Math.max(wdv - depnYr, 0);
@@ -466,7 +517,7 @@ export function generateProjections(limits: LoanLimits, profile: BusinessProfile
       const targetProfitBeforeTax = solveProfitBeforeTaxForNetProfit(targetNetProfit);
       const maxIndirectExpense = Math.max(grossProfit - depnYr - interest, sales * 0.04);
       indExpTotal = clamp(grossProfit - depnYr - interest - targetProfitBeforeTax, sales * 0.04, maxIndirectExpense);
-      ({ indirectExpenses, totalFixedCosts } = buildIndirectExpenses(indExpTotal, profile, rng, variability));
+      ({ indirectExpenses, totalFixedCosts } = buildIndirectExpenses(indExpTotal, profile, rng, variability, prevIndirectExpenses));
       profitBeforeInt = grossProfit - indExpTotal - depnYr;
       profitBeforeTax = profitBeforeInt - interest;
       tax = calculateTax(profitBeforeTax);
@@ -524,7 +575,9 @@ export function generateProjections(limits: LoanLimits, profile: BusinessProfile
     const totalDebtors = organic((sales / 365) * curDebtorDays, rng);
     const debtorsOver6M = organic(totalDebtors * (profile.debtorAgingPct || 0.05), rng);
     const debtorsUnder6M = totalDebtors - debtorsOver6M;
-    let loansAdv = organic(sales * profile.loansAdvPct, rng);
+    // FIX Bug 3: loansAdv starts from operational ratio and is capped at 2% of sales.
+    // It must NOT be used as a plug to hit the CR target.
+    let loansAdv = organic(Math.min(sales * profile.loansAdvPct, sales * 0.02), rng);
     const operationalCA = inventory + totalDebtors + loansAdv; // Cash added later
 
     // ── Step 3: Current Liabilities (from operational cycle) ──
@@ -562,23 +615,38 @@ export function generateProjections(limits: LoanLimits, profile: BusinessProfile
     // but default target is purely organic retention
     let targetCapital = Math.max(capital + netProfit - nominalDrawings, capitalFloorSales, capitalFloorPrior);
 
-    // ── Step 7: Solve Cash for Target Current Ratio ──
+    // ── Step 7: Solve Cash & CR — FIX Bug 3 ──────────────────────────────
+    // BEFORE: missing CA was dumped entirely into loansAdv (inflating it to 35%+ of sales).
+    // AFTER:  missing CA first fills cashBank (up to 3% of sales), then any remaining
+    //         gap is absorbed into grossFA / netFA on the non-current side so the
+    //         Balance Sheet still tallies without distorting current assets.
     const crYearNoise = centeredRandom(rng, 0.04 * variability);
     const crDipBias = (i === 2 && rng() < 0.35) ? -0.02 : 0; 
     const targetCR = clamp(1.35 + (i - 1) * 0.04 + crYearNoise + crDipBias, 1.33, 1.65);
     
-    // CASH IS NO LONGER THE PLUG. It is realistic: 1-3% of turnover.
     const minCash = organic(sales * profile.cashPct, rng);
     let cashBank = clamp(organic(sales * 0.015 * capitalTilt, rng), Math.max(minCash, baselineVol * 0.01), Math.max(baselineVol * 0.03, minCash * 2));
     
     const clDenom = bankBorrowings + totalCL;
     const neededCA = Math.ceil(targetCR * clDenom);
-    
-    // Missing CA to hit CR target is routed to Advances to Suppliers
-    let missingCA = Math.max(neededCA - (operationalCA + cashBank), 0);
-    loansAdv += missingCA;
+    const missingCA = Math.max(neededCA - (operationalCA + cashBank), 0);
 
-    let totalCA = operationalCA + cashBank + missingCA;
+    if (missingCA > 0) {
+      // Route missing CA to cashBank first (up to 3% of sales is realistic)
+      const cashHeadroom = Math.max(sales * 0.03 - cashBank, 0);
+      const cashTopUp = Math.min(missingCA, cashHeadroom);
+      cashBank += cashTopUp;
+      const stillMissing = missingCA - cashTopUp;
+      // Any remaining gap is absorbed on the asset side as additional Fixed Assets
+      // (e.g. capital work-in-progress, security deposits shown under FA).
+      // This keeps loansAdv clean and the Balance Sheet still tallies.
+      if (stillMissing > 0) {
+        grossFA += stillMissing;
+        netFA += stillMissing;
+      }
+    }
+
+    let totalCA = operationalCA + cashBank;
 
     // ── Steps 8-10: Unified Balance Sheet Finalization ──
     const totalBankDebt = bankBorrowings + closingTermLoan;
@@ -670,7 +738,7 @@ export function generateProjections(limits: LoanLimits, profile: BusinessProfile
         1.15, 2.50
       );
     }
-    facr = Math.min(facr, 10.0); // Bug 1 fix: was 5.0, now 10.0
+    facr = Math.min(facr, 10.0);
 
     projections.push({
       year: i, fyLabel, sales, otherInc, totalRev, openStock, purchases, indirectExpenses, totalIndExp: indExpTotal,
@@ -705,6 +773,9 @@ export function generateProjections(limits: LoanLimits, profile: BusinessProfile
       facr: facr, 
       capacityUtil: currentUtil
     });
+
+    // Save this year's indirect expenses for next year's monotonic guard
+    prevIndirectExpenses = indirectExpenses;
 
     openStock = closeStock;
     openingTermLoan = closingTermLoan; // Carry remaining loan to next year
