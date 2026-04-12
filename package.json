@@ -7,7 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:ratios": "node --import tsx scripts/benchmark-suite.ts"
+    "test:ratios": "node --import tsx scripts/benchmark-suite.ts",
+    "test:redflags": "node --import tsx scripts/bank_red_flags.ts",
+    "test:audit": "node --import tsx scripts/engine_audit.ts",
+    "test": "npm run test:ratios && npm run test:redflags && npm run test:audit"
   },
   "dependencies": {
     "next": "16.2.2",

@@ -8,21 +8,40 @@ on:
 
 jobs:
   test-ratios:
-    name: Run Ratio Benchmark Suite
+    name: Ratio Benchmark (benchmark-suite)
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run benchmark suite
+      - run: npm ci
+      - name: Run ratio benchmark suite
         run: npm run test:ratios
+
+  test-redflags:
+    name: Bank Red Flag Scan (bank_red_flags)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - name: Run bank red flags scan
+        run: npm run test:redflags
+
+  test-audit:
+    name: Engine Audit (engine_audit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - name: Run engine audit
+        run: npm run test:audit
