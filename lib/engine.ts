@@ -562,9 +562,9 @@ export function generateProjections(limits: LoanLimits, profile: BusinessProfile
     // Different seeds → meaningfully different liquidity profiles (not all stuck at 1.30).
     // CR target: non-monotonic — Y2 might dip slightly before Y3 recovers,
     // mimicking real business cycles where a growth year strains liquidity.
-    const crYearNoise = centeredRandom(rng, 0.075 * variability);
-    const crDipBias = (i === 2 && rng() < 0.35) ? -0.03 : 0; // 35% chance Y2 dips slightly
-    const targetCR = clamp(1.22 + (i - 1) * 0.05 + crYearNoise + crDipBias, 1.17, 1.55);
+    const crYearNoise = centeredRandom(rng, 0.04 * variability);
+    const crDipBias = (i === 2 && rng() < 0.35) ? -0.02 : 0; // 35% chance Y2 dips slightly
+    const targetCR = clamp(1.35 + (i - 1) * 0.04 + crYearNoise + crDipBias, 1.33, 1.65);
     const minCash = organic(sales * profile.cashPct, rng);
 
     // ── CREDITOR-SAFE CR SOLVER ─────────────────────────────────────────
