@@ -6,15 +6,21 @@ import own from "./DscrSchedule.module.css";
 
 export default function DscrSchedule({ data, years }: { data: ProjectedYear[]; years: string[] }) {
   const ncols = years.length + 1;
-  const avgDscr = data.reduce((acc, d) => acc + d.dscr, 0) / data.length;
+  const isCcOnly = data[0]?.isCcOnly ?? false;
+  const avgDscr = isCcOnly ? 0 : data.reduce((acc, d) => acc + d.dscr, 0) / data.length;
+  const avgIcr  = data.reduce((acc, d) => acc + (d.icr ?? (d.ebitda / Math.max(d.interest, 1))), 0) / data.length;
 
   return (
     <div className="report-section-wrapper font-sans">
       <div className="report-section-header">
         <div>
           <div className="report-section-num">Section 12</div>
-          <h3 className="report-section-title">Debt Service Coverage Ratio (DSCR)</h3>
-          <p className="report-section-subtitle">Detailed Schedule of Repayment Capacity</p>
+          <h3 className="report-section-title">
+            {isCcOnly ? 'Interest Coverage Ratio (ICR) — CC / OD Facility' : 'Debt Service Coverage Ratio (DSCR)'}
+          </h3>
+          <p className="report-section-subtitle">
+            {isCcOnly ? 'No Term Loan — DSCR not applicable; ICR shown instead' : 'Detailed Schedule of Repayment Capacity'}
+          </p>
         </div>
         <span className="badge badge-emerald">Liquid Coverage</span>
       </div>
@@ -91,15 +97,25 @@ export default function DscrSchedule({ data, years }: { data: ProjectedYear[]; y
             </tr>
 
             <tr className={s.grandTotalRow}>
-              <td className={s.tdParticulars}>Debt Service Coverage Ratio (DSCR)</td>
+              <td className={s.tdParticulars}>
+                {isCcOnly ? 'Interest Coverage Ratio (ICR)' : 'Debt Service Coverage Ratio (DSCR)'}
+              </td>
               {data.map((d) => (
-                <td key={d.year} className={s.tdValue}>{fmtR(d.dscr)}</td>
+                <td key={d.year} className={s.tdValue}>
+                  {isCcOnly
+                    ? fmtR(d.icr ?? (d.ebitda / Math.max(d.interest, 1)))
+                    : fmtR(d.dscr)}
+                </td>
               ))}
             </tr>
 
             <tr className={s.subtotalRow}>
-              <td className={s.tdParticulars}>Weighted Average DSCR</td>
-              <td colSpan={data.length} className={s.tdValue}>{fmtR(avgDscr)}</td>
+              <td className={s.tdParticulars}>
+                {isCcOnly ? 'Weighted Average ICR' : 'Weighted Average DSCR'}
+              </td>
+              <td colSpan={data.length} className={s.tdValue}>
+                {fmtR(isCcOnly ? avgIcr : avgDscr)}
+              </td>
             </tr>
           </tbody>
         </table>

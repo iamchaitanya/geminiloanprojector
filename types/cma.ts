@@ -91,6 +91,8 @@ export interface ProjectedYear {
   currentRatio: number;
   currentRatioExBank: number;
   dscr: number;
+  icr?: number;          // Interest Coverage Ratio (exported for CC-only proposals)
+  isCcOnly?: boolean;    // true when no term loan exists; DscrSchedule shows ICR instead
   assessedDebtService: number;
   debtServiceBuffer: number;
   deRatio: number;

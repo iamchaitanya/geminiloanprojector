@@ -130,7 +130,11 @@ export default function RatioAnalysis({ data, years }: { data: ProjectedYear[]; 
               vals={data.map((d) => <span key={d.year} className={d.facr > 0 ? getStatusColor(d.facr, "facr") : ""}>{d.facr > 0 ? `${fmtR(d.facr)}×` : "N/A"}</span>)}
               benchmark="≥ 1.33" />
             <RatioRow s={s} own={own} label="DSCR"
-              vals={data.map((d) => <span key={d.year} className={getStatusColor(d.dscr, "dscr")}>{fmtR(d.dscr)}×</span>)}
+              vals={data.map((d) => (
+                d.isCcOnly
+                  ? <span key={d.year}>N/A</span>
+                  : <span key={d.year} className={getStatusColor(d.dscr, "dscr")}>{fmtR(d.dscr)}×</span>
+              ))}
               benchmark="≥ 1.50" />
             <RatioRow s={s} own={own} label="Total Debt / EBITDA"
               vals={data.map((d) => { const v = (d.bankBorrowings + d.termLoan + d.cmltd + d.unsecured) / Math.max(d.ebitda, 1); return <span key={d.year} className={getStatusColor(v, "debt_ebitda")}>{fmtR(v)}×</span>; })}
