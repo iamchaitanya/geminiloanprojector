@@ -6,42 +6,160 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   test-ratios:
     name: Ratio Benchmark (benchmark-suite)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
+
       - run: npm ci
+
       - name: Run ratio benchmark suite
-        run: npm run test:ratios
+        id: ratios
+        run: |
+          set +e
+          OUTPUT=$(npm run test:ratios 2>&1)
+          EXIT=$?
+          echo "output<<EOF" >> $GITHUB_OUTPUT
+          echo "$OUTPUT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          echo "exit=$EXIT" >> $GITHUB_OUTPUT
+          echo "$OUTPUT"
+          exit $EXIT
+
+      - name: Write step summary
+        if: always()
+        run: |
+          STATUS="${{ steps.ratios.outputs.exit == '0' && '✅ PASS' || '❌ FAIL' }}"
+          echo "## Ratio Benchmark — $STATUS" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.ratios.outputs.output }}" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Post PR comment
+        if: always() && github.event_name == 'pull_request'
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            ### 📊 Ratio Benchmark — ${{ steps.ratios.outputs.exit == '0' && '✅ PASS' || '❌ FAIL' }}
+            <details>
+            <summary>Full output (click to expand)</summary>
+
+            ```
+            ${{ steps.ratios.outputs.output }}
+            ```
+            </details>
+          comment-tag: ci-ratios
 
   test-redflags:
     name: Bank Red Flag Scan (bank_red_flags)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
+
       - run: npm ci
+
       - name: Run bank red flags scan
-        run: npm run test:redflags
+        id: redflags
+        run: |
+          set +e
+          OUTPUT=$(npm run test:redflags 2>&1)
+          EXIT=$?
+          echo "output<<EOF" >> $GITHUB_OUTPUT
+          echo "$OUTPUT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          echo "exit=$EXIT" >> $GITHUB_OUTPUT
+          echo "$OUTPUT"
+          exit $EXIT
+
+      - name: Write step summary
+        if: always()
+        run: |
+          STATUS="${{ steps.redflags.outputs.exit == '0' && '✅ PASS' || '❌ FAIL' }}"
+          echo "## Bank Red Flag Scan — $STATUS" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.redflags.outputs.output }}" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Post PR comment
+        if: always() && github.event_name == 'pull_request'
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            ### 🚩 Bank Red Flag Scan — ${{ steps.redflags.outputs.exit == '0' && '✅ PASS' || '❌ FAIL' }}
+            <details>
+            <summary>Full output (click to expand)</summary>
+
+            ```
+            ${{ steps.redflags.outputs.output }}
+            ```
+            </details>
+          comment-tag: ci-redflags
 
   test-audit:
     name: Engine Audit (engine_audit)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
+
       - run: npm ci
+
       - name: Run engine audit
-        run: npm run test:audit
+        id: audit
+        run: |
+          set +e
+          OUTPUT=$(npm run test:audit 2>&1)
+          EXIT=$?
+          echo "output<<EOF" >> $GITHUB_OUTPUT
+          echo "$OUTPUT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          echo "exit=$EXIT" >> $GITHUB_OUTPUT
+          echo "$OUTPUT"
+          exit $EXIT
+
+      - name: Write step summary
+        if: always()
+        run: |
+          STATUS="${{ steps.audit.outputs.exit == '0' && '✅ PASS' || '❌ FAIL' }}"
+          echo "## Engine Audit — $STATUS" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.audit.outputs.output }}" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Post PR comment
+        if: always() && github.event_name == 'pull_request'
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            ### 🔍 Engine Audit — ${{ steps.audit.outputs.exit == '0' && '✅ PASS' || '❌ FAIL' }}
+            <details>
+            <summary>Full output (click to expand)</summary>
+
+            ```
+            ${{ steps.audit.outputs.output }}
+            ```
+            </details>
+          comment-tag: ci-audit

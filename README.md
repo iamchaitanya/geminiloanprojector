@@ -1,37 +1,44 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CMA Loan Projector
+
+A Next.js CMA (Credit Monitoring Arrangement) report generator for Indian bank loan appraisals. Produces all 6 RBI CMA forms — P&L, Balance Sheet, Cash Flow, Depreciation Schedule, DSCR, Ratio Analysis, and Funds Flow — from a single input form.
+
+[![Ratio Benchmark](https://github.com/iamchaitanya/geminiloanprojector/actions/workflows/ci.yml/badge.svg?job=test-ratios)](https://github.com/iamchaitanya/geminiloanprojector/actions/workflows/ci.yml)
+[![Bank Red Flag Scan](https://github.com/iamchaitanya/geminiloanprojector/actions/workflows/ci.yml/badge.svg?job=test-redflags)](https://github.com/iamchaitanya/geminiloanprojector/actions/workflows/ci.yml)
+[![Engine Audit](https://github.com/iamchaitanya/geminiloanprojector/actions/workflows/ci.yml/badge.svg?job=test-audit)](https://github.com/iamchaitanya/geminiloanprojector/actions/workflows/ci.yml)
+
+## Live Demo
+
+[superb-scone-275e42.netlify.app](https://superb-scone-275e42.netlify.app)
+
+## What it does
+
+- Accepts business inputs: segment, sales, expenses, assets, limits (CC + TL)
+- Runs a pure client-side projection engine (`lib/engine.ts`) for up to 5 years
+- Renders all 6 CMA forms as print-ready tables
+- Validates 15+ financial ratios against RBI / bank benchmark bands
+- Supports 4 business segments: Trading, Service, Manufacturing, Construction
+
+## Test Scripts
+
+| Command | Script | Coverage |
+|---|---|---|
+| `npm run test:ratios` | `scripts/benchmark-suite.ts` | 240 ratio-band scenarios (4 segments × 20 loan amounts × 3 seeds) |
+| `npm run test:redflags` | `scripts/bank_red_flags.ts` | Bank red-flag pattern detection |
+| `npm run test:audit` | `scripts/engine_audit.ts` | Engine internals, BS integrity, formula audit |
+| `npm test` | All three in sequence | Full suite |
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Stack
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-# geminiloanprojector
+- **Next.js 16** (App Router) + **TypeScript**
+- **Tailwind CSS v4**
+- **Netlify** for deployment
+- No backend — 100% client-side computation
