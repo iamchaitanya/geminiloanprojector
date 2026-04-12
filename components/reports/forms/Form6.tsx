@@ -22,6 +22,10 @@ export default function Form6({ data, years }: { data: ProjectedYear[]; years: s
   // prev(i) returns the year before data[i]; for i=0 use the zero baseline
   const prev = (i: number): ProjectedYear => (i === 0 ? zero : data[i - 1]);
 
+  // Helper: full closing TL balance (LT portion + CMLTD) — engine stores termLoan
+  // as (closingTL - cmltd) so we must add cmltd back to get the true closing balance.
+  const fullClosingTL = (d: ProjectedYear) => d.termLoan + d.cmltd;
+
   const periodHeaders = years.map((y) => (
     <th key={y} style={{ textAlign: "center" }}>
       {y.includes("\n") ? y.split("\n").map((l, i) => <span key={i} style={{ display: "block" }}>{l}</span>) : y}
@@ -78,20 +82,32 @@ export default function Form6({ data, years }: { data: ProjectedYear[]; years: s
                 return <td key={i} className={s.tdValue}>{fmt(diff > 0 ? diff : 0)}</td>;
               })}
             </tr>
+            {/* FIX 1: quasiEquity increase is a long-term source of funds */}
             <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
-                <span style={{ marginLeft: '40px', display: 'inline-block' }}>4) Increase in Term Loans / Unsecured Loans</span>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>4) Increase in Quasi-Equity / Subordinated Loans</span>
               </td>
               {data.map((d, i) => {
                 const p = prev(i);
-                const ti = Math.max(0, d.termLoan - p.termLoan + d.tlRepayment);
+                const diff = d.quasiEquity - p.quasiEquity;
+                return <td key={i} className={s.tdValue}>{fmt(diff > 0 ? diff : 0)}</td>;
+              })}
+            </tr>
+            <tr className={s.detailRow}>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>5) Increase in Term Loans / Unsecured Loans</span>
+              </td>
+              {data.map((d, i) => {
+                const p = prev(i);
+                // FIX 2: use fullClosingTL (termLoan + cmltd) for correct gross balance
+                const ti = Math.max(0, fullClosingTL(d) - fullClosingTL(p) + d.tlRepayment);
                 const ui = Math.max(0, d.unsecured - p.unsecured);
                 return <td key={i} className={s.tdValue}>{fmt(ti + ui)}</td>;
               })}
             </tr>
             <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
-                <span style={{ marginLeft: '40px', display: 'inline-block' }}>5) Sale / Decrease in Fixed Assets</span>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>6) Sale / Decrease in Fixed Assets</span>
               </td>
               {data.map((d, i) => {
                 const p = prev(i);
@@ -106,9 +122,10 @@ export default function Form6({ data, years }: { data: ProjectedYear[]; years: s
               {data.map((d, i) => {
                 const p = prev(i);
                 const ci = Math.max(d.capital - (p.capital + d.netProfit), 0);
-                const ti = Math.max(0, d.termLoan - p.termLoan + d.tlRepayment) + Math.max(0, d.unsecured - p.unsecured);
+                const qi = Math.max(d.quasiEquity - p.quasiEquity, 0);
+                const ti = Math.max(0, fullClosingTL(d) - fullClosingTL(p) + d.tlRepayment) + Math.max(0, d.unsecured - p.unsecured);
                 const fd = Math.max(p.grossFA - d.grossFA, 0);
-                return <td key={i} className={s.tdValue}>{fmt(d.netProfit + d.depnYr + ci + ti + fd)}</td>;
+                return <td key={i} className={s.tdValue}>{fmt(d.netProfit + d.depnYr + ci + qi + ti + fd)}</td>;
               })}
             </tr>
 
@@ -117,7 +134,7 @@ export default function Form6({ data, years }: { data: ProjectedYear[]; years: s
 
             <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
-                <span style={{ marginLeft: '40px', display: 'inline-block' }}>6) Capital Expenditure (Increase in Fixed Assets)</span>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>7) Capital Expenditure (Increase in Fixed Assets)</span>
               </td>
               {data.map((d, i) => {
                 const p = prev(i);
@@ -127,7 +144,7 @@ export default function Form6({ data, years }: { data: ProjectedYear[]; years: s
             </tr>
             <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
-                <span style={{ marginLeft: '40px', display: 'inline-block' }}>7) Repayment of Term Loans / Unsecured Loans</span>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>8) Repayment of Term Loans / Unsecured Loans</span>
               </td>
               {data.map((d, i) => {
                 const p = prev(i);
@@ -137,12 +154,23 @@ export default function Form6({ data, years }: { data: ProjectedYear[]; years: s
             </tr>
             <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
-                <span style={{ marginLeft: '40px', display: 'inline-block' }}>8) Dividend / Proprietor&apos;s Drawings</span>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>9) Dividend / Proprietor&apos;s Drawings</span>
               </td>
               {data.map((d, i) => {
                 const p = prev(i);
                 const drawings = Math.max((p.capital + d.netProfit) - d.capital, 0);
                 return <td key={i} className={s.tdValue}>{fmt(drawings)}</td>;
+              })}
+            </tr>
+            {/* FIX 1b: quasiEquity decrease is an application of funds */}
+            <tr className={s.detailRow}>
+              <td className={s.tdParticulars}>
+                <span style={{ marginLeft: '40px', display: 'inline-block' }}>10) Repayment of Quasi-Equity / Subordinated Loans</span>
+              </td>
+              {data.map((d, i) => {
+                const p = prev(i);
+                const diff = p.quasiEquity - d.quasiEquity;
+                return <td key={i} className={s.tdValue}>{fmt(diff > 0 ? diff : 0)}</td>;
               })}
             </tr>
             <tr className={s.subtotalRow}>
@@ -154,7 +182,8 @@ export default function Form6({ data, years }: { data: ProjectedYear[]; years: s
                 const fi = Math.max(d.grossFA - p.grossFA, 0);
                 const td2 = d.tlRepayment + Math.max(0, p.unsecured - d.unsecured);
                 const dr = Math.max((p.capital + d.netProfit) - d.capital, 0);
-                return <td key={i} className={s.tdValue}>{fmt(fi + td2 + dr)}</td>;
+                const qd = Math.max(p.quasiEquity - d.quasiEquity, 0);
+                return <td key={i} className={s.tdValue}>{fmt(fi + td2 + dr + qd)}</td>;
               })}
             </tr>
 
@@ -164,13 +193,15 @@ export default function Form6({ data, years }: { data: ProjectedYear[]; years: s
               {data.map((d, i) => {
                 const p = prev(i);
                 const ci = Math.max(d.capital - (p.capital + d.netProfit), 0);
-                const ti = Math.max(0, d.termLoan - p.termLoan + d.tlRepayment) + Math.max(0, d.unsecured - p.unsecured);
+                const qi = Math.max(d.quasiEquity - p.quasiEquity, 0);
+                const ti = Math.max(0, fullClosingTL(d) - fullClosingTL(p) + d.tlRepayment) + Math.max(0, d.unsecured - p.unsecured);
                 const fd = Math.max(p.grossFA - d.grossFA, 0);
-                const totalA = d.netProfit + d.depnYr + ci + ti + fd;
+                const totalA = d.netProfit + d.depnYr + ci + qi + ti + fd;
                 const fi = Math.max(d.grossFA - p.grossFA, 0);
                 const td2 = d.tlRepayment + Math.max(0, p.unsecured - d.unsecured);
                 const dr = Math.max((p.capital + d.netProfit) - d.capital, 0);
-                const totalB = fi + td2 + dr;
+                const qd = Math.max(p.quasiEquity - d.quasiEquity, 0);
+                const totalB = fi + td2 + dr + qd;
                 return <td key={i} className={s.tdValue}>{fmt(totalA - totalB)}</td>;
               })}
             </tr>
