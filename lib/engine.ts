@@ -266,13 +266,20 @@ export function generateProjections(
 
     if (patPre > npmCap) {
       const excess = patPre - npmCap;
+      // Spread excess proportionally across ALL expense heads (not just Misc).
+      // This avoids a visually alarming 10× spike on a single line in the P&L.
       finalIndirectExpenses = indirectExpenses.map(e => ({ ...e }));
-      const miscIdx = finalIndirectExpenses.findIndex(e => e.label === 'Miscellaneous Expenses');
-      if (miscIdx >= 0) {
-        finalIndirectExpenses[miscIdx].value += excess;
-      } else {
-        finalIndirectExpenses.push({ label: 'Miscellaneous Expenses', value: excess });
-      }
+      const spreadBase = finalIndirectExpenses.reduce((s, e) => s + e.value, 0);
+      let spreadSoFar = 0;
+      finalIndirectExpenses = finalIndirectExpenses.map((e, idx) => {
+        if (idx === finalIndirectExpenses.length - 1) {
+          // Last item absorbs rounding residual
+          return { ...e, value: e.value + (excess - spreadSoFar) };
+        }
+        const share = spreadBase > 0 ? Math.round(excess * e.value / spreadBase) : 0;
+        spreadSoFar += share;
+        return { ...e, value: e.value + share };
+      });
       finalIndExpTotal = finalIndirectExpenses.reduce((s, e) => s + e.value, 0);
     }
 
@@ -294,10 +301,15 @@ export function generateProjections(
     const netFA = Math.max(grossFA - accDepn, 0);
 
     // ── Capital: drawings applied every year including Y1 ────────
-    // FIX C1: Old code had `if (i > 1)` guard, leaving all Y1 profit undrawn → cash plug.
-    const yearDrawingRatio = clamp(drawingRatioBase + (i - 1) * 0.03, 0.25, 0.88);
-    let drawings           = Math.round(netProfit * yearDrawingRatio);
-    capital = capital + netProfit - drawings;
+    // CRITICAL RULE: drawings can only come from THIS YEAR's profit.
+    // Accumulated capital (past retained earnings) is never touched by drawings.
+    // This ensures capital is monotonically non-decreasing except in loss years.
+    const yearDrawingRatio    = clamp(drawingRatioBase + (i - 1) * 0.03, 0.25, 0.88);
+    const profitToDistribute  = Math.max(netProfit, 0);  // never draw from a loss
+    let drawings              = Math.round(profitToDistribute * yearDrawingRatio);
+    capital                   = capital + netProfit - drawings;
+    // Safety floor: capital can never go below openingCapital's minimum
+    if (capital < openingCapital) capital = openingCapital;
 
     // ── Current Assets ───────────────────────────────────────────
     const inventory      = closeStock;
@@ -332,22 +344,12 @@ export function generateProjections(
       totalLiab       += shortfall;
     }
 
-    // Step 3: compute plug cash; if it exceeds the cap, route excess to drawings.
-    // Economically: a profitable proprietor draws out surplus cash rather than
-    // letting it sit idle — this is what we see in real CMA statements.
-    let rawPlug = totalLiab - nonCashAssets;
-    const maxCash = Math.round(sales * (profile.cashPct || 0.025));
-
-    if (rawPlug > maxCash) {
-      const excess    = rawPlug - maxCash;
-      drawings       += excess;   // proprietor draws out the excess
-      capital        -= excess;   // capital reduces symmetrically
-      totalLiab      -= excess;   // totalLiab reduces (capital is inside it)
-      rawPlug         = maxCash;
-    }
-
-    let cashBank = Math.max(rawPlug, 0);
-    let totalCA  = inventory + totalDebtors + loansAdv + cashBank;
+    // Step 3: cash is the honest BS plug — never manipulate capital to control it.
+    // A business with a large CC limit will naturally show more cash; that's correct.
+    // Negative capital is fatal for a bank report; high cash is merely conservative.
+    const rawPlug = totalLiab - nonCashAssets;
+    let cashBank  = Math.max(rawPlug, 0);
+    let totalCA   = inventory + totalDebtors + loansAdv + cashBank;
 
     // Step 4: CR floor guard — if CR < 1.20 inject via unsecured (capped at 20% TNW)
     // Using 1.20 (not 1.25) as the injection threshold: small CC-only businesses
