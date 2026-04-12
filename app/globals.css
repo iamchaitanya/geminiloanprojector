@@ -846,7 +846,10 @@
 
   .cma-formal-report th,
   .cma-formal-report td {
-    border:         1px solid #000;
+    border-left:    1px solid #000;
+    border-right:   1px solid #000;
+    border-top:     none;
+    border-bottom:  none;
     padding-top:    6px;
     padding-bottom: 6px;
     padding-right:  12px;
