@@ -4,7 +4,7 @@ import { BusinessSegment, ProjectedYear } from '../types/cma';
 
 const LOAN_AMOUNTS = Array.from({ length: 20 }, (_, i) => (i + 1) * 50_000);
 const SEGMENTS: BusinessSegment[] = ['trading', 'service', 'manufacturing', 'construction'];
-const VARIANT_SEEDS = [101, 202, 303];
+const VARIANT_SEEDS = [101, 202, 303, 404, 777, 12345, 99999];
 
 type RatioBand = {
   min?: number;
@@ -22,13 +22,12 @@ const CORE_BANDS = {
   currentRatio: { min: 1.1, max: 1.65 },
   currentRatioExBank: { min: 1.33 },
   quickRatio: { min: 0.72 },
-  debtEquity: { max: 2.1 },
+  debtEquity: { min: 0.4, max: 2.1 },
   tolTnw: { max: 3.2 },
   icr: { min: 2.5 },
   facr: { min: 1.1 },
-  // For CC-only loans, DSCR = EBITDA / interest (i.e. ICR). A high value is healthy —
-  // banks only enforce a floor, not a ceiling, for working capital facilities.
-  dscr: { min: 1.5 },
+  // For CC-only loans, DSCR = EBITDA / interest (ICR). A healthy range is 3-15×.
+  dscr: { min: 1.5, max: 15 },
   debtEbitda: { max: 4.0 },
   roa: { min: 5 },
   roe: { min: 12 },
@@ -109,7 +108,10 @@ function evaluateYear(segment: BusinessSegment, projection: ProjectedYear, failu
   checkBand(projection.deRatio, CORE_BANDS.debtEquity, `Yr ${projection.year} D:E`, failures);
   checkBand(projection.tolTnw, CORE_BANDS.tolTnw, `Yr ${projection.year} TOL/TNW`, failures);
   checkBand(icr, CORE_BANDS.icr, `Yr ${projection.year} ICR`, failures);
-  checkBand(projection.facr, CORE_BANDS.facr, `Yr ${projection.year} FACR`, failures);
+  // Skip FACR check for CC-only (facr=0 means no term loan — N/A)
+  if (projection.facr > 0) {
+    checkBand(projection.facr, CORE_BANDS.facr, `Yr ${projection.year} FACR`, failures);
+  }
   checkBand(projection.dscr, CORE_BANDS.dscr, `Yr ${projection.year} DSCR`, failures);
   checkBand(debtEbitda, CORE_BANDS.debtEbitda, `Yr ${projection.year} Debt/EBITDA`, failures);
   checkBand(roa, CORE_BANDS.roa, `Yr ${projection.year} ROA`, failures);

@@ -26,7 +26,7 @@ for (const seg of SEGMENTS) {
   for (const amt of AMOUNTS) {
     const p = getDynamicProfile(seg, amt);
     const d = generateProjections(
-      { ccLimit: amt, termLoan: 0, isRenewal: false, existingCc: 0, existingTl: 0, ccIntRate: 11.5, tlIntRate: 12, tenure: 60 },
+      { ccLimit: amt, termLoan: 0, isRenewal: false, existingCc: 0, existingTl: 0, ccIntRate: 11.5, tlIntRate: 12, tenure: 5 },
       { ...p, label: seg, exp: p.exp }, 3, 2024, { seed: 42, variability: 1 }
     );
     console.log(`  ${seg.padEnd(16)}| Rs.${fmt(amt).padStart(7)}|   ${r(d[0].dscr)}x  |   ${r(d[1].dscr)}x  |   ${r(d[2].dscr)}x`);
@@ -43,7 +43,7 @@ for (const seg of SEGMENTS) {
   for (const amt of [100000, 500000, 1000000]) {
     const p = getDynamicProfile(seg, amt);
     const d = generateProjections(
-      { ccLimit: amt, termLoan: 0, isRenewal: false, existingCc: 0, existingTl: 0, ccIntRate: 11.5, tlIntRate: 12, tenure: 60 },
+      { ccLimit: amt, termLoan: 0, isRenewal: false, existingCc: 0, existingTl: 0, ccIntRate: 11.5, tlIntRate: 12, tenure: 5 },
       { ...p, label: seg, exp: p.exp }, 3, 2024, { seed: 42, variability: 1 }
     );
     console.log(`  ${seg.padEnd(16)}| Rs.${fmt(amt).padStart(7)}|   ${r(d[0].facr)}x  |   ${r(d[1].facr)}x  |   ${r(d[2].facr)}x`);
@@ -62,7 +62,7 @@ for (const seg of SEGMENTS) {
   for (const amt of AMOUNTS) {
     const p = getDynamicProfile(seg, amt);
     const d = generateProjections(
-      { ccLimit: amt, termLoan: 0, isRenewal: false, existingCc: 0, existingTl: 0, ccIntRate: 11.5, tlIntRate: 12, tenure: 60 },
+      { ccLimit: amt, termLoan: 0, isRenewal: false, existingCc: 0, existingTl: 0, ccIntRate: 11.5, tlIntRate: 12, tenure: 5 },
       { ...p, label: seg, exp: p.exp }, 3, 2024, { seed: 42, variability: 1 }
     );
     const deY3 = d[2].deRatio;
@@ -82,7 +82,7 @@ for (const seg of SEGMENTS) {
   for (const amt of AMOUNTS) {
     const p = getDynamicProfile(seg, amt);
     const d = generateProjections(
-      { ccLimit: amt, termLoan: 0, isRenewal: false, existingCc: 0, existingTl: 0, ccIntRate: 11.5, tlIntRate: 12, tenure: 60 },
+      { ccLimit: amt, termLoan: 0, isRenewal: false, existingCc: 0, existingTl: 0, ccIntRate: 11.5, tlIntRate: 12, tenure: 5 },
       { ...p, label: seg, exp: p.exp }, 3, 2024, { seed: 42, variability: 1 }
     );
     const crY3 = d[2].currentRatio;
@@ -102,7 +102,7 @@ for (const seg of SEGMENTS) {
   for (const amt of [100000, 500000, 1000000]) {
     const p = getDynamicProfile(seg, amt);
     const d = generateProjections(
-      { ccLimit: amt, termLoan: 0, isRenewal: false, existingCc: 0, existingTl: 0, ccIntRate: 11.5, tlIntRate: 12, tenure: 60 },
+      { ccLimit: amt, termLoan: 0, isRenewal: false, existingCc: 0, existingTl: 0, ccIntRate: 11.5, tlIntRate: 12, tenure: 5 },
       { ...p, label: seg, exp: p.exp }, 3, 2024, { seed: 42, variability: 1 }
     );
     console.log(`  ${seg.padEnd(16)}| Rs.${fmt(amt).padStart(7)}|   ${r(d[0].capacityUtil)}%  |   ${r(d[1].capacityUtil)}%  |   ${r(d[2].capacityUtil)}%`);
@@ -121,7 +121,7 @@ for (const seg of SEGMENTS) {
   for (const amt of AMOUNTS) {
     const p = getDynamicProfile(seg, amt);
     const d = generateProjections(
-      { ccLimit: amt, termLoan: 0, isRenewal: false, existingCc: 0, existingTl: 0, ccIntRate: 11.5, tlIntRate: 12, tenure: 60 },
+      { ccLimit: amt, termLoan: 0, isRenewal: false, existingCc: 0, existingTl: 0, ccIntRate: 11.5, tlIntRate: 12, tenure: 5 },
       { ...p, label: seg, exp: p.exp }, 3, 2024, { seed: 42, variability: 1 }
     );
     const icrVals = d.map(yr => yr.ebitda / Math.max(yr.interest, 1));
@@ -130,23 +130,60 @@ for (const seg of SEGMENTS) {
   }
 }
 
+// --- DATA-DRIVEN VERDICT ---
 console.log('\n\n' + '='.repeat(70));
-console.log('  HONEST VERDICT');
+console.log('  DATA-DRIVEN VERDICT — Computed from actual test data above');
 console.log('='.repeat(70));
-console.log(`
-  The engine passes automated compliance checks AND produces bank-natural figures:
 
-  DSCR (ICR) for CC-only is naturally high (5-10x) -- this is correct.
-     Banks don't impose a DSCR ceiling on WC facilities. ICR 5-10x = healthy.
-  D:E is 0.8-1.6x -- well within the 1.0-2.0 band banks prefer.
-  CR stays in 1.27-1.42x Y1->Y3 -- within the 1.1-1.5 bank comfort zone.
-  ROE is capped at 80% -- looks realistic for a growing MSME proprietorship.
-  Capacity utilization is segment-specific, not uniform.
+// Collect actual ranges across all scenarios
+const allDE: number[] = [];
+const allCR: number[] = [];
+const allDSCR: number[] = [];
+const allICR: number[] = [];
+let bsErrors = 0;
 
-  RESIDUAL THINGS A CREDIT ANALYST MIGHT OBSERVE:
-  - FACR follows a formulaic step-up curve (inherent in the model design)
-  - Capacity util steps are deterministic per segment (by design for bank acceptance)
-  - ICR climbing above 10x in Y3 for construction at Rs.10L -- borderline but within audit range
+for (const seg of SEGMENTS) {
+  for (const amt of AMOUNTS) {
+    const p = getDynamicProfile(seg, amt);
+    const d = generateProjections(
+      { ccLimit: amt, termLoan: 0, isRenewal: false, existingCc: 0, existingTl: 0, ccIntRate: 11.5, tlIntRate: 12, tenure: 5 },
+      { ...p, label: seg, exp: p.exp }, 3, 2024, { seed: 42, variability: 1 }
+    );
+    for (const yr of d) {
+      allDE.push(yr.deRatio);
+      allCR.push(yr.currentRatio);
+      allDSCR.push(yr.dscr);
+      allICR.push(yr.ebitda / Math.max(yr.interest, 1));
+      if (Math.abs(yr.reconAdj) > 100) bsErrors++;
+    }
+  }
+}
 
-  VERDICT: Projections are bank-acceptable for MSME CC loan appraisals.
-`);
+const deMin = Math.min(...allDE).toFixed(2);
+const deMax = Math.max(...allDE).toFixed(2);
+const crMin = Math.min(...allCR).toFixed(2);
+const crMax = Math.max(...allCR).toFixed(2);
+const dscrMin = Math.min(...allDSCR).toFixed(2);
+const dscrMax = Math.max(...allDSCR).toFixed(2);
+
+const issues: string[] = [];
+if (Math.min(...allDE) < 0.4) issues.push(`D:E too low (${deMin}x) — over-capitalized`);
+if (Math.max(...allDE) > 2.5) issues.push(`D:E too high (${deMax}x) — over-leveraged`);
+if (Math.min(...allCR) < 1.0) issues.push(`CR below 1.0 (${crMin}x) — bank will reject`);
+if (Math.max(...allCR) > 2.5) issues.push(`CR too high (${crMax}x) — suggests capital hoarding`);
+if (bsErrors > 0) issues.push(`${bsErrors} balance sheet mismatches found`);
+if (Math.max(...allDSCR) > 20) issues.push(`DSCR exceeds 20x — unusual`);
+
+console.log(`\n  Measured from ${allDE.length} year-observations across ${SEGMENTS.length} segments × ${AMOUNTS.length} amounts:\n`);
+console.log(`  D:E range:   ${deMin}x – ${deMax}x  ${(Math.min(...allDE) >= 0.4 && Math.max(...allDE) <= 2.5) ? '✅' : '⚠️'}`);
+console.log(`  CR range:    ${crMin}x – ${crMax}x   ${(Math.min(...allCR) >= 1.0 && Math.max(...allCR) <= 2.0) ? '✅' : '⚠️'}`);
+console.log(`  DSCR range:  ${dscrMin}x – ${dscrMax}x  (ICR for CC-only — high is natural)`);
+console.log(`  BS errors:   ${bsErrors}  ${bsErrors === 0 ? '✅' : '❌'}`);
+
+if (issues.length === 0) {
+  console.log('\n  VERDICT: ✅ Projections pass — figures are within bank-acceptable ranges.');
+} else {
+  console.log(`\n  VERDICT: ⚠️ ${issues.length} concern(s) found:`);
+  issues.forEach(i => console.log(`    - ${i}`));
+}
+console.log('');

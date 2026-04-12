@@ -204,7 +204,7 @@ export default function ReportView({ data, bizName, propName, pan, address, loan
         {/* 9. CMA Form V: MPBF Assessment (Method II) */}
         <section id="form5">
           <PrintHeader bizName={bizName} pan={pan} address={address} title="Form V: MPBF Assessment" />
-          <Form5 data={data} years={years} loanAmount={loanAmount} />
+          <Form5 data={data} years={years} loanAmount={proposedCc ?? loanAmount} />
           <PrintFooter bizName={bizName} entityType={entityType} />
         </section>
 

@@ -11,19 +11,19 @@ const pct = (n: number) => n.toFixed(1) + '%';
 const ratio = (n: number) => n.toFixed(2) + '×';
 
 const BASE_BENCHMARKS = {
-  gpMargin: { min: 5, max: 50, label: 'GP%' },
-  npMargin: { min: 3, max: 20, label: 'NP%' },
-  ebitdaMargin: { min: 5, max: 25, label: 'EBITDA%' },
-  currentRatio: { min: 1.1, max: 2.5, label: 'CR(incl)' },
+  gpMargin: { min: 15, max: 36, label: 'GP%' },
+  npMargin: { min: 5, max: 16, label: 'NP%' },
+  ebitdaMargin: { min: 8, max: 22, label: 'EBITDA%' },
+  currentRatio: { min: 1.1, max: 1.65, label: 'CR(incl)' },
   currentRatioExBank: { min: 1.33, max: 6.0, label: 'CR(excl)' },
-  deRatio: { min: 0, max: 2.5, label: 'D:E' },
+  deRatio: { min: 0.3, max: 2.1, label: 'D:E' },
   tolTnw: { min: 0, max: 3.5, label: 'TOL/TNW' },
-  dscr: { min: 1.2, max: 10.0, label: 'DSCR' },  // CC-only DSCR is naturally 4-8× (no TL repayment)
-  icr: { min: 1.5, max: 15, label: 'ICR' },
-  facr: { min: 1.0, max: 5.5, label: 'FACR' },
-  roe: { min: 5, max: 80, label: 'ROE%' },
-  roa: { min: 3, max: 40, label: 'ROA%' },
-  bep: { min: 30, max: 90, label: 'BEP%' },
+  dscr: { min: 1.5, max: 15.0, label: 'DSCR' },  // CC-only DSCR = ICR, naturally 4-12×
+  icr: { min: 2.5, max: 15, label: 'ICR' },
+  facr: { min: 1.0, max: 10.0, label: 'FACR' },  // Only checked when TL exists
+  roe: { min: 10, max: 60, label: 'ROE%' },
+  roa: { min: 5, max: 30, label: 'ROA%' },
+  bep: { min: 30, max: 85, label: 'BEP%' },
   invTurnover: { min: 2, max: 15, label: 'InvTurn' },
   wcTurnover: { min: 2, max: 12, label: 'WCTurn' },
   capUtil: { min: 50, max: 100, label: 'CapUtil%' },
@@ -66,8 +66,10 @@ function checkRatio(value: number, min: number, max: number): RatioResult {
 
 console.log('═══════════════════════════════════════════════════════════════════');
 console.log('  CMA ENGINE DIAGNOSTIC — All Segments × All Loan Amounts');
-console.log('  Seed: 42 (deterministic) | 3 Projection Years');
+console.log('  Seeds: [42, 101, 303, 777, 12345, 99999, 55555] | 3 Projection Years');
 console.log('═══════════════════════════════════════════════════════════════════\n');
+
+const AUDIT_SEEDS = [42, 101, 303, 777, 12345, 99999, 55555];
 
 let totalTests = 0;
 let passCount = 0;
@@ -81,12 +83,14 @@ for (const segment of SEGMENTS) {
 
   for (const loanAmt of LOAN_AMOUNTS) {
     const profile = getDynamicProfile(segment, loanAmt);
-    const limits = { ccLimit: loanAmt, termLoan: 0, isRenewal: false, existingCc: 0, existingTl: 0, ccIntRate: 11.5, tlIntRate: 12, tenure: 60 };
-    const data = generateProjections(limits, {
+    const limits = { ccLimit: loanAmt, termLoan: 0, isRenewal: false, existingCc: 0, existingTl: 0, ccIntRate: 11.5, tlIntRate: 12, tenure: 5 };
+    // Run across all seeds and use first seed for display, all seeds for totals
+    const allData = AUDIT_SEEDS.map(seed => generateProjections(limits, {
       ...profile,
       label: segment,
       exp: profile.exp,
-    }, 3, 2024, { seed: 42, variability: 1 });
+    }, 3, 2024, { seed, variability: 1 }));
+    const data = allData[0]; // Display first seed
 
     console.log(`  ┌─ Loan: ₹${fmt(loanAmt)} ──────────────────────────────────────────`);
     console.log(`  │  Sales Y1: ₹${fmt(data[0].sales)}  │  Sales Y3: ₹${fmt(data[2].sales)}`);
@@ -119,7 +123,7 @@ for (const segment of SEGMENTS) {
           case 'bep': return d.bepPercentage;
           case 'invTurnover': return (d.purchases + d.openStock - d.closingStock) / Math.max(d.inventory, 1);
           case 'wcTurnover': {
-            const wcGap = d.totalCA - d.totalCL; // WC Gap = CA – CL (excl. bank borrowings)
+            const wcGap = d.totalCA - d.totalCL;
             return d.sales / Math.max(wcGap, 1);
           }
           case 'capUtil': return d.capacityUtil;
@@ -128,6 +132,9 @@ for (const segment of SEGMENTS) {
           default: return 0;
         }
       });
+
+      // Skip FACR for CC-only (facr=0 means N/A)
+      if (key === 'facr' && values.every(v => v === 0)) continue;
 
       const checked = values.map(v => checkRatio(v, bench.min, bench.max));
       checked.forEach(c => {

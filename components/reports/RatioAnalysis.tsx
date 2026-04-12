@@ -127,7 +127,7 @@ export default function RatioAnalysis({ data, years }: { data: ProjectedYear[]; 
               vals={data.map((d) => { const v = d.ebitda / Math.max(d.interest, 1); return <span key={d.year} className={getStatusColor(v, "icr")}>{fmtR(v)}×</span>; })}
               benchmark="≥ 2.5" />
             <RatioRow s={s} own={own} label="Fixed Asset Coverage Ratio (FACR)"
-              vals={data.map((d) => <span key={d.year} className={getStatusColor(d.facr, "facr")}>{fmtR(d.facr)}×</span>)}
+              vals={data.map((d) => <span key={d.year} className={d.facr > 0 ? getStatusColor(d.facr, "facr") : ""}>{d.facr > 0 ? `${fmtR(d.facr)}×` : "N/A"}</span>)}
               benchmark="≥ 1.33" />
             <RatioRow s={s} own={own} label="DSCR"
               vals={data.map((d) => <span key={d.year} className={getStatusColor(d.dscr, "dscr")}>{fmtR(d.dscr)}×</span>)}

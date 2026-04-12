@@ -3,14 +3,14 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { generateProjections, ProjectedYear } from '../lib/engine';
+import { getDynamicProfile } from '../lib/profiles';
+import type { BusinessSegment } from '../types/cma';
 import ReportView from '../components/ReportView';
 
-const PROFILES: any = {
-  trading:      { label: 'Trading',      salesMult: 5.0, purchaseRatio: .81, stockMonths: 1.5, debtorDays: 30, creditorDays: 42, indExpRatio: .11, depnRate: .15, revGrowth: .15, purGrowth: .12, expGrowth: .08, capitalMult: 1.10, grossFAMult: .40, drawingsMult: .38, wcMargin: 25, cashPct: .020, loansAdvPct: .015, otherCLPct: .040, exp: { salary: .40, rent: .20, power: .04, freight: .08, travel: .06, telephone: .04, sadar: .06, office: .07, welfare: .02, misc: .03 } },
-  service:      { label: 'Services',     salesMult: 5.5, purchaseRatio: .15, stockMonths: .5,  debtorDays: 35, creditorDays: 22, indExpRatio: .65, depnRate: .15, revGrowth: .18, purGrowth: .12, expGrowth: .09, capitalMult: 1.00, grossFAMult: .40, drawingsMult: .42, wcMargin: 25, cashPct: .025, loansAdvPct: .012, otherCLPct: .045, exp: { salary: .55, rent: .15, power: .03, freight: .01, travel: .08, telephone: .04, sadar: .04, office: .05, welfare: .02, misc: .03 } },
-  manufacturing:{ label: 'Manufacturing',salesMult: 5.0, purchaseRatio: .74, stockMonths: 2.0, debtorDays: 40, creditorDays: 42, indExpRatio: .14, depnRate: .15, revGrowth: .15, purGrowth: .12, expGrowth: .08, capitalMult: 1.20, grossFAMult: 1.00, drawingsMult: .35, wcMargin: 25, cashPct: .015, loansAdvPct: .022, otherCLPct: .038, exp: { salary: .35, rent: .10, power: .18, freight: .10, travel: .04, telephone: .03, sadar: .05, office: .05, welfare: .05, misc: .05 } },
-  construction: { label: 'Construction', salesMult: 5.2, purchaseRatio: .70, stockMonths: 1.0, debtorDays: 42, creditorDays: 42, indExpRatio: .16, depnRate: .15, revGrowth: .15, purGrowth: .12, expGrowth: .08, capitalMult: 1.10, grossFAMult: .80, drawingsMult: .36, wcMargin: 25, cashPct: .018, loansAdvPct: .025, otherCLPct: .038, exp: { salary: .40, rent: .07, power: .10, freight: .15, travel: .05, telephone: .03, sadar: .08, office: .04, welfare: .04, misc: .04 } }
-};
+// Single source of truth: lib/profiles.ts provides loan-amount-aware profiles
+function getProfile(bizType: string, loanAmount: number) {
+  return getDynamicProfile(bizType as BusinessSegment, loanAmount);
+}
 
 const EXPENSE_HEADS = [
   { k: 'salary', l: 'Salaries & Wages' }, { k: 'rent', l: 'Rent & Rates' }, { k: 'power', l: 'Power & Fuel' },
@@ -47,13 +47,13 @@ export default function CMAApp() {
   const bizNameRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const p = PROFILES[bizType];
     const totalLoanForMath = f.ccLimit + f.termLoan || 500000;
+    const p = getProfile(bizType, totalLoanForMath);
     const sales = isOverride ? f.sales0 : Math.round(totalLoanForMath * p.salesMult);
     const purch = Math.round(sales * p.purchaseRatio);
     const indExp = Math.round(sales * p.indExpRatio);
     const newExps = { ...f.expBase };
-    EXPENSE_HEADS.forEach(h => { (newExps as any)[h.k] = Math.round(indExp * p.exp[h.k]); });
+    EXPENSE_HEADS.forEach(h => { (newExps as any)[h.k] = Math.round(indExp * (p.exp as any)[h.k]); });
 
     setF(prev => ({
       ...prev,

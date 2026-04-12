@@ -3,7 +3,7 @@ import { ProjectedYear } from "../../../lib/engine";
 import { fmt } from "../../../lib/format";
 import s from "../shared.module.css";
 
-export default function Form5({ data, years }: { data: ProjectedYear[]; years: string[]; loanAmount: number }) {
+export default function Form5({ data, years, loanAmount }: { data: ProjectedYear[]; years: string[]; loanAmount: number }) {
   const ncols = years.length + 1;
 
   const YH = years.map((y) => (
@@ -113,7 +113,7 @@ export default function Form5({ data, years }: { data: ProjectedYear[]; years: s
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '20px', display: 'inline-block' }}>12) Final Requested Loan Limit (CC/OD)</span>
               </td>
-              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.bankBorrowings)}</td>)}
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(loanAmount)}</td>)}
             </tr>
           </tbody>
         </table>
