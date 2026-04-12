@@ -103,7 +103,7 @@ export default function Form1({ proposedCc, proposedTl, existingCc, existingTl }
       {/* PART B: SECURITY */}
       <div style={{ borderTop: "2px solid #000" }}>
         <div className={own.partHeader}>PART B: SECURITY PARTICULARS</div>
-        <table className={`${s.table} ${own.table}`} style={{ border: "none", borderTop: "none" }}>
+        <table className={`${s.table} ${own.table}`}>
           <tbody>
             <tr className={own.securityRow}>
               <td className={s.tdParticulars} style={{ fontWeight: "bold", width: "200px" }}>Primary Security</td>
@@ -124,7 +124,7 @@ export default function Form1({ proposedCc, proposedTl, existingCc, existingTl }
       {/* PART C: ASSOCIATE CONCERNS */}
       <div style={{ borderTop: "2px solid #000" }}>
         <div className={own.partHeader}>PART C: PARTICULARS OF ASSOCIATE / GROUP CONCERNS</div>
-        <table className={`${s.table} ${own.table}`} style={{ border: "none" }}>
+        <table className={`${s.table} ${own.table}`}>
           <thead>
             <tr>
               <th className={s.colParticulars}>Name of Concern</th>
@@ -134,7 +134,7 @@ export default function Form1({ proposedCc, proposedTl, existingCc, existingTl }
             </tr>
           </thead>
           <tbody>
-            <tr>
+            <tr className={own.gridRow}>
               <td colSpan={4} className={s.tdParticulars} style={{ color: "#000", fontSize: "11px", textAlign: "center" }}>
                 No other bank facilities enjoyed by associate concerns as per available records.
               </td>

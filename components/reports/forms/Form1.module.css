@@ -24,10 +24,12 @@
   color: #000;
 }
 
-.securityRow td {
+.securityRow td,
+.gridRow td {
   font-weight: 400;
   background: #fff;
   color: #000;
+  border-bottom: 1px solid #000;
 }
 
 .footnote {

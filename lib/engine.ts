@@ -338,6 +338,12 @@ export function generateProjections(limits: LoanLimits, profile: BusinessProfile
   let openingTermLoan = limits.isRenewal ? limits.existingTl : 0;
   let annualTlRepayment = 0; 
   
+  // Inject closed loan history for CC-only borrowers (seasoning)
+  if (limits.termLoan === 0 && limits.existingTl === 0 && !limits.isRenewal) {
+    openingTermLoan = organic(baselineVol * 0.08, rng);
+    annualTlRepayment = openingTermLoan; // fully amortizes in yr 1
+  }
+  
   // Segment-specific capacity utilization
   const capBand = CAP_UTIL_BANDS[segKey];
   const capStartNoise  = centeredRandom(rng, 0.07 * variability);  // ±7% — starting util visibly different across borrowers
@@ -418,7 +424,7 @@ export function generateProjections(limits: LoanLimits, profile: BusinessProfile
     currentUtil = currentUtil * 0.50 + targetCapUtil * 0.50;
 
     // --- P&L MATH ---
-    const otherInc = 0; 
+    const otherInc = organic(sales * (0.0005 + rng() * 0.0015), rng); // 0.05% to 0.20%
     const totalRev = sales + otherInc;
     const closeStock = organic((purchases / 12) * curStockMonths, rng);
     
@@ -427,7 +433,7 @@ export function generateProjections(limits: LoanLimits, profile: BusinessProfile
     const noisyIndExpRatio = profile.indExpRatio * expenseTilt * (1 - opEfficiency + centeredRandom(rng, 0.004 * variability));
     let indExpTotal = organic(sales * noisyIndExpRatio, rng);
 
-    const cogs = (openStock + purchases) - closeStock;
+    let cogs = (openStock + purchases) - closeStock;
     const targetEbitdaMargin = getTargetEbitdaMargin(profile.label, i);
     const targetEbitda = sales * targetEbitdaMargin;
     const rawEbitda = sales - cogs - indExpTotal;
@@ -436,7 +442,7 @@ export function generateProjections(limits: LoanLimits, profile: BusinessProfile
     }
 
     let { indirectExpenses, totalFixedCosts } = buildIndirectExpenses(indExpTotal, profile, rng, variability);
-    const grossProfit = sales - cogs;
+    let grossProfit = sales - cogs;
     const depnYr = organic(wdv * profile.depnRate, rng);
     wdv = Math.max(wdv - depnYr, 0);
 
@@ -481,10 +487,12 @@ export function generateProjections(limits: LoanLimits, profile: BusinessProfile
         const excessEBITDA = ebitda - targetEBITDA;
         const npFloor = npComfortBand.min + 0.003;
         const npHeadroom = Math.max((netProfit / Math.max(sales, 1)) - npFloor, 0) * sales;
-        const absorb = Math.min(excessEBITDA, npHeadroom, indExpTotal * 0.20);
+        // Shift absorption from indirect expenses to COGS (purchases) to prevent 3x overhead spikes
+        const absorb = Math.min(excessEBITDA, npHeadroom, purchases * 0.05);
         if (absorb > 500) {
-          indExpTotal = organic(indExpTotal + absorb, rng);
-          ({ indirectExpenses, totalFixedCosts } = buildIndirectExpenses(indExpTotal, profile, rng, variability));
+          purchases = organic(purchases + absorb, rng);
+          cogs = (openStock + purchases) - closeStock;
+          grossProfit = sales - cogs;
           profitBeforeInt = grossProfit - indExpTotal - depnYr;
           profitBeforeTax = profitBeforeInt - interest;
           tax = calculateTax(profitBeforeTax);
@@ -509,14 +517,14 @@ export function generateProjections(limits: LoanLimits, profile: BusinessProfile
 
     // ── Step 1: Fixed Assets ──
     accDepn += depnYr;
-    const netFA = Math.max(grossFA - accDepn, 0);
+    let netFA = Math.max(grossFA - accDepn, 0);
 
     // ── Step 2: Operational Current Assets (from business cycle) ──
     const inventory = closeStock;
     const totalDebtors = organic((sales / 365) * curDebtorDays, rng);
     const debtorsOver6M = organic(totalDebtors * (profile.debtorAgingPct || 0.05), rng);
     const debtorsUnder6M = totalDebtors - debtorsOver6M;
-    const loansAdv = organic(sales * profile.loansAdvPct, rng);
+    let loansAdv = organic(sales * profile.loansAdvPct, rng);
     const operationalCA = inventory + totalDebtors + loansAdv; // Cash added later
 
     // ── Step 3: Current Liabilities (from operational cycle) ──
@@ -543,125 +551,88 @@ export function generateProjections(limits: LoanLimits, profile: BusinessProfile
     const capitalFloorPrior = capital * 0.95; // Never shrink drastically
 
     // Nominal drawings (~35-50% of NP — realistic for MSME proprietor)
+    // Smooth drawings predictability: Use nominal direct
     const dynamicDrawingsMult = clamp(
       (profile.drawingsMult * drawingsTilt) + ((i - 1) * 0.06),
       0.25, 0.65
     );
     const nominalDrawings = organic(Math.max(baselineVol * 0.03, netProfit * dynamicDrawingsMult), rng);
-    const capitalFromRetention = capital + netProfit - nominalDrawings;
-
-    // Pick the best floor
-    let targetCapital = Math.max(capitalFromRetention, capitalFloorROE, capitalFloorSales, capitalFloorPrior);
-    let drawings = Math.max(capital + netProfit - targetCapital, 0);
-    capital = targetCapital;
+    
+    // Evaluate if capital inherently demands more
+    // but default target is purely organic retention
+    let targetCapital = Math.max(capital + netProfit - nominalDrawings, capitalFloorSales, capitalFloorPrior);
 
     // ── Step 7: Solve Cash for Target Current Ratio ──
-    // CR = totalCA / (bankBorrowings + totalCL)
-    // Strategy: First reduce creditors if CL is too heavy, then solve cash.
-    // Wider CR target band: ±7% noise gives real spread of ~1.17–1.50 across borrowers.
-    // Different seeds → meaningfully different liquidity profiles (not all stuck at 1.30).
-    // CR target: non-monotonic — Y2 might dip slightly before Y3 recovers,
-    // mimicking real business cycles where a growth year strains liquidity.
     const crYearNoise = centeredRandom(rng, 0.04 * variability);
-    const crDipBias = (i === 2 && rng() < 0.35) ? -0.02 : 0; // 35% chance Y2 dips slightly
+    const crDipBias = (i === 2 && rng() < 0.35) ? -0.02 : 0; 
     const targetCR = clamp(1.35 + (i - 1) * 0.04 + crYearNoise + crDipBias, 1.33, 1.65);
+    
+    // CASH IS NO LONGER THE PLUG. It is realistic: 1-3% of turnover.
     const minCash = organic(sales * profile.cashPct, rng);
-
-    // ── CREDITOR-SAFE CR SOLVER ─────────────────────────────────────────
-    // Creditors are OPERATIONAL — they reflect real supplier payment terms
-    // (40-45 days for trading, 30-42 for manufacturing, etc.). A CA would
-    // never artificially reduce creditors to inflate Current Ratio.
-    // Instead, we achieve CR through the asset side: owner's cash injection.
-    // Max cash = 120% of CC limit (owner maintains working liquidity).
-    const maxReasonableCash = Math.max(minCash * 5, limits.ccLimit * 1.20);
-
-    // Solve cash directly from CR equation: CR = (opCA + cash) / (BB + CL)
+    let cashBank = clamp(organic(sales * 0.015 * capitalTilt, rng), Math.max(minCash, baselineVol * 0.01), Math.max(baselineVol * 0.03, minCash * 2));
+    
     const clDenom = bankBorrowings + totalCL;
-    const neededCA = targetCR * clDenom;
-    let cashBank = clamp(neededCA - operationalCA, minCash, maxReasonableCash);
+    const neededCA = Math.ceil(targetCR * clDenom);
+    
+    // Missing CA to hit CR target is routed to Advances to Suppliers
+    let missingCA = Math.max(neededCA - (operationalCA + cashBank), 0);
+    loansAdv += missingCA;
 
-    let totalCA = operationalCA + cashBank;
+    let totalCA = operationalCA + cashBank + missingCA;
 
     // ── Steps 8-10: Unified Balance Sheet Finalization ──
-    // Strategy:
-    //  a) Compute nonCapitalLiab (everything except owners' equity)
-    //  b) Plug capital = totalAssets - nonCapitalLiab
-    //  c) If D:E floor breached, inject promoter cash → grow both assets and capital
-    //  d) Re-check CR after injection; inject more if still short
-    //  e) reconAdj = 0 always (capital is the balancing item)
-
     const totalBankDebt = bankBorrowings + closingTermLoan;
-    const nonCapitalLiab = quasiEquity + marketUnsecured + bankBorrowings + closingTermLoan +
-                           creditors + totalOtherCL + cmltd;
-
     let totalAssets = netFA + totalCA;
-
-    // a) Initial capital plug
-    let plugCapital = totalAssets - nonCapitalLiab;
-
-    // b) D:E floor: capital (excl. quasiEquity for TNW) must give D:E ≤ 2.0
-    //    TNW = capital + quasiEquity; D:E = totalBankDebt / TNW ≤ 2.0
-    //    => TNW ≥ totalBankDebt / 2.0  => capital ≥ totalBankDebt/2.0 - quasiEquity
+    
+    let nonCapitalLiab = quasiEquity + bankBorrowings + closingTermLoan + creditors + totalOtherCL + cmltd;
+    let requiredUnsecured = totalAssets - targetCapital - nonCapitalLiab;
+    
+    if (requiredUnsecured < 0) {
+      // We have too much capital for the assets.
+      // Store the extra capital in non-current assets (Fixed Assets) to protect the Current Ratio
+      grossFA += Math.abs(requiredUnsecured);
+      netFA += Math.abs(requiredUnsecured);
+      totalAssets += Math.abs(requiredUnsecured);
+      marketUnsecured = 0;
+    } else {
+      marketUnsecured = requiredUnsecured;
+    }
+    
+    // Check D:E Floor
     const deFloorCapital = Math.max(totalBankDebt / 2.0 - quasiEquity, 0);
-    if (plugCapital < deFloorCapital) {
-      // Promoter injection: bring in cash to raise capital to the D:E floor
-      const injection = Math.ceil(deFloorCapital - plugCapital);
-      cashBank += injection;
-      totalCA += injection;
-      totalAssets += injection;
-      plugCapital = deFloorCapital;
-    }
-
-    // c) Re-check CR after any injection above
-    //    CR = totalCA / (bankBorrowings + totalCL)
-    const crDenom = bankBorrowings + totalCL;
-    const targetCRCheck = targetCR; // same target as computed in Phase B
-    if (totalCA / Math.max(crDenom, 1) < targetCRCheck) {
-      const neededCA2 = Math.ceil(targetCRCheck * crDenom);
-      const crInjection = Math.max(neededCA2 - totalCA, 0);
-      if (crInjection > 0) {
-        cashBank += crInjection;
-        totalCA += crInjection;
-        totalAssets += crInjection;
-        plugCapital += crInjection; // assets grew, so capital plug grows too
+    if (targetCapital < deFloorCapital) {
+      const injection = deFloorCapital - targetCapital;
+      targetCapital = deFloorCapital;
+      // We increased capital. Decrease unsecured by same amount if available.
+      if (marketUnsecured >= injection) {
+          marketUnsecured -= injection;
+      } else {
+          // If we run out of unsecured, business needs more assets to balance the new capital
+          const remainder = injection - marketUnsecured;
+          marketUnsecured = 0;
+          grossFA += remainder;   // Protected Current Ratio by routing to Fixed Assets
+          netFA += remainder;
+          totalAssets += remainder;
       }
     }
-
-    // e) ROE ceiling: cap ROE at a realistic range (55-72%) — a hard 80.00% looks
-    //    like an engineered ceiling to any credit analyst. Real MSMEs show ROEs
-    //    of 25-65% depending on capital structure. Using a noisy band ensures no
-    //    two borrowers show the same suspicious round ROE figure.
+    
+    // Check ROE Ceiling
     const roeCeiling = clamp(0.62 + centeredRandom(rng, 0.10 * variability), 0.52, 0.72);
-    if (netProfit > 0 && plugCapital > 0 && netProfit / plugCapital > roeCeiling) {
+    if (netProfit > 0 && targetCapital > 0 && netProfit / targetCapital > roeCeiling) {
       const roeCapFloor = Math.ceil(netProfit / roeCeiling);
-      const roeInjection = roeCapFloor - plugCapital;
+      const roeInjection = roeCapFloor - targetCapital;
       if (roeInjection > 0) {
-        cashBank += roeInjection;
-        totalCA += roeInjection;
+        targetCapital = roeCapFloor;
+        // Balance by adding to Fixed Assets
+        grossFA += roeInjection;
+        netFA += roeInjection;
         totalAssets += roeInjection;
-        plugCapital = roeCapFloor;
       }
     }
 
-    // f) CR ceiling hard-cap at 1.65 — if the ROE injection pushed CR above this,
-    //    trim cashBank. Capital stays higher than needed for CR (from ROE floor),
-    //    so we reduce cashBank and accept the balance sheet rebalance via capital plug.
-    const crHardCap = 1.65;
-    const crAfterRoe = totalCA / Math.max(crDenom, 1);
-    if (crAfterRoe > crHardCap) {
-      const maxCA = Math.floor(crHardCap * crDenom);
-      const trim = totalCA - maxCA;
-      if (trim > 0 && cashBank - trim >= minCash) {
-        cashBank -= trim;
-        totalCA -= trim;
-        totalAssets -= trim;
-        plugCapital -= trim; // capital shrinks symmetrically — ROE may rise slightly
-      }
-    }
-
-    capital = Math.max(plugCapital, 1);
-    const totalLiab = capital + nonCapitalLiab;
-    const reconAdj = 0; // Balance sheet always balances by construction
+    capital = Math.max(targetCapital, 1);
+    const totalLiab = capital + nonCapitalLiab + marketUnsecured;
+    const reconAdj = totalAssets - totalLiab; // Balance sheet balances by construction
 
     // d) TOL/TNW (informational, for ratio output)
     const finalTnw = capital + quasiEquity;

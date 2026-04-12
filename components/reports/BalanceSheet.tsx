@@ -118,7 +118,7 @@ export default function BalanceSheet({ data, years }: { data: ProjectedYear[]; y
             </tr>
 
             <tr className={s.grandTotalRow}>
-              <td className={s.tdParticulars}>Total Liabilities &amp; Capital</td>
+              <td className={s.tdParticulars}>Total Sources of Funds</td>
               {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.totalLiab)}</td>)}
             </tr>
 

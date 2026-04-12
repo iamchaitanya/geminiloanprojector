@@ -104,31 +104,6 @@ export default function DscrSchedule({ data, years }: { data: ProjectedYear[]; y
           </tbody>
         </table>
       </div>
-
-      <div style={{
-        padding: "12px 24px",
-        borderTop: "1px solid #000",
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        fontFamily: '"Times New Roman", Times, serif',
-        background: "#fff",
-      }}>
-        <div>
-          <div style={{ fontWeight: "bold", fontSize: "11px" }}>
-            Benchmark: Weighted Average DSCR ≥ 1.50 is considered bankable.
-          </div>
-          <div style={{ fontSize: "10px", marginTop: "2px" }}>
-            Calculated over the entire projection period of {data.length} years.
-          </div>
-        </div>
-        <div style={{ textAlign: "center" }}>
-          <span style={{ fontSize: "28px", fontWeight: 900 }}>{fmtR(avgDscr)}</span>
-          <span style={{ marginLeft: "8px", fontSize: "11px", fontWeight: "bold", textTransform: "uppercase" }}>
-            Benchmark: ≥ 1.50
-          </span>
-        </div>
-      </div>
     </div>
   );
 }
