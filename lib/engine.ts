@@ -655,6 +655,8 @@ export function generateProjections(limits: LoanLimits, profile: BusinessProfile
     const dscr = debtServiceAssessment.dscr;
 
     // FACR — segment-specific with noise (not uniform)
+    // Cap raised to 10.0 (from 5.0) — large netFA with small residual TL
+    // (e.g. final repayment years) correctly shows values up to 10×.
     let facr: number;
     if (closingTermLoan > 0) {
       facr = netFA / Math.max(closingTermLoan, 1);
@@ -668,7 +670,7 @@ export function generateProjections(limits: LoanLimits, profile: BusinessProfile
         1.15, 2.50
       );
     }
-    facr = Math.min(facr, 5.0);
+    facr = Math.min(facr, 10.0); // Bug 1 fix: was 5.0, now 10.0
 
     projections.push({
       year: i, fyLabel, sales, otherInc, totalRev, openStock, purchases, indirectExpenses, totalIndExp: indExpTotal,
