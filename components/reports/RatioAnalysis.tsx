@@ -1,7 +1,8 @@
 // components/reports/RatioAnalysis.tsx
 import React from "react";
 import { ProjectedYear } from "../../lib/engine";
-import { fmtR } from "../../lib/format";
+import { fmtZ, fmtRZ, fmtAccZ } from "../../lib/format";
+import { usePrintSettings } from "../../lib/PrintSettingsContext";
 import s from "./shared.module.css";
 import own from "./RatioAnalysis.module.css";
 
@@ -23,6 +24,10 @@ function RatioRow({ label, vals, benchmark, s: cx, own: ox }: RowProps) {
 }
 
 export default function RatioAnalysis({ data, years }: { data: ProjectedYear[]; years: string[]; loanAmount: number }) {
+  const { showZero } = usePrintSettings();
+  const f    = (n: number) => fmtZ(n, showZero);
+  const fR   = (n: number) => fmtRZ(n, showZero);
+  const fAcc = (n: number) => fmtAccZ(n, showZero);
   const ncols = years.length + 2;
 
   const getStatusColor = (val: number, type: string): string => {
@@ -87,37 +92,37 @@ export default function RatioAnalysis({ data, years }: { data: ProjectedYear[]; 
           <tbody>
             <tr className={s.sectionHeader}><td colSpan={ncols}>Profitability Ratios</td></tr>
             <RatioRow s={s} own={own} label="Gross Profit Margin (%)"
-              vals={data.map((d) => <span key={d.year} className={getStatusColor(d.gpRatio, "gp")}>{fmtR(d.gpRatio)}%</span>)}
+              vals={data.map((d) => <span key={d.year} className={getStatusColor(d.gpRatio, "gp")}>{fR(d.gpRatio)}%</span>)}
               benchmark="≥ 10% Good" />
             <RatioRow s={s} own={own} label="Net Profit Margin (%)"
-              vals={data.map((d) => <span key={d.year} className={getStatusColor(d.npRatio, "np")}>{fmtR(d.npRatio)}%</span>)}
+              vals={data.map((d) => <span key={d.year} className={getStatusColor(d.npRatio, "np")}>{fR(d.npRatio)}%</span>)}
               benchmark="≥ 7% Good" />
             <RatioRow s={s} own={own} label="EBITDA Margin (%)"
-              vals={data.map((d) => { const v = (d.ebitda / d.sales) * 100; return <span key={d.year} className={getStatusColor(v, "ebitda")}>{fmtR(v)}%</span>; })}
+              vals={data.map((d) => { const v = (d.ebitda / d.sales) * 100; return <span key={d.year} className={getStatusColor(v, "ebitda")}>{fR(v)}%</span>; })}
               benchmark="≥ 10% Good" />
             <RatioRow s={s} own={own} label="Break-Even Point (% of Sales)"
-              vals={data.map((d) => <span key={d.year} className={getStatusColor(d.bepPercentage, "bep")}>{fmtR(d.bepPercentage)}%</span>)}
+              vals={data.map((d) => <span key={d.year} className={getStatusColor(d.bepPercentage, "bep")}>{fR(d.bepPercentage)}%</span>)}
               benchmark="≤ 75%" />
             <RatioRow s={s} own={own} label="Return on Equity (ROE %)"
               vals={data.map((d) => {
                 if (d.capital <= 0) return <span key={d.year}>N/A</span>;
                 const v = (d.netProfit / d.capital) * 100;
-                return <span key={d.year} className={getStatusColor(v, "roe")}>{fmtR(v)}%</span>;
+                return <span key={d.year} className={getStatusColor(v, "roe")}>{fR(v)}%</span>;
               })}
               benchmark="≥ 12% Good" />
             <RatioRow s={s} own={own} label="Return on Assets (ROA %)"
-              vals={data.map((d) => { const v = (d.netProfit / Math.max(d.totalAssets, 1)) * 100; return <span key={d.year} className={getStatusColor(v, "roa")}>{fmtR(v)}%</span>; })}
+              vals={data.map((d) => { const v = (d.netProfit / Math.max(d.totalAssets, 1)) * 100; return <span key={d.year} className={getStatusColor(v, "roa")}>{fR(v)}%</span>; })}
               benchmark="≥ 5% Good" />
 
             <tr className={s.sectionHeader}><td colSpan={ncols}>Liquidity Ratios</td></tr>
             <RatioRow s={s} own={own} label="Current Ratio (incl. CC)"
-              vals={data.map((d) => <span key={d.year} className={getStatusColor(d.currentRatio, "cr_incl")}>{fmtR(d.currentRatio)}×</span>)}
+              vals={data.map((d) => <span key={d.year} className={getStatusColor(d.currentRatio, "cr_incl")}>{fR(d.currentRatio)}×</span>)}
               benchmark="1.1 – 1.4" />
             <RatioRow s={s} own={own} label="Current Ratio (excl. bank)"
-              vals={data.map((d) => <span key={d.year} className={getStatusColor(d.currentRatioExBank, "cr_excl")}>{fmtR(d.currentRatioExBank)}×</span>)}
+              vals={data.map((d) => <span key={d.year} className={getStatusColor(d.currentRatioExBank, "cr_excl")}>{fR(d.currentRatioExBank)}×</span>)}
               benchmark="≥ 1.33" />
             <RatioRow s={s} own={own} label="Quick Ratio"
-              vals={data.map((d) => { const v = (d.totalCA - d.inventory) / Math.max(d.totalCL + d.bankBorrowings, 1); return <span key={d.year} className={getStatusColor(v, "qr")}>{fmtR(v)}×</span>; })}
+              vals={data.map((d) => { const v = (d.totalCA - d.inventory) / Math.max(d.totalCL + d.bankBorrowings, 1); return <span key={d.year} className={getStatusColor(v, "qr")}>{fR(v)}×</span>; })}
               benchmark="≥ 1.00" />
 
             <tr className={s.sectionHeader}><td colSpan={ncols}>Solvency &amp; Leverage</td></tr>
@@ -125,36 +130,36 @@ export default function RatioAnalysis({ data, years }: { data: ProjectedYear[]; 
               vals={data.map((d) => {
                 const tnw = d.capital + d.quasiEquity;
                 if (tnw <= 0) return <span key={d.year}>N/A</span>;
-                return <span key={d.year} className={getStatusColor(d.deRatio, "de")}>{fmtR(d.deRatio)}×</span>;
+                return <span key={d.year} className={getStatusColor(d.deRatio, "de")}>{fR(d.deRatio)}×</span>;
               })}
               benchmark="≤ 2.0" />
             <RatioRow s={s} own={own} label="TOL / TNW (Regulatory Cap)"
               vals={data.map((d) => {
                 const tnw = d.capital + d.quasiEquity;
                 if (tnw <= 0) return <span key={d.year}>N/A</span>;
-                return <span key={d.year} className={getStatusColor(d.tolTnw, "toltnw")}>{fmtR(d.tolTnw)}×</span>;
+                return <span key={d.year} className={getStatusColor(d.tolTnw, "toltnw")}>{fR(d.tolTnw)}×</span>;
               })}
               benchmark="≤ 3.0 Best" />
             <RatioRow s={s} own={own} label="Interest Coverage Ratio (ICR)"
-              vals={data.map((d) => { const v = d.ebitda / Math.max(d.interest, 1); return <span key={d.year} className={getStatusColor(v, "icr")}>{fmtR(v)}×</span>; })}
+              vals={data.map((d) => { const v = d.ebitda / Math.max(d.interest, 1); return <span key={d.year} className={getStatusColor(v, "icr")}>{fR(v)}×</span>; })}
               benchmark="≥ 2.5" />
             <RatioRow s={s} own={own} label="Fixed Asset Coverage Ratio (FACR)"
-              vals={data.map((d) => <span key={d.year} className={d.facr > 0 ? getStatusColor(d.facr, "facr") : ""}>{d.facr > 0 ? `${fmtR(d.facr)}×` : "N/A"}</span>)}
+              vals={data.map((d) => <span key={d.year} className={d.facr > 0 ? getStatusColor(d.facr, "facr") : ""}>{d.facr > 0 ? `${fR(d.facr)}×` : "N/A"}</span>)}
               benchmark="≥ 1.33" />
             <RatioRow s={s} own={own} label="DSCR"
               vals={data.map((d) => (
                 d.isCcOnly
                   ? <span key={d.year}>N/A</span>
-                  : <span key={d.year} className={getStatusColor(d.dscr, "dscr")}>{fmtR(d.dscr)}×</span>
+                  : <span key={d.year} className={getStatusColor(d.dscr, "dscr")}>{fR(d.dscr)}×</span>
               ))}
               benchmark="≥ 1.50" />
             <RatioRow s={s} own={own} label="Total Debt / EBITDA"
-              vals={data.map((d) => { const v = (d.bankBorrowings + d.termLoan + d.cmltd + d.unsecured) / Math.max(d.ebitda, 1); return <span key={d.year} className={getStatusColor(v, "debt_ebitda")}>{fmtR(v)}×</span>; })}
+              vals={data.map((d) => { const v = (d.bankBorrowings + d.termLoan + d.cmltd + d.unsecured) / Math.max(d.ebitda, 1); return <span key={d.year} className={getStatusColor(v, "debt_ebitda")}>{fR(v)}×</span>; })}
               benchmark="< 4.0" />
 
             <tr className={s.sectionHeader}><td colSpan={ncols}>Efficiency Ratios</td></tr>
             <RatioRow s={s} own={own} label="Capacity Utilization (%)"
-              vals={data.map((d) => <span key={d.year} className={getStatusColor(d.capacityUtil, "capacity")}>{fmtR(d.capacityUtil)}%</span>)}
+              vals={data.map((d) => <span key={d.year} className={getStatusColor(d.capacityUtil, "capacity")}>{fR(d.capacityUtil)}%</span>)}
               benchmark="≥ 70% Good" />
             <RatioRow s={s} own={own} label="Debtor Collection Period (Days)"
               vals={data.map((d) => { const v = Math.round(d.debtors / (d.sales / 365)); return <span key={d.year} className={getStatusColor(v, "debtor_days")}>{v}</span>; })}
@@ -163,21 +168,21 @@ export default function RatioAnalysis({ data, years }: { data: ProjectedYear[]; 
               vals={data.map((d) => { const v = Math.round(d.creditors / (d.purchases / 365)); return <span key={d.year} className={getStatusColor(v, "creditor_days")}>{v}</span>; })}
               benchmark="≤ 75 Days" />
             <RatioRow s={s} own={own} label="Inventory Holding (Months)"
-              vals={data.map((d) => { const v = d.inventory / (d.purchases / 12); return <span key={d.year} className={getStatusColor(v, "inv_months")}>{fmtR(v)}</span>; })}
+              vals={data.map((d) => { const v = d.inventory / (d.purchases / 12); return <span key={d.year} className={getStatusColor(v, "inv_months")}>{fR(v)}</span>; })}
               benchmark="≤ 3.0" />
             <RatioRow s={s} own={own} label="Inventory Turnover (×)"
-              vals={data.map((d) => { const v = d.purchases / Math.max(d.inventory, 1); return <span key={d.year} className={getStatusColor(v, "inv_turn")}>{fmtR(v)}</span>; })}
+              vals={data.map((d) => { const v = d.purchases / Math.max(d.inventory, 1); return <span key={d.year} className={getStatusColor(v, "inv_turn")}>{fR(v)}</span>; })}
               benchmark="≥ 4.0×" />
             <RatioRow s={s} own={own} label="Working Capital Turnover (×)"
               vals={data.map((d) => {
                 const nwc = d.totalCA - (d.totalCL + d.bankBorrowings);
                 if (nwc <= 0) return <span key={d.year}>N/A</span>;
                 const v = d.sales / nwc;
-                return <span key={d.year} className={getStatusColor(v, "wc_turn")}>{fmtR(v)}</span>;
+                return <span key={d.year} className={getStatusColor(v, "wc_turn")}>{fR(v)}</span>;
               })}
               benchmark="3.0 – 8.0×" />
             <RatioRow s={s} own={own} label="Asset Turnover (×)"
-              vals={data.map((d) => { const v = d.sales / Math.max(d.totalAssets, 1); return <span key={d.year} className={getStatusColor(v, "ass_turn")}>{fmtR(v)}</span>; })}
+              vals={data.map((d) => { const v = d.sales / Math.max(d.totalAssets, 1); return <span key={d.year} className={getStatusColor(v, "ass_turn")}>{fR(v)}</span>; })}
               benchmark="≥ 1.5×" />
           </tbody>
         </table>

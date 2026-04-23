@@ -1,11 +1,15 @@
 // components/reports/CashFlow.tsx
 import { ProjectedYear } from "../../lib/engine";
-import { fmt, fmtAcc } from "../../lib/format";
+import { fmtZ, fmtAccZ } from "../../lib/format";
+import { usePrintSettings } from "../../lib/PrintSettingsContext";
 import s from "./shared.module.css";
 import own from "./CashFlow.module.css";
 
 export default function CashFlow({ data, years, loanAmount }: { data: ProjectedYear[]; years: string[]; loanAmount: number }) {
   const ncols = years.length + 1;
+  const { showZero } = usePrintSettings();
+  const f    = (n: number) => fmtZ(n, showZero);
+  const fAcc = (n: number) => fmtAccZ(n, showZero);
 
   const yearHeaders = years.map((y) => (
     <th key={y} style={{ textAlign: "center" }}>
@@ -103,19 +107,19 @@ export default function CashFlow({ data, years, loanAmount }: { data: ProjectedY
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>1) Net Profit after Tax</span>
               </td>
-              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.netProfit)}</td>)}
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{f(d.netProfit)}</td>)}
             </tr>
             <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>2) Add: Depreciation (Non-Cash)</span>
               </td>
-              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.depnYr)}</td>)}
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{f(d.depnYr)}</td>)}
             </tr>
             <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>3) Add: Interest Charged Back</span>
               </td>
-              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.interest)}</td>)}
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{f(d.interest)}</td>)}
             </tr>
 
             <tr className={s.detailRow}>
@@ -128,32 +132,32 @@ export default function CashFlow({ data, years, loanAmount }: { data: ProjectedY
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '64px', display: 'inline-block' }}>i) (Increase) / Decrease in Debtors</span>
               </td>
-              {data.map((d, i) => <td key={d.year} className={s.tdValue}>{fmtAcc(-debtorDiffs[i])}</td>)}
+              {data.map((d, i) => <td key={d.year} className={s.tdValue}>{fAcc(-debtorDiffs[i])}</td>)}
             </tr>
             <tr className={s.adjustRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '64px', display: 'inline-block' }}>ii) (Increase) / Decrease in Inventory</span>
               </td>
-              {data.map((d, i) => <td key={d.year} className={s.tdValue}>{fmtAcc(-inventDiffs[i])}</td>)}
+              {data.map((d, i) => <td key={d.year} className={s.tdValue}>{fAcc(-inventDiffs[i])}</td>)}
             </tr>
             <tr className={s.adjustRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '64px', display: 'inline-block' }}>iii) Increase / (Decrease) in Creditors</span>
               </td>
-              {data.map((d, i) => <td key={d.year} className={s.tdValue}>{fmtAcc(credDiffs[i])}</td>)}
+              {data.map((d, i) => <td key={d.year} className={s.tdValue}>{fAcc(credDiffs[i])}</td>)}
             </tr>
             <tr className={s.adjustRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '64px', display: 'inline-block' }}>iv) Increase / (Decrease) in Other CL</span>
               </td>
-              {data.map((d, i) => <td key={d.year} className={s.tdValue}>{fmtAcc(otherCLDiffs[i])}</td>)}
+              {data.map((d, i) => <td key={d.year} className={s.tdValue}>{fAcc(otherCLDiffs[i])}</td>)}
             </tr>
 
             <tr className={s.subtotalRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '20px', display: 'inline-block' }}>Net Cash from Operating Activities (A)</span>
               </td>
-              {data.map((d, i) => <td key={d.year} className={s.tdValue}>{fmt(cfA[i])}</td>)}
+              {data.map((d, i) => <td key={d.year} className={s.tdValue}>{f(cfA[i])}</td>)}
             </tr>
 
             <tr className={`${s.spacerRow} ${own.spacerRow}`}><td colSpan={ncols} /></tr>
@@ -166,13 +170,13 @@ export default function CashFlow({ data, years, loanAmount }: { data: ProjectedY
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>1) Purchase of Fixed Assets / Capex</span>
               </td>
-              {data.map((d, i) => <td key={d.year} className={s.tdValue}>({fmt(capex[i])})</td>)}
+              {data.map((d, i) => <td key={d.year} className={s.tdValue}>({f(capex[i])})</td>)}
             </tr>
             <tr className={s.subtotalRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '20px', display: 'inline-block' }}>Net Cash from Investing Activities (B)</span>
               </td>
-              {data.map((d, i) => <td key={d.year} className={s.tdValue}>({fmt(capex[i])})</td>)}
+              {data.map((d, i) => <td key={d.year} className={s.tdValue}>({f(capex[i])})</td>)}
             </tr>
 
             <tr className={`${s.spacerRow} ${own.spacerRow}`}><td colSpan={ncols} /></tr>
@@ -185,56 +189,56 @@ export default function CashFlow({ data, years, loanAmount }: { data: ProjectedY
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>1) Cash Credit Limit Availed</span>
               </td>
-              {data.map((d, i) => <td key={d.year} className={s.tdValue}>{fmtAcc(ccDiffs[i])}</td>)}
+              {data.map((d, i) => <td key={d.year} className={s.tdValue}>{fAcc(ccDiffs[i])}</td>)}
             </tr>
             <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>2) Term Loan Proceeds</span>
               </td>
-              {data.map((d, i) => <td key={d.year} className={s.tdValue}>{fmtAcc(tlProceeds[i])}</td>)}
+              {data.map((d, i) => <td key={d.year} className={s.tdValue}>{fAcc(tlProceeds[i])}</td>)}
             </tr>
             <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>3) Less: Term Loan Repayments</span>
               </td>
-              {data.map((d, i) => <td key={d.year} className={s.tdValue}>({fmt(tlRepayments[i])})</td>)}
+              {data.map((d, i) => <td key={d.year} className={s.tdValue}>({f(tlRepayments[i])})</td>)}
             </tr>
             <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>4) Increase / (Decrease) in Unsecured Loans</span>
               </td>
-              {data.map((d, i) => <td key={d.year} className={s.tdValue}>{fmtAcc(unsecDiffs[i])}</td>)}
+              {data.map((d, i) => <td key={d.year} className={s.tdValue}>{fAcc(unsecDiffs[i])}</td>)}
             </tr>
             <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>5) Increase / (Decrease) in Quasi-Equity</span>
               </td>
-              {data.map((d, i) => <td key={d.year} className={s.tdValue}>{fmtAcc(quasiDiffs[i])}</td>)}
+              {data.map((d, i) => <td key={d.year} className={s.tdValue}>{fAcc(quasiDiffs[i])}</td>)}
             </tr>
             <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>6) Proprietor&apos;s Initial Capital Stake</span>
               </td>
-              {data.map((d, i) => <td key={d.year} className={s.tdValue}>{fmtAcc(initialStake[i])}</td>)}
+              {data.map((d, i) => <td key={d.year} className={s.tdValue}>{fAcc(initialStake[i])}</td>)}
             </tr>
             <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>7) Proprietor&apos;s Drawings / Withdrawals</span>
               </td>
-              {data.map((d, i) => <td key={d.year} className={s.tdValue}>({fmt(drawings[i])})</td>)}
+              {data.map((d, i) => <td key={d.year} className={s.tdValue}>({f(drawings[i])})</td>)}
             </tr>
             <tr className={s.subtotalRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '20px', display: 'inline-block' }}>Net Cash from Financing Activities (C)</span>
               </td>
-              {data.map((d, i) => <td key={d.year} className={s.tdValue}>{fmtAcc(cfC[i])}</td>)}
+              {data.map((d, i) => <td key={d.year} className={s.tdValue}>{fAcc(cfC[i])}</td>)}
             </tr>
 
             <tr className={`${s.spacerRow} ${own.spacerRow}`}><td colSpan={ncols} /></tr>
 
             <tr className={s.grandTotalRow}>
               <td className={s.tdParticulars}>Net Increase / (Decrease) in Cash (A + B + C)</td>
-              {data.map((d, i) => <td key={d.year} className={s.tdValue}>{fmtAcc(netCash[i])}</td>)}
+              {data.map((d, i) => <td key={d.year} className={s.tdValue}>{fAcc(netCash[i])}</td>)}
             </tr>
             <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
@@ -242,13 +246,13 @@ export default function CashFlow({ data, years, loanAmount }: { data: ProjectedY
               </td>
               {data.map((d, i) => (
                 <td key={d.year} className={s.tdValue}>
-                  {fmt(i === 0 ? 0 : data[i - 1].cashBank)}
+                  {f(i === 0 ? 0 : data[i - 1].cashBank)}
                 </td>
               ))}
             </tr>
             <tr className={s.grandTotalRow}>
               <td className={s.tdParticulars}>Closing Cash &amp; Bank Balance</td>
-              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.cashBank)}</td>)}
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{f(d.cashBank)}</td>)}
             </tr>
           </tbody>
         </table>

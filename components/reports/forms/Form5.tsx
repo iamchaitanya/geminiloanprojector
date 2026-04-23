@@ -1,9 +1,14 @@
 // components/reports/forms/Form5.tsx
 import { ProjectedYear } from "../../../lib/engine";
-import { fmt } from "../../../lib/format";
+import { fmtZ, fmtRZ, fmtAccZ } from "../../../lib/format";
+import { usePrintSettings } from "../../../lib/PrintSettingsContext";
 import s from "../shared.module.css";
 
 export default function Form5({ data, years, loanAmount }: { data: ProjectedYear[]; years: string[]; loanAmount: number }) {
+  const { showZero } = usePrintSettings();
+  const f    = (n: number) => fmtZ(n, showZero);
+  const fR   = (n: number) => fmtRZ(n, showZero);
+  const fAcc = (n: number) => fmtAccZ(n, showZero);
   const ncols = years.length + 1;
 
   const YH = years.map((y) => (
@@ -38,49 +43,49 @@ export default function Form5({ data, years, loanAmount }: { data: ProjectedYear
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>1) Total Current Assets (as per Form III)</span>
               </td>
-              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.totalCA)}</td>)}
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{f(d.totalCA)}</td>)}
             </tr>
             <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>2) Other Current Liabilities (Excl. Bank Borrowings)</span>
               </td>
-              {data.map((d) => <td key={d.year} className={s.tdValue}>({fmt(d.totalCL)})</td>)}
+              {data.map((d) => <td key={d.year} className={s.tdValue}>({f(d.totalCL)})</td>)}
             </tr>
             <tr className={s.infoRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '64px', display: 'inline-block' }}>Of Which: Statutory Dues (GST/PF/TDS)</span>
               </td>
-              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.statutoryDues)}</td>)}
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{f(d.statutoryDues)}</td>)}
             </tr>
             <tr className={s.subtotalRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '20px', display: 'inline-block' }}>3) Working Capital Gap (1 - 2)</span>
               </td>
-              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.totalCA - d.totalCL)}</td>)}
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{f(d.totalCA - d.totalCL)}</td>)}
             </tr>
             <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>4) Min. Borrower Margin (25% of NCA)</span>
               </td>
-              {data.map((d) => <td key={d.year} className={s.tdValue}>({fmt(d.totalCA * 0.25)})</td>)}
+              {data.map((d) => <td key={d.year} className={s.tdValue}>({f(d.totalCA * 0.25)})</td>)}
             </tr>
             <tr className={s.subtotalRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '20px', display: 'inline-block' }}>5) MPBF as per Method II (3 - 4)</span>
               </td>
-              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt((d.totalCA - d.totalCL) - (d.totalCA * 0.25))}</td>)}
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{f((d.totalCA - d.totalCL) - (d.totalCA * 0.25))}</td>)}
             </tr>
             <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>6) Actual Net Working Capital (NWC) Proposed</span>
               </td>
-              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.totalCA - (d.totalCL + d.bankBorrowings))}</td>)}
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{f(d.totalCA - (d.totalCL + d.bankBorrowings))}</td>)}
             </tr>
             <tr className={s.grandTotalRow}>
               <td className={s.tdParticulars}>7) Final Eligibility (Tandon II)</td>
               {data.map((d) => {
                 const mpbf = (d.totalCA - d.totalCL) - (d.totalCA * 0.25);
-                return <td key={d.year} className={s.tdValue}>{fmt(mpbf)}</td>;
+                return <td key={d.year} className={s.tdValue}>{f(mpbf)}</td>;
               })}
             </tr>
 
@@ -90,30 +95,30 @@ export default function Form5({ data, years, loanAmount }: { data: ProjectedYear
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>8) Projected Annual Turnover (Sales)</span>
               </td>
-              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.sales)}</td>)}
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{f(d.sales)}</td>)}
             </tr>
             <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>9) Total WC Requirement (25% of Sales)</span>
               </td>
-              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.sales * 0.25)}</td>)}
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{f(d.sales * 0.25)}</td>)}
             </tr>
             <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>10) Min. Borrower Contribution (5% of Sales)</span>
               </td>
-              {data.map((d) => <td key={d.year} className={s.tdValue}>({fmt(d.sales * 0.05)})</td>)}
+              {data.map((d) => <td key={d.year} className={s.tdValue}>({f(d.sales * 0.05)})</td>)}
             </tr>
             <tr className={s.grandTotalRow}>
               <td className={s.tdParticulars}>11) MPBF as per Turnover Method (9 - 10)</td>
-              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.sales * 0.20)}</td>)}
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{f(d.sales * 0.20)}</td>)}
             </tr>
 
             <tr className={s.grandTotalRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '20px', display: 'inline-block' }}>12) Final Requested Loan Limit (CC/OD)</span>
               </td>
-              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(loanAmount)}</td>)}
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{f(loanAmount)}</td>)}
             </tr>
           </tbody>
         </table>

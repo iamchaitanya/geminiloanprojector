@@ -1,10 +1,15 @@
 // components/reports/DscrSchedule.tsx
 import { ProjectedYear } from "../../lib/engine";
-import { fmt, fmtR } from "../../lib/format";
+import { fmtZ, fmtRZ, fmtAccZ } from "../../lib/format";
+import { usePrintSettings } from "../../lib/PrintSettingsContext";
 import s from "./shared.module.css";
 import own from "./DscrSchedule.module.css";
 
 export default function DscrSchedule({ data, years }: { data: ProjectedYear[]; years: string[] }) {
+  const { showZero } = usePrintSettings();
+  const f    = (n: number) => fmtZ(n, showZero);
+  const fR   = (n: number) => fmtRZ(n, showZero);
+  const fAcc = (n: number) => fmtAccZ(n, showZero);
   const ncols = years.length + 1;
   const isCcOnly = data[0]?.isCcOnly ?? false;
   const avgDscr = isCcOnly ? 0 : data.reduce((acc, d) => acc + d.dscr, 0) / data.length;
@@ -52,25 +57,25 @@ export default function DscrSchedule({ data, years }: { data: ProjectedYear[]; y
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>1) Net Profit after Tax (PAT)</span>
               </td>
-              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.netProfit)}</td>)}
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{f(d.netProfit)}</td>)}
             </tr>
             <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>2) Add: Depreciation (Non-Cash)</span>
               </td>
-              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.depnYr)}</td>)}
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{f(d.depnYr)}</td>)}
             </tr>
             <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>3) Add: Interest on Term Loans / CC</span>
               </td>
-              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.interest)}</td>)}
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{f(d.interest)}</td>)}
             </tr>
             <tr className={s.subtotalRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '20px', display: 'inline-block' }}>Total Cash Accruals (1+2+3)</span>
               </td>
-              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.netProfit + d.depnYr + d.interest)}</td>)}
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{f(d.netProfit + d.depnYr + d.interest)}</td>)}
             </tr>
 
             <tr className={s.sectionHeader}>
@@ -81,19 +86,19 @@ export default function DscrSchedule({ data, years }: { data: ProjectedYear[]; y
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>4) Interest on Term Loans / Working Capital</span>
               </td>
-              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.interest)}</td>)}
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{f(d.interest)}</td>)}
             </tr>
             <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>5) Repayment of Term Loan Installments</span>
               </td>
-              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.tlRepayment)}</td>)}
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{f(d.tlRepayment)}</td>)}
             </tr>
             <tr className={s.subtotalRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '20px', display: 'inline-block' }}>Total Debt Service (4+5)</span>
               </td>
-              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.interest + d.tlRepayment)}</td>)}
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{f(d.interest + d.tlRepayment)}</td>)}
             </tr>
 
             <tr className={s.grandTotalRow}>
@@ -103,8 +108,8 @@ export default function DscrSchedule({ data, years }: { data: ProjectedYear[]; y
               {data.map((d) => (
                 <td key={d.year} className={s.tdValue}>
                   {isCcOnly
-                    ? fmtR(d.icr ?? (d.ebitda / Math.max(d.interest, 1)))
-                    : fmtR(d.dscr)}
+                    ? fR(d.icr ?? (d.ebitda / Math.max(d.interest, 1)))
+                    : fR(d.dscr)}
                 </td>
               ))}
             </tr>
@@ -114,7 +119,7 @@ export default function DscrSchedule({ data, years }: { data: ProjectedYear[]; y
                 {isCcOnly ? 'Weighted Average ICR' : 'Weighted Average DSCR'}
               </td>
               <td colSpan={data.length} className={s.tdValue}>
-                {fmtR(isCcOnly ? avgIcr : avgDscr)}
+                {fR(isCcOnly ? avgIcr : avgDscr)}
               </td>
             </tr>
           </tbody>

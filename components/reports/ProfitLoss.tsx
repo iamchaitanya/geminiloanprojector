@@ -1,11 +1,15 @@
 // components/reports/ProfitLoss.tsx
 import { ProjectedYear } from "../../lib/engine";
-import { fmt, fmtR } from "../../lib/format";
+import { fmtZ, fmtRZ } from "../../lib/format";
+import { usePrintSettings } from "../../lib/PrintSettingsContext";
 import s from "./shared.module.css";
 import own from "./ProfitLoss.module.css";
 
 export default function ProfitLoss({ data, years }: { data: ProjectedYear[]; years: string[] }) {
   const ncols = years.length + 1; // Particulars + year columns
+  const { showZero } = usePrintSettings();
+  const f = (n: number) => fmtZ(n, showZero);
+  const fR = (n: number) => fmtRZ(n, showZero);
 
   return (
     <div className="report-section-wrapper">
@@ -47,21 +51,21 @@ export default function ProfitLoss({ data, years }: { data: ProjectedYear[]; yea
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>A) Sales / Turnover</span>
               </td>
-              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.sales)}</td>)}
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{f(d.sales)}</td>)}
             </tr>
 
             <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>B) Other Income</span>
               </td>
-              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.otherInc)}</td>)}
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{f(d.otherInc)}</td>)}
             </tr>
 
             <tr className={s.subtotalRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '20px', display: 'inline-block' }}>Total Revenue (A)</span>
               </td>
-              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.totalRev)}</td>)}
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{f(d.totalRev)}</td>)}
             </tr>
 
             {/* ── 2) EXPENDITURE ───────────────────────────────────── */}
@@ -73,14 +77,14 @@ export default function ProfitLoss({ data, years }: { data: ProjectedYear[]; yea
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>A) Opening Stock</span>
               </td>
-              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.openStock)}</td>)}
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{f(d.openStock)}</td>)}
             </tr>
 
             <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>B) Purchases / Direct Costs</span>
               </td>
-              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.purchases)}</td>)}
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{f(d.purchases)}</td>)}
             </tr>
 
             <tr className={s.sectionHeader}>
@@ -99,7 +103,7 @@ export default function ProfitLoss({ data, years }: { data: ProjectedYear[]; yea
                     <span style={{ marginLeft: '64px', display: 'inline-block' }}>{label}</span>
                   </td>
                   {data.map((d) => (
-                    <td key={d.year} className={s.tdValue}>{fmt(d.indirectExpenses[idx].value)}</td>
+                    <td key={d.year} className={s.tdValue}>{f(d.indirectExpenses[idx].value)}</td>
                   ))}
                 </tr>
               );
@@ -109,65 +113,65 @@ export default function ProfitLoss({ data, years }: { data: ProjectedYear[]; yea
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '48px', display: 'inline-block' }}>Total Indirect Expenses</span>
               </td>
-              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.totalIndExp)}</td>)}
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{f(d.totalIndExp)}</td>)}
             </tr>
 
             <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>D) Less: Closing Stock</span>
               </td>
-              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.closingStock)}</td>)}
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{f(d.closingStock)}</td>)}
             </tr>
 
             <tr className={s.subtotalRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '20px', display: 'inline-block' }}>Total Expenditure (B)</span>
               </td>
-              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.totalCosts)}</td>)}
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{f(d.totalCosts)}</td>)}
             </tr>
 
             {/* ── GROSS PROFIT ──────────────────────────────────────── */}
             <tr className={s.grandTotalRow}>
               <td className={s.tdParticulars}>3) Gross Profit (A − B)</td>
-              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.grossProfit)}</td>)}
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{f(d.grossProfit)}</td>)}
             </tr>
 
             <tr className={s.ratioRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>Gross Profit Ratio (%)</span>
               </td>
-              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmtR(d.gpRatio)}%</td>)}
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{fR(d.gpRatio)}%</td>)}
             </tr>
 
             <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>4) Less: Depreciation</span>
               </td>
-              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.depnYr)}</td>)}
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{f(d.depnYr)}</td>)}
             </tr>
 
             <tr className={s.grandTotalRow}>
               <td className={s.tdParticulars}>5) Profit before Interest &amp; Tax (PBIT)</td>
-              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.profitBeforeInt)}</td>)}
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{f(d.profitBeforeInt)}</td>)}
             </tr>
 
             <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>6) Less: Interest on Borrowings</span>
               </td>
-              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.interest)}</td>)}
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{f(d.interest)}</td>)}
             </tr>
 
             <tr className={s.grandTotalRow}>
               <td className={s.tdParticulars}>7) Net Profit before Tax (PBT)</td>
-              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.profitBeforeTax)}</td>)}
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{f(d.profitBeforeTax)}</td>)}
             </tr>
 
             <tr className={s.ratioRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>Net Profit Ratio (%)</span>
               </td>
-              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmtR(d.npRatio)}%</td>)}
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{fR(d.npRatio)}%</td>)}
             </tr>
 
             <tr className={s.detailRow}>
@@ -176,14 +180,14 @@ export default function ProfitLoss({ data, years }: { data: ProjectedYear[]; yea
               </td>
               {data.map((d) => (
                 <td key={d.year} className={s.tdValue}>
-                  {d.tax === 0 ? "0" : fmt(d.tax)}
+                  {f(d.tax)}
                 </td>
               ))}
             </tr>
 
             <tr className={s.grandTotalRow}>
               <td className={s.tdParticulars}>9) Net Profit After Tax (PAT)</td>
-              {data.map((d) => <td key={d.year} className={s.tdValue}>{fmt(d.netProfit)}</td>)}
+              {data.map((d) => <td key={d.year} className={s.tdValue}>{f(d.netProfit)}</td>)}
             </tr>
           </tbody>
         </table>

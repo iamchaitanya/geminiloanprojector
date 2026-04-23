@@ -1,5 +1,6 @@
 // components/reports/forms/Form1.tsx
-import { fmt } from "../../../lib/format";
+import { fmtZ, fmtRZ, fmtAccZ } from "../../../lib/format";
+import { usePrintSettings } from "../../../lib/PrintSettingsContext";
 import s from "../shared.module.css";
 import own from "./Form1.module.css";
 
@@ -10,10 +11,14 @@ interface Form1Props {
 }
 
 export default function Form1({ proposedCc, proposedTl, existingCc, existingTl }: Form1Props) {
+  const { showZero } = usePrintSettings();
+  const f    = (n: number) => fmtZ(n, showZero);
+  const fR   = (n: number) => fmtRZ(n, showZero);
+  const fAcc = (n: number) => fmtAccZ(n, showZero);
   const totalExisting = existingCc + existingTl;
   const totalProposed = proposedCc + proposedTl;
 
-  const fmtV = (v: number) => (v > 0 ? fmt(v) : "0");
+  const fmtV = (v: number) => (v > 0 ? f(v) : "0");
 
   return (
     <div className="report-section-wrapper font-sans">

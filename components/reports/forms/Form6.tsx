@@ -1,9 +1,14 @@
 // components/reports/forms/Form6.tsx
 import { ProjectedYear } from "../../../lib/engine";
-import { fmt } from "../../../lib/format";
+import { fmtZ, fmtRZ, fmtAccZ } from "../../../lib/format";
+import { usePrintSettings } from "../../../lib/PrintSettingsContext";
 import s from "../shared.module.css";
 
 export default function Form6({ data, years }: { data: ProjectedYear[]; years: string[] }) {
+  const { showZero } = usePrintSettings();
+  const f    = (n: number) => fmtZ(n, showZero);
+  const fR   = (n: number) => fmtRZ(n, showZero);
+  const fAcc = (n: number) => fmtAccZ(n, showZero);
   // Zero baseline — represents the pre-loan opening position (Year 0)
   const zero: ProjectedYear = {
     year: 0, fyLabel: '', sales: 0, otherInc: 0, totalRev: 0, openStock: 0, purchases: 0,
@@ -64,13 +69,13 @@ export default function Form6({ data, years }: { data: ProjectedYear[]; years: s
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>1) Net Profit after Tax (PAT)</span>
               </td>
-              {data.map((d, i) => <td key={i} className={s.tdValue}>{fmt(d.netProfit)}</td>)}
+              {data.map((d, i) => <td key={i} className={s.tdValue}>{f(d.netProfit)}</td>)}
             </tr>
             <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>2) Add: Depreciation (Non-Cash)</span>
               </td>
-              {data.map((d, i) => <td key={i} className={s.tdValue}>{fmt(d.depnYr)}</td>)}
+              {data.map((d, i) => <td key={i} className={s.tdValue}>{f(d.depnYr)}</td>)}
             </tr>
             <tr className={s.detailRow}>
               <td className={s.tdParticulars}>
@@ -79,7 +84,7 @@ export default function Form6({ data, years }: { data: ProjectedYear[]; years: s
               {data.map((d, i) => {
                 const p = prev(i);
                 const diff = d.capital - (p.capital + d.netProfit);
-                return <td key={i} className={s.tdValue}>{fmt(diff > 0 ? diff : 0)}</td>;
+                return <td key={i} className={s.tdValue}>{f(diff > 0 ? diff : 0)}</td>;
               })}
             </tr>
             {/* FIX 1: quasiEquity increase is a long-term source of funds */}
@@ -90,7 +95,7 @@ export default function Form6({ data, years }: { data: ProjectedYear[]; years: s
               {data.map((d, i) => {
                 const p = prev(i);
                 const diff = d.quasiEquity - p.quasiEquity;
-                return <td key={i} className={s.tdValue}>{fmt(diff > 0 ? diff : 0)}</td>;
+                return <td key={i} className={s.tdValue}>{f(diff > 0 ? diff : 0)}</td>;
               })}
             </tr>
             <tr className={s.detailRow}>
@@ -102,7 +107,7 @@ export default function Form6({ data, years }: { data: ProjectedYear[]; years: s
                 // FIX 2: use fullClosingTL (termLoan + cmltd) for correct gross balance
                 const ti = Math.max(0, fullClosingTL(d) - fullClosingTL(p) + d.tlRepayment);
                 const ui = Math.max(0, d.unsecured - p.unsecured);
-                return <td key={i} className={s.tdValue}>{fmt(ti + ui)}</td>;
+                return <td key={i} className={s.tdValue}>{f(ti + ui)}</td>;
               })}
             </tr>
             <tr className={s.detailRow}>
@@ -112,7 +117,7 @@ export default function Form6({ data, years }: { data: ProjectedYear[]; years: s
               {data.map((d, i) => {
                 const p = prev(i);
                 const diff = p.grossFA - d.grossFA;
-                return <td key={i} className={s.tdValue}>{fmt(diff > 0 ? diff : 0)}</td>;
+                return <td key={i} className={s.tdValue}>{f(diff > 0 ? diff : 0)}</td>;
               })}
             </tr>
             <tr className={s.subtotalRow}>
@@ -125,7 +130,7 @@ export default function Form6({ data, years }: { data: ProjectedYear[]; years: s
                 const qi = Math.max(d.quasiEquity - p.quasiEquity, 0);
                 const ti = Math.max(0, fullClosingTL(d) - fullClosingTL(p) + d.tlRepayment) + Math.max(0, d.unsecured - p.unsecured);
                 const fd = Math.max(p.grossFA - d.grossFA, 0);
-                return <td key={i} className={s.tdValue}>{fmt(d.netProfit + d.depnYr + ci + qi + ti + fd)}</td>;
+                return <td key={i} className={s.tdValue}>{f(d.netProfit + d.depnYr + ci + qi + ti + fd)}</td>;
               })}
             </tr>
 
@@ -139,7 +144,7 @@ export default function Form6({ data, years }: { data: ProjectedYear[]; years: s
               {data.map((d, i) => {
                 const p = prev(i);
                 const diff = d.grossFA - p.grossFA;
-                return <td key={i} className={s.tdValue}>{fmt(diff > 0 ? diff : 0)}</td>;
+                return <td key={i} className={s.tdValue}>{f(diff > 0 ? diff : 0)}</td>;
               })}
             </tr>
             <tr className={s.detailRow}>
@@ -149,7 +154,7 @@ export default function Form6({ data, years }: { data: ProjectedYear[]; years: s
               {data.map((d, i) => {
                 const p = prev(i);
                 const ud = Math.max(0, p.unsecured - d.unsecured);
-                return <td key={i} className={s.tdValue}>{fmt(d.tlRepayment + ud)}</td>;
+                return <td key={i} className={s.tdValue}>{f(d.tlRepayment + ud)}</td>;
               })}
             </tr>
             <tr className={s.detailRow}>
@@ -159,7 +164,7 @@ export default function Form6({ data, years }: { data: ProjectedYear[]; years: s
               {data.map((d, i) => {
                 const p = prev(i);
                 const drawings = Math.max((p.capital + d.netProfit) - d.capital, 0);
-                return <td key={i} className={s.tdValue}>{fmt(drawings)}</td>;
+                return <td key={i} className={s.tdValue}>{f(drawings)}</td>;
               })}
             </tr>
             {/* FIX 1b: quasiEquity decrease is an application of funds */}
@@ -170,7 +175,7 @@ export default function Form6({ data, years }: { data: ProjectedYear[]; years: s
               {data.map((d, i) => {
                 const p = prev(i);
                 const diff = p.quasiEquity - d.quasiEquity;
-                return <td key={i} className={s.tdValue}>{fmt(diff > 0 ? diff : 0)}</td>;
+                return <td key={i} className={s.tdValue}>{f(diff > 0 ? diff : 0)}</td>;
               })}
             </tr>
             <tr className={s.subtotalRow}>
@@ -183,7 +188,7 @@ export default function Form6({ data, years }: { data: ProjectedYear[]; years: s
                 const td2 = d.tlRepayment + Math.max(0, p.unsecured - d.unsecured);
                 const dr = Math.max((p.capital + d.netProfit) - d.capital, 0);
                 const qd = Math.max(p.quasiEquity - d.quasiEquity, 0);
-                return <td key={i} className={s.tdValue}>{fmt(fi + td2 + dr + qd)}</td>;
+                return <td key={i} className={s.tdValue}>{f(fi + td2 + dr + qd)}</td>;
               })}
             </tr>
 
@@ -202,7 +207,7 @@ export default function Form6({ data, years }: { data: ProjectedYear[]; years: s
                 const dr = Math.max((p.capital + d.netProfit) - d.capital, 0);
                 const qd = Math.max(p.quasiEquity - d.quasiEquity, 0);
                 const totalB = fi + td2 + dr + qd;
-                return <td key={i} className={s.tdValue}>{fmt(totalA - totalB)}</td>;
+                return <td key={i} className={s.tdValue}>{f(totalA - totalB)}</td>;
               })}
             </tr>
 
@@ -214,7 +219,7 @@ export default function Form6({ data, years }: { data: ProjectedYear[]; years: s
                 const p = prev(i);
                 const prevNWC = p.totalCA - (p.totalCL + p.bankBorrowings);
                 const currNWC = d.totalCA - (d.totalCL + d.bankBorrowings);
-                return <td key={i} className={s.tdValue}>{fmt(currNWC - prevNWC)}</td>;
+                return <td key={i} className={s.tdValue}>{f(currNWC - prevNWC)}</td>;
               })}
             </tr>
           </tbody>

@@ -1,6 +1,7 @@
 // components/reports/Depreciation.tsx
 import { ProjectedYear } from "../../lib/engine";
-import { fmt } from "../../lib/format";
+import { fmtZ, fmtRZ, fmtAccZ } from "../../lib/format";
+import { usePrintSettings } from "../../lib/PrintSettingsContext";
 import s from "./shared.module.css";
 import own from "./Depreciation.module.css";
 
@@ -83,6 +84,10 @@ function buildSchedule(data: ProjectedYear[]): AssetRow[][] {
 }
 
 export default function Depreciation({ data, years }: { data: ProjectedYear[]; years: string[] }) {
+  const { showZero } = usePrintSettings();
+  const f    = (n: number) => fmtZ(n, showZero);
+  const fR   = (n: number) => fmtRZ(n, showZero);
+  const fAcc = (n: number) => fmtAccZ(n, showZero);
   const schedule = buildSchedule(data);
 
   return (
@@ -166,21 +171,21 @@ export default function Depreciation({ data, years }: { data: ProjectedYear[]; y
                                 <span style={{ marginLeft: '40px', display: 'inline-block' }}>{row.label}</span>
                               </td>
                               <td className={s.tdValue}>{fmtRate(row.rate + "%")}</td>
-                              <td className={s.tdValue}>{fmtC(fmt(row.openWDV))}</td>
-                              <td className={s.tdValue}>{fmtC(row.additions > 0 ? fmt(row.additions) : "—")}</td>
-                              <td className={s.tdValue}>{fmtC(fmt(row.total))}</td>
-                              <td className={s.tdValue} style={{ fontWeight: "700" }}>{fmtC(fmt(row.depn))}</td>
-                              <td className={s.tdValue}>{fmtC(fmt(row.closeWDV))}</td>
+                              <td className={s.tdValue}>{fmtC(f(row.openWDV))}</td>
+                              <td className={s.tdValue}>{fmtC(row.additions > 0 ? f(row.additions) : "—")}</td>
+                              <td className={s.tdValue}>{fmtC(f(row.total))}</td>
+                              <td className={s.tdValue} style={{ fontWeight: "700" }}>{fmtC(f(row.depn))}</td>
+                              <td className={s.tdValue}>{fmtC(f(row.closeWDV))}</td>
                             </tr>
                           ))}
                           <tr className={s.subtotalRow} style={{ borderTop: '2px solid #000', borderBottom: '3px double #000' }}>
                             <td className={s.tdParticulars} style={{ fontWeight: 800 }}>Total Assets — Depreciation Schedule</td>
                             <td className={s.tdValue}>{fmtRate("—")}</td>
-                            <td className={s.tdValue} style={{ fontWeight: 800 }}>{fmtC(fmt(totals.openWDV))}</td>
-                            <td className={s.tdValue} style={{ fontWeight: 800 }}>{fmtC(totals.additions > 0 ? fmt(totals.additions) : "—")}</td>
-                            <td className={s.tdValue} style={{ fontWeight: 800 }}>{fmtC(fmt(totals.total))}</td>
-                            <td className={s.tdValue} style={{ fontWeight: 800 }}>{fmtC(fmt(totals.depn))}</td>
-                            <td className={s.tdValue} style={{ fontWeight: 800 }}>{fmtC(fmt(totals.closeWDV))}</td>
+                            <td className={s.tdValue} style={{ fontWeight: 800 }}>{fmtC(f(totals.openWDV))}</td>
+                            <td className={s.tdValue} style={{ fontWeight: 800 }}>{fmtC(totals.additions > 0 ? f(totals.additions) : "—")}</td>
+                            <td className={s.tdValue} style={{ fontWeight: 800 }}>{fmtC(f(totals.total))}</td>
+                            <td className={s.tdValue} style={{ fontWeight: 800 }}>{fmtC(f(totals.depn))}</td>
+                            <td className={s.tdValue} style={{ fontWeight: 800 }}>{fmtC(f(totals.closeWDV))}</td>
                           </tr>
                         </>
                       );

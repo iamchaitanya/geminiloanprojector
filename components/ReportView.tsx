@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { ProjectedYear } from "../lib/engine";
 import { fmt } from "../lib/format";
+import { PrintSettingsProvider, usePrintSettings } from "../lib/PrintSettingsContext";
 
 // Core Financial Statements
 import ProfitLoss from "./reports/ProfitLoss";
@@ -66,12 +67,13 @@ const PrintFooter = ({ bizName, entityType }: { bizName: string; entityType?: st
   );
 };
 
-export default function ReportView({ data, bizName, propName, pan, address, loanAmount, proposedCc, proposedTl, existingCc, existingTl, entityType }: ReportViewProps) {
+function ReportViewInner({ data, bizName, propName, pan, address, loanAmount, proposedCc, proposedTl, existingCc, existingTl, entityType }: ReportViewProps) {
   const baseYear = 2024;
   const years = data.map(d => `31-03-${baseYear + d.year}\n(${d.year === 1 ? 'Actuals' : 'Estimations'})`);
   const [activeSection, setActiveSection] = useState('assumptions');
   const [isEditing, setIsEditing] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
+  const { showZero, setShowZero } = usePrintSettings();
 
   const toggleEdit = useCallback(() => {
     const next = !isEditing;
@@ -269,6 +271,35 @@ export default function ReportView({ data, bizName, propName, pan, address, loan
             Changes appear on print.
           </div>
         )}
+
+        {/* ── Zero-value toggle ── */}
+        <button
+          id="toggle-print-zeros"
+          onClick={() => setShowZero(!showZero)}
+          title={showZero ? 'Click to hide zero values on print' : 'Click to show zero values on print'}
+          style={{
+            padding: '10px 18px',
+            borderRadius: '8px',
+            border: '1.5px solid',
+            cursor: 'pointer',
+            fontFamily: '"Times New Roman", Times, serif',
+            fontSize: '12px',
+            fontWeight: 700,
+            letterSpacing: '0.02em',
+            boxShadow: '0 3px 12px rgba(0,0,0,0.18)',
+            transition: 'all 0.2s',
+            background: showZero ? '#065f46' : '#1c1917',
+            borderColor: showZero ? '#10b981' : '#57534e',
+            color: showZero ? '#d1fae5' : '#a8a29e',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '7px',
+          }}
+        >
+          <span style={{ fontSize: '15px' }}>{showZero ? '🔢' : '⬜'}</span>
+          {showZero ? 'Print with Zeros' : 'Print without Zeros'}
+        </button>
+
         <button
           onClick={toggleEdit}
           style={{
@@ -293,5 +324,13 @@ export default function ReportView({ data, bizName, propName, pan, address, loan
         </button>
       </div>
     </div>
+  );
+}
+
+export default function ReportView(props: ReportViewProps) {
+  return (
+    <PrintSettingsProvider>
+      <ReportViewInner {...props} />
+    </PrintSettingsProvider>
   );
 }
