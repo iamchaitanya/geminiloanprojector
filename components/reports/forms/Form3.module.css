@@ -41,8 +41,8 @@
     width: auto;
   }
 
-  /* Zero-row visibility is now controlled by data-hide-zero attribute via React context */
-  [data-hide-zero="true"] {
+  /* Zero-row visibility: .zeroRow combined with attribute keeps selector "pure" for CSS Modules */
+  .zeroRow[data-hide-zero="true"] {
     display: none;
   }
 }
