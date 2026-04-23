@@ -41,8 +41,8 @@
     width: auto;
   }
 
-  /* Hide always-zero rows on print to fit Form III on one A4 page */
-  .zeroRow {
+  /* Zero-row visibility is now controlled by data-hide-zero attribute via React context */
+  [data-hide-zero="true"] {
     display: none;
   }
 }
